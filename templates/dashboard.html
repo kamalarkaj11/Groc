@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - GroceryHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-5">
+                <h1 class="mb-3">Welcome back, {{ request.user.username }}</h1>
+                <p class="lead text-muted">You are now logged in successfully.</p>
+                {% if profile %}
+                    <p class="mb-2"><strong>Verified phone:</strong> {{ profile.phone_number }}</p>
+                    <p><strong>Status:</strong> {% if profile.is_phone_verified %}Verified{% else %}Pending verification{% endif %}</p>
+                {% endif %}
+                <a href="{% url 'store:home' %}" class="btn btn-primary mt-4">Go to Home</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

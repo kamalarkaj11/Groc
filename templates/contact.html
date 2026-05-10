@@ -1,0 +1,602 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contact Us - GroceryHub{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ct-green: #198754;
+    --ct-mint: #20c997;
+    --ct-yellow: #ffc857;
+    --ct-ink: #18251f;
+    --ct-muted: #66736c;
+    --ct-soft: #f4fbf7;
+    --ct-line: rgba(25, 135, 84, 0.16);
+    --ct-shadow: 0 18px 45px rgba(18, 55, 38, 0.12);
+  }
+
+  main.container {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .contact-page {
+    color: var(--ct-ink);
+    background:
+      radial-gradient(circle at top left, rgba(255, 200, 87, 0.16), transparent 30rem),
+      linear-gradient(180deg, #ffffff 0%, #f7fbf8 55%, #ffffff 100%);
+  }
+
+  .ct-container {
+    width: min(1140px, calc(100% - 32px));
+    margin: 0 auto;
+  }
+
+  .contact-hero {
+    padding: 58px 0 42px;
+  }
+
+  .hero-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 30px;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid var(--ct-line);
+    border-radius: 8px;
+    padding: clamp(28px, 5vw, 52px);
+    color: #fff;
+    background:
+      linear-gradient(135deg, rgba(13, 76, 45, 0.95), rgba(26, 148, 96, 0.85)),
+      url("https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1800&q=85") center/cover;
+    box-shadow: var(--ct-shadow);
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 8px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    font-size: 0.78rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .eyebrow.dark {
+    color: var(--ct-green);
+    border-color: var(--ct-line);
+    background: rgba(25, 135, 84, 0.08);
+  }
+
+  .hero-title {
+    max-width: 720px;
+    margin: 0;
+    font-size: clamp(2.7rem, 6vw, 5rem);
+    font-weight: 950;
+    line-height: 0.98;
+    letter-spacing: 0;
+  }
+
+  .hero-copy {
+    max-width: 620px;
+    margin: 18px 0 0;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 1.12rem;
+    line-height: 1.75;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 30px;
+  }
+
+  .ct-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 48px;
+    border: 0;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-weight: 900;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .ct-btn-primary {
+    color: #183523;
+    background: var(--ct-yellow);
+  }
+
+  .ct-btn-light {
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.46);
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .ct-btn-green {
+    color: #fff;
+    background: linear-gradient(135deg, var(--ct-green), var(--ct-mint));
+  }
+
+  .ct-btn-primary:hover {
+    color: #183523;
+    background: #ffd775;
+  }
+
+  .ct-btn-light:hover,
+  .ct-btn-green:hover {
+    color: #fff;
+  }
+
+  .ct-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ct-shadow);
+  }
+
+  .hero-support-card {
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 8px;
+    padding: 22px;
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(12px);
+  }
+
+  .support-row {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  }
+
+  .support-row:last-child {
+    border-bottom: 0;
+  }
+
+  .support-icon,
+  .card-icon,
+  .faq-icon {
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    color: #183523;
+    background: var(--ct-yellow);
+    font-size: 1.25rem;
+  }
+
+  .support-row strong {
+    display: block;
+    color: #fff;
+  }
+
+  .support-row span {
+    color: rgba(255, 255, 255, 0.74);
+  }
+
+  .section-pad {
+    padding: 76px 0;
+  }
+
+  .section-head {
+    max-width: 760px;
+    margin-bottom: 34px;
+  }
+
+  .section-title {
+    margin: 14px 0 12px;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 950;
+    line-height: 1.06;
+    letter-spacing: 0;
+  }
+
+  .section-copy {
+    color: var(--ct-muted);
+    font-size: 1.08rem;
+    line-height: 1.75;
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .contact-card,
+  .form-panel,
+  .map-panel,
+  .faq-card {
+    border: 1px solid var(--ct-line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 10px 25px rgba(24, 37, 31, 0.06);
+  }
+
+  .contact-card {
+    display: flex;
+    flex-direction: column;
+    padding: 26px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .contact-card:hover,
+  .faq-card:hover {
+    transform: translateY(-7px);
+    box-shadow: var(--ct-shadow);
+  }
+
+  .contact-card h3 {
+    margin: 18px 0 8px;
+    font-size: 1.25rem;
+    font-weight: 950;
+  }
+
+  .contact-card p {
+    color: var(--ct-muted);
+    line-height: 1.65;
+  }
+
+  .contact-card .ct-btn {
+    margin-top: auto;
+  }
+
+  .contact-workspace {
+    background: var(--ct-soft);
+  }
+
+  .workspace-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .form-panel {
+    padding: clamp(24px, 4vw, 38px);
+  }
+
+  .form-panel .form-control,
+  .form-panel .form-select {
+    min-height: 54px;
+    border: 1px solid var(--ct-line);
+    border-radius: 8px;
+  }
+
+  .form-panel textarea.form-control {
+    min-height: 150px;
+  }
+
+  .form-panel .form-control:focus,
+  .form-panel .form-select:focus {
+    border-color: rgba(25, 135, 84, 0.55);
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.1);
+  }
+
+  .form-floating label {
+    color: var(--ct-green);
+    font-weight: 750;
+  }
+
+  .side-stack {
+    display: grid;
+    gap: 18px;
+  }
+
+  .map-panel {
+    overflow: hidden;
+  }
+
+  .map-panel iframe {
+    display: block;
+    width: 100%;
+    height: 300px;
+    border: 0;
+  }
+
+  .map-caption {
+    padding: 18px;
+  }
+
+  .map-caption strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .map-caption span {
+    color: var(--ct-muted);
+  }
+
+  .hours-card {
+    padding: 22px;
+    border: 1px solid var(--ct-line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .hours-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(25, 135, 84, 0.1);
+  }
+
+  .hours-row:last-child {
+    border-bottom: 0;
+  }
+
+  .hours-row span {
+    color: var(--ct-muted);
+  }
+
+  .faq-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .faq-card {
+    padding: 24px;
+  }
+
+  .faq-card h3 {
+    margin: 16px 0 8px;
+    font-size: 1.1rem;
+    font-weight: 950;
+  }
+
+  .faq-card p {
+    margin: 0;
+    color: var(--ct-muted);
+    line-height: 1.65;
+  }
+
+  @media (max-width: 991px) {
+    .hero-panel,
+    .workspace-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .contact-grid,
+    .faq-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (max-width: 575px) {
+    .ct-container {
+      width: min(100% - 24px, 1140px);
+    }
+
+    .contact-hero {
+      padding-top: 34px;
+    }
+
+    .contact-grid,
+    .faq-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-actions {
+      flex-direction: column;
+    }
+
+    .ct-btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="contact-page">
+  <section class="contact-hero">
+    <div class="ct-container">
+      <div class="hero-panel">
+        <div>
+          <span class="eyebrow"><i class="bi bi-chat-dots"></i> Contact GroceryHub</span>
+          <h1 class="hero-title">Need help with groceries, orders, or delivery?</h1>
+          <p class="hero-copy">Our support team is ready to help with product questions, delivery updates, order issues, and anything else you need for a smoother grocery run.</p>
+          <div class="hero-actions">
+            <a href="#contact-form" class="ct-btn ct-btn-primary">Send Message <i class="bi bi-arrow-down"></i></a>
+            <a href="tel:+918988545540" class="ct-btn ct-btn-light">Call Now</a>
+          </div>
+        </div>
+
+        <aside class="hero-support-card">
+          <div class="support-row">
+            <span class="support-icon"><i class="bi bi-clock"></i></span>
+            <div>
+              <strong>Fast replies</strong>
+              <span>Most messages are answered within 2 business hours.</span>
+            </div>
+          </div>
+          <div class="support-row">
+            <span class="support-icon"><i class="bi bi-truck"></i></span>
+            <div>
+              <strong>Delivery help</strong>
+              <span>Track order concerns and area availability.</span>
+            </div>
+          </div>
+          <div class="support-row">
+            <span class="support-icon"><i class="bi bi-basket2"></i></span>
+            <div>
+              <strong>Product support</strong>
+              <span>Ask about freshness, stock, pricing, or returns.</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section id="info" class="section-pad">
+    <div class="ct-container">
+      <div class="section-head">
+        <span class="eyebrow dark"><i class="bi bi-life-preserver"></i> Support Channels</span>
+        <h2 class="section-title">Reach us the way that works for you.</h2>
+        <p class="section-copy">Call, message, email, or visit. We keep support simple and easy to access.</p>
+      </div>
+
+      <div class="contact-grid">
+        <article class="contact-card">
+          <span class="card-icon"><i class="bi bi-geo-alt-fill"></i></span>
+          <h3>Visit Us</h3>
+          <p>123 Fresh Market Street<br>Green Valley, GV 12345</p>
+          <a href="https://www.google.com/maps/@30.7336714,76.7358583,18.6z?authuser=0&entry=ttu" class="ct-btn ct-btn-green" target="_blank" rel="noopener">Get Directions <i class="bi bi-arrow-right"></i></a>
+        </article>
+
+        <article class="contact-card">
+          <span class="card-icon"><i class="bi bi-telephone-fill"></i></span>
+          <h3>Call or WhatsApp</h3>
+          <p>Speak with us directly for urgent order and delivery questions.</p>
+          <div class="d-flex flex-wrap gap-2 mt-auto">
+            <a href="tel:+918988545540" class="ct-btn ct-btn-green">Call</a>
+            <a href="https://wa.me/918988545540" class="ct-btn ct-btn-primary" target="_blank" rel="noopener">WhatsApp</a>
+          </div>
+        </article>
+
+        <article class="contact-card">
+          <span class="card-icon"><i class="bi bi-envelope-fill"></i></span>
+          <h3>Email Us</h3>
+          <p>Send order details, feedback, or product questions any time.</p>
+          <a href="https://mail.google.com/mail/u/0/#inbox?compose=GTvVlcSGMhkZDQDDPlkrkwGJsHjvdsCTzSQGVvbgpncbWghgNwhrfNgnxXgtxMqqDVMWdnQFtpMhN" class="ct-btn ct-btn-green">Send Email <i class="bi bi-send"></i></a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact-form" class="section-pad contact-workspace">
+    <div class="ct-container workspace-grid">
+      <div class="form-panel">
+        <span class="eyebrow dark"><i class="bi bi-envelope-paper"></i> Message Us</span>
+        <h2 class="section-title">Tell us how we can help.</h2>
+        <p class="section-copy">Share a few details and we will get back to you as soon as possible.</p>
+
+        <form id="contactForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="form-floating">
+                <input type="text" class="form-control" id="name" placeholder="Your Name" required>
+                <label for="name">Full Name</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-floating">
+                <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
+                <label for="email">Email Address</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-floating">
+                <input type="tel" class="form-control" id="phone" placeholder="Phone">
+                <label for="phone">Phone Optional</label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-floating">
+                <select class="form-select" id="subject">
+                  <option selected>General Inquiry</option>
+                  <option value="order">Order Issue</option>
+                  <option value="delivery">Delivery</option>
+                  <option value="product">Product Feedback</option>
+                  <option value="other">Other</option>
+                </select>
+                <label for="subject">Subject</label>
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="form-floating">
+                <textarea class="form-control" id="message" placeholder="Your Message" required></textarea>
+                <label for="message">Message</label>
+              </div>
+            </div>
+            <div class="col-12">
+              <button type="submit" class="ct-btn ct-btn-green">
+                <i class="bi bi-send-fill"></i> Send Message
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <aside class="side-stack">
+        <div class="map-panel">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d2048.8620043218048!2d76.73586113578843!3d30.73366156861399!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sin!4v1775926683452!5m2!1sen!2sin" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <div class="map-caption">
+            <strong>GroceryHub support desk</strong>
+            <span>Find us around Green Valley for local support and partner coordination.</span>
+          </div>
+        </div>
+
+        <div class="hours-card">
+          <h3 class="section-heading h5 fw-bold mb-3"><i class="bi bi-clock-history text-success"></i> Support Hours</h3>
+          <div class="hours-row"><strong>Monday - Friday</strong><span>8 AM - 10 PM</span></div>
+          <div class="hours-row"><strong>Saturday</strong><span>9 AM - 9 PM</span></div>
+          <div class="hours-row"><strong>Sunday</strong><span>9 AM - 8 PM</span></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section-pad">
+    <div class="ct-container">
+      <div class="section-head">
+        <span class="eyebrow dark"><i class="bi bi-question-circle"></i> Quick Answers</span>
+        <h2 class="section-title">Common questions before you contact us.</h2>
+      </div>
+
+      <div class="faq-grid">
+        <article class="faq-card">
+          <span class="faq-icon"><i class="bi bi-truck"></i></span>
+          <h3>What are your delivery hours?</h3>
+          <p>Deliveries usually run from 8 AM to 10 PM daily. Same-day delivery depends on item availability and order time.</p>
+        </article>
+        <article class="faq-card">
+          <span class="faq-icon"><i class="bi bi-bag-check"></i></span>
+          <h3>Can I change an order?</h3>
+          <p>Contact support as soon as possible. If packing has not started, we will help update the order.</p>
+        </article>
+        <article class="faq-card">
+          <span class="faq-icon"><i class="bi bi-patch-check"></i></span>
+          <h3>What if an item is not fresh?</h3>
+          <p>Share your order details with support and we will help resolve it quickly.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  document.getElementById('contactForm')?.addEventListener('submit', event => {
+    event.preventDefault();
+    alert("Thank you! Your message has been sent. We'll reply within 2 business hours.");
+  });
+
+  document.querySelectorAll('.contact-page a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', event => {
+      event.preventDefault();
+      const target = document.querySelector(anchor.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+</script>
+{% endblock %}

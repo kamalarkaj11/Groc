@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Verify OTP - GroceryHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-5">
+                <h2 class="card-title mb-3">Verify your OTP</h2>
+                <p class="text-muted mb-4">We sent an OTP to <strong>{{ phone }}</strong>. Enter it below to log in.</p>
+
+                <form method="post" id="otp-form">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+                    <button type="submit" class="btn btn-success btn-lg w-100 mt-3">Verify OTP</button>
+                </form>
+
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <a href="{% url 'store:phone_login' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Change Number
+                    </a>
+                    <button id="resend-btn" class="btn btn-outline-primary" type="button">
+                        <i class="bi bi-arrow-repeat me-2"></i>Resend OTP
+                    </button>
+                </div>
+                <div class="text-center mt-2">
+                    <span id="resend-countdown" class="text-muted small">You can resend in 30s</span>
+                </div>
+
+                <p class="mt-3 text-muted">If you did not receive the code, wait a moment and click resend.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const resendBtn = document.getElementById('resend-btn');
+const countdownEl = document.getElementById('resend-countdown');
+let timer = 30;
+let countdownInterval;
+
+function setCooldown(seconds) {
+    timer = seconds;
+    resendBtn.disabled = true;
+    countdownEl.textContent = `You can resend in ${timer}s`;
+    countdownInterval = setInterval(() => {
+        timer -= 1;
+        if (timer <= 0) {
+            clearInterval(countdownInterval);
+            resendBtn.disabled = false;
+            countdownEl.textContent = 'You can resend now.';
+            return;
+        }
+        countdownEl.textContent = `You can resend in ${timer}s`;
+    }, 1000);
+}
+
+resendBtn.addEventListener('click', async () => {
+    resendBtn.disabled = true;
+    resendBtn.textContent = 'Resending...';
+    countdownEl.textContent = 'Please wait...';
+
+    const response = await fetch('{% url "store:resend_phone_otp" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify({}),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+        setCooldown(30);
+        alert(result.message);
+    } else {
+        alert(result.error || 'Unable to resend OTP.');
+        resendBtn.disabled = false;
+        resendBtn.textContent = 'Resend OTP';
+        countdownEl.textContent = 'Try again in a moment.';
+    }
+});
+
+setCooldown(30);
+</script>
+{% endblock %}

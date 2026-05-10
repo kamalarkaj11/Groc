@@ -1,0 +1,493 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile - GroceryHub{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --pf-green: #198754;
+    --pf-mint: #20c997;
+    --pf-yellow: #ffc857;
+    --pf-ink: #18251f;
+    --pf-muted: #66736c;
+    --pf-soft: #f4fbf7;
+    --pf-line: rgba(25, 135, 84, 0.16);
+    --pf-shadow: 0 18px 45px rgba(18, 55, 38, 0.12);
+  }
+
+  main.container {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .profile-page {
+    min-height: 70vh;
+    color: var(--pf-ink);
+    background:
+      radial-gradient(circle at top left, rgba(255, 200, 87, 0.16), transparent 30rem),
+      linear-gradient(180deg, #ffffff 0%, #f7fbf8 55%, #ffffff 100%);
+    padding: 54px 0 78px;
+  }
+
+  .pf-container {
+    width: min(1080px, calc(100% - 32px));
+    margin: 0 auto;
+  }
+
+  .profile-hero {
+    overflow: hidden;
+    border: 1px solid var(--pf-line);
+    border-radius: 8px;
+    color: #fff;
+    background:
+      linear-gradient(135deg, rgba(13, 76, 45, 0.95), rgba(25, 135, 84, 0.88)),
+      url("https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=80") center/cover;
+    box-shadow: var(--pf-shadow);
+  }
+
+  .profile-hero-inner {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: center;
+    padding: clamp(24px, 5vw, 42px);
+  }
+
+  .identity {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-width: 0;
+  }
+
+  .profile-img {
+    width: 92px;
+    height: 92px;
+    flex: 0 0 92px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(255, 255, 255, 0.82);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.24);
+    background: linear-gradient(135deg, var(--pf-green), var(--pf-mint));
+  }
+
+  .profile-initial {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 2.2rem;
+    font-weight: 950;
+  }
+
+  .profile-name {
+    margin: 0;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    font-weight: 950;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+
+  .profile-email {
+    margin: 8px 0 0;
+    color: rgba(255, 255, 255, 0.78);
+    font-weight: 750;
+    word-break: break-word;
+  }
+
+  .profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .pf-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    border-radius: 8px;
+    padding: 11px 16px;
+    font-weight: 900;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .pf-btn-primary {
+    color: #183523;
+    background: var(--pf-yellow);
+  }
+
+  .pf-btn-light {
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.46);
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .pf-btn-primary:hover {
+    color: #183523;
+    background: #ffd775;
+  }
+
+  .pf-btn-light:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .pf-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--pf-shadow);
+  }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .stat-item {
+    padding: 18px 24px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .stat-value {
+    display: block;
+    color: #fff;
+    font-size: 1.6rem;
+    font-weight: 950;
+    line-height: 1;
+  }
+
+  .stat-label {
+    color: rgba(255, 255, 255, 0.72);
+    font-weight: 800;
+  }
+
+  .profile-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 24px;
+    align-items: start;
+    margin-top: 24px;
+  }
+
+  .panel {
+    border: 1px solid var(--pf-line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 10px 25px rgba(24, 37, 31, 0.06);
+  }
+
+  .panel-body {
+    padding: clamp(22px, 3vw, 30px);
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 18px;
+    font-size: 1.35rem;
+    font-weight: 950;
+  }
+
+  .section-heading i {
+    color: var(--pf-green);
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .info-item,
+  .address-card,
+  .order-card {
+    border: 1px solid var(--pf-line);
+    border-radius: 8px;
+    background: var(--pf-soft);
+  }
+
+  .info-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .info-icon {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    color: #183523;
+    background: var(--pf-yellow);
+  }
+
+  .info-label {
+    display: block;
+    color: var(--pf-muted);
+    font-size: 0.78rem;
+    font-weight: 850;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .info-value {
+    display: block;
+    color: var(--pf-ink);
+    font-weight: 850;
+    overflow-wrap: anywhere;
+  }
+
+  .side-stack {
+    display: grid;
+    gap: 24px;
+  }
+
+  .address-card {
+    padding: 18px;
+    color: var(--pf-muted);
+    line-height: 1.7;
+  }
+
+  .orders-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  .order-card {
+    padding: 16px;
+    background: #fff;
+  }
+
+  .order-title {
+    color: var(--pf-green);
+    font-weight: 950;
+  }
+
+  .order-price {
+    color: var(--pf-ink);
+    font-size: 1.2rem;
+    font-weight: 950;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    color: #fff;
+    background: var(--pf-green);
+    font-size: 0.78rem;
+    font-weight: 850;
+  }
+
+  .empty-orders {
+    padding: 24px;
+    border: 1px dashed rgba(25, 135, 84, 0.32);
+    border-radius: 8px;
+    color: var(--pf-muted);
+    background: #fff;
+    text-align: center;
+  }
+
+  @media (max-width: 991px) {
+    .profile-hero-inner,
+    .profile-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .profile-actions {
+      justify-content: flex-start;
+    }
+
+    .orders-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 575px) {
+    .profile-page {
+      padding-top: 34px;
+    }
+
+    .pf-container {
+      width: min(100% - 24px, 1080px);
+    }
+
+    .identity {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .profile-img {
+      width: 82px;
+      height: 82px;
+      flex-basis: 82px;
+    }
+
+    .profile-actions,
+    .pf-btn {
+      width: 100%;
+    }
+
+    .stats-row,
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="profile-page">
+  <div class="pf-container">
+    <section class="profile-hero">
+      <div class="profile-hero-inner">
+        <div class="identity">
+          {% if profile.profile_image %}
+          <img src="{{ profile.profile_image.url }}" alt="{{ user.username }}" class="profile-img">
+          {% else %}
+          <div class="profile-img profile-initial">
+            {{ user.username.0|upper }}
+          </div>
+          {% endif %}
+
+          <div>
+            <h1 class="profile-name">{{ user.username }}</h1>
+            <p class="profile-email">{{ user.email }}</p>
+          </div>
+        </div>
+
+        <div class="profile-actions">
+          <a href="{% url 'store:edit_profile' %}" class="pf-btn pf-btn-primary">
+            <i class="bi bi-pencil"></i> Edit Profile
+          </a>
+          <a href="{% url 'password_change' %}" class="pf-btn pf-btn-light">
+            <i class="bi bi-shield-lock"></i> Change Password
+          </a>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-item">
+          <span class="stat-value">{{ total_orders }}</span>
+          <span class="stat-label">Total orders</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ recent_orders|length }}</span>
+          <span class="stat-label">Recent orders</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">Fresh</span>
+          <span class="stat-label">GroceryHub member</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="profile-grid">
+      <main class="panel">
+        <div class="panel-body">
+          <h2 class="section-heading"><i class="bi bi-person-circle"></i> Personal Information</h2>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-icon"><i class="bi bi-calendar-heart"></i></span>
+              <div>
+                <span class="info-label">Age</span>
+                <span class="info-value">{{ profile.age|default:"Not set" }}</span>
+              </div>
+            </div>
+            <div class="info-item">
+              <span class="info-icon"><i class="bi bi-telephone"></i></span>
+              <div>
+                <span class="info-label">Phone</span>
+                <span class="info-value">{{ profile.phone_number|default:"Not set" }}</span>
+              </div>
+            </div>
+            <div class="info-item">
+              <span class="info-icon"><i class="bi bi-geo-alt"></i></span>
+              <div>
+                <span class="info-label">State</span>
+                <span class="info-value">{{ profile.get_state_display|default:"Not set" }}</span>
+              </div>
+            </div>
+            <div class="info-item">
+              <span class="info-icon"><i class="bi bi-envelope"></i></span>
+              <div>
+                <span class="info-label">Email</span>
+                <span class="info-value">{{ user.email|default:"Not set" }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <h2 class="section-heading"><i class="bi bi-box-seam"></i> Recent Orders</h2>
+            {% if recent_orders %}
+            <div class="orders-grid">
+              {% for order in recent_orders %}
+              <article class="order-card">
+                <div class="order-title">Order #{{ order.id }}</div>
+                <div class="order-price my-2">Rs. {{ order.total_amount }}</div>
+                <span class="status-badge">{{ order.get_status_display }}</span>
+              </article>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-orders">
+              <i class="bi bi-bag-heart fs-1 text-success"></i>
+              <h3 class="h5 mt-3">No recent orders yet</h3>
+              <p class="mb-3">Your latest GroceryHub orders will appear here.</p>
+              <a href="{% url 'store:product_list' %}" class="pf-btn pf-btn-primary">Start Shopping</a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </main>
+
+      <aside class="side-stack">
+        <section class="panel">
+          <div class="panel-body">
+            <h2 class="section-heading"><i class="bi bi-house-heart"></i> Delivery Address</h2>
+            <div class="address-card">
+              {{ profile.address|default:"No address added yet. Add your delivery address to make checkout faster." }}
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-body">
+            <h2 class="section-heading"><i class="bi bi-patch-check"></i> Account Tips</h2>
+            <div class="info-item mb-3">
+              <span class="info-icon"><i class="bi bi-truck"></i></span>
+              <div>
+                <span class="info-label">Faster checkout</span>
+                <span class="info-value">Keep your phone and address updated.</span>
+              </div>
+            </div>
+            <div class="info-item">
+              <span class="info-icon"><i class="bi bi-shield-lock"></i></span>
+              <div>
+                <span class="info-label">Security</span>
+                <span class="info-value">Change your password regularly.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</div>
+{% endblock %}

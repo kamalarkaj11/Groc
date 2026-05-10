@@ -1,0 +1,395 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login - GroceryHub{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --auth-green: #198754;
+    --auth-mint: #20c997;
+    --auth-yellow: #ffc857;
+    --auth-ink: #18251f;
+    --auth-muted: #66736c;
+    --auth-soft: #f4fbf7;
+    --auth-line: rgba(25, 135, 84, 0.16);
+    --auth-shadow: 0 18px 45px rgba(18, 55, 38, 0.12);
+  }
+
+  main.container {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .auth-page {
+    min-height: 78vh;
+    display: grid;
+    place-items: center;
+    padding: 56px 16px 78px;
+    color: var(--auth-ink);
+    background:
+      radial-gradient(circle at top left, rgba(255, 200, 87, 0.16), transparent 30rem),
+      linear-gradient(180deg, #ffffff 0%, #f7fbf8 58%, #ffffff 100%);
+  }
+
+  .auth-shell {
+    width: min(1120px, 100%);
+    display: grid;
+    grid-template-columns: 0.9fr 1.08fr;
+    overflow: hidden;
+    border: 1px solid var(--auth-line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: var(--auth-shadow);
+  }
+
+  .auth-story {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 720px;
+    padding: clamp(28px, 5vw, 46px);
+    color: #fff;
+    background:
+      linear-gradient(135deg, rgba(13, 76, 45, 0.94), rgba(26, 148, 96, 0.84)),
+      url("https://images.unsplash.com/photo-1555939594-58d7cb561155?auto=format&fit=crop&w=1300&q=85") center/cover;
+  }
+
+  .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.4rem;
+    font-weight: 950;
+  }
+
+  .brand-mark i {
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #183523;
+    background: var(--auth-yellow);
+  }
+
+  .story-title {
+    margin: 0;
+    font-size: clamp(2.4rem, 5vw, 4.2rem);
+    font-weight: 950;
+    line-height: 0.98;
+    letter-spacing: 0;
+  }
+
+  .story-copy {
+    max-width: 440px;
+    margin: 18px 0 0;
+    color: rgba(255, 255, 255, 0.82);
+    line-height: 1.75;
+  }
+
+  .story-points {
+    display: grid;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .story-point {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .story-point i {
+    color: var(--auth-yellow);
+  }
+
+  .auth-card {
+    padding: clamp(28px, 5vw, 52px);
+  }
+
+  .auth-icon {
+    width: 68px;
+    height: 68px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--auth-green), var(--auth-mint));
+    box-shadow: 0 14px 28px rgba(25, 135, 84, 0.22);
+    font-size: 2rem;
+  }
+
+  .auth-title {
+    margin: 18px 0 8px;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 950;
+    line-height: 1.05;
+  }
+
+  .auth-subtitle {
+    color: var(--auth-muted);
+    margin-bottom: 28px;
+  }
+
+  .auth-card form .form-control,
+  .auth-card form .form-select {
+    min-height: 52px;
+    border: 1px solid var(--auth-line);
+    border-radius: 8px;
+    background: #fbfefc;
+  }
+
+  .auth-card form .form-control:focus,
+  .auth-card form .form-select:focus {
+    border-color: rgba(25, 135, 84, 0.55);
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.1);
+  }
+
+  .auth-card form label {
+    color: var(--auth-green);
+    font-weight: 800;
+  }
+
+  .auth-submit {
+    width: 100%;
+    min-height: 54px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--auth-green), var(--auth-mint));
+    font-weight: 950;
+    box-shadow: 0 14px 28px rgba(25, 135, 84, 0.22);
+  }
+
+  .auth-submit:hover {
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  .auth-switch,
+  .auth-note {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid var(--auth-line);
+    border-radius: 8px;
+    background: var(--auth-soft);
+    color: var(--auth-muted);
+  }
+
+  .auth-switch {
+    text-align: center;
+  }
+
+  .auth-switch a {
+    color: var(--auth-green);
+    font-weight: 950;
+    text-decoration: none;
+  }
+
+  .auth-note {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 0.95rem;
+  }
+
+  .auth-note i {
+    color: var(--auth-green);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .phone-login-divider {
+    display: flex;
+    align-items: center;
+    margin: 24px 0;
+    gap: 12px;
+    color: var(--auth-muted);
+    font-weight: 600;
+  }
+
+  .phone-login-divider::before,
+  .phone-login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--auth-line);
+  }
+
+  .phone-login-btn {
+    width: 100%;
+    min-height: 54px;
+    border: 1px solid var(--auth-line);
+    border-radius: 8px;
+    color: var(--auth-green);
+    background: var(--auth-soft);
+    font-weight: 950;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+  }
+
+  .phone-login-btn:hover {
+    color: var(--auth-green);
+    background: rgba(25, 135, 84, 0.08);
+    transform: translateY(-2px);
+  }
+
+  .toggle-password-btn {
+    background: none;
+    border: 1px solid var(--auth-line);
+    color: var(--auth-green);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .toggle-password-btn:hover {
+    background: var(--auth-soft);
+  }
+
+  .remember-check {
+    margin: 16px 0;
+  }
+
+  .remember-check input[type="checkbox"] {
+    border-color: var(--auth-line);
+    accent-color: var(--auth-green);
+  }
+
+  .remember-check label {
+    color: var(--auth-muted);
+    font-weight: 600;
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 900px) {
+    .auth-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .auth-story {
+      min-height: auto;
+      gap: 48px;
+    }
+  }
+</style>
+
+<div class="auth-page">
+  <div class="auth-shell">
+    <aside class="auth-story">
+      <a href="{% url 'store:home' %}" class="brand-mark">
+        <i class="bi bi-basket2-fill"></i>
+        GrocHub
+      </a>
+      <div>
+        <h1 class="story-title">Welcome back, shopper!</h1>
+        <p class="story-copy">Sign in to your GroceryHub account to access your saved addresses, order history, and get faster checkout.</p>
+        <div class="story-points">
+          <div class="story-point"><i class="bi bi-lightning-fill"></i> Quick and easy checkout</div>
+          <div class="story-point"><i class="bi bi-clock-history"></i> View your order history</div>
+          <div class="story-point"><i class="bi bi-map"></i> Saved delivery addresses</div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="auth-card">
+      <span class="auth-icon"><i class="bi bi-box-arrow-in-right"></i></span>
+      <h2 class="auth-title">Welcome back</h2>
+      <p class="auth-subtitle">Sign in with your username and password to continue shopping.</p>
+
+      <form method="post" id="login-form">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <div class="text-end mb-3">
+          <button type="button" id="toggle-password-btn" class="toggle-password-btn">
+            <i class="bi bi-eye" id="login-password-icon"></i> Show password
+          </button>
+        </div>
+        <div class="remember-check">
+          <input class="form-check-input" type="checkbox" value="1" id="remember_me" name="remember_me">
+          <label class="form-check-label" for="remember_me">
+            Remember me for 30 days
+          </label>
+        </div>
+        <button type="submit" class="auth-submit">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+        </button>
+      </form>
+
+      <div class="phone-login-divider">OR</div>
+
+      <a href="{% url 'store:phone_login' %}" class="phone-login-btn">
+        <i class="bi bi-phone"></i> Login with Phone Number
+      </a>
+
+      <div class="auth-note">
+        <i class="bi bi-info-circle"></i>
+        <div>No account yet? <a href="{% url 'store:signup' %}" style="color: var(--auth-green); font-weight: 950;">Sign up here</a> to get started.</div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleButton = document.getElementById('toggle-password-btn');
+    const passwordIcon = document.getElementById('login-password-icon');
+    const form = document.getElementById('login-form');
+
+    if (!toggleButton || !form) return;
+
+    toggleButton.addEventListener('click', function() {
+        const passwordField = form.querySelector('input[type="password"]');
+        if (!passwordField) {
+            const allInputs = form.querySelectorAll('input[type="password"], input[type="text"]');
+            allInputs.forEach((input) => {
+                if (input.id && input.id.includes('password')) {
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        if (passwordIcon) passwordIcon.className = 'bi bi-eye-slash';
+                        toggleButton.innerHTML = '<i class="bi bi-eye-slash"></i> Hide password';
+                    } else {
+                        input.type = 'password';
+                        if (passwordIcon) passwordIcon.className = 'bi bi-eye';
+                        toggleButton.innerHTML = '<i class="bi bi-eye"></i> Show password';
+                    }
+                }
+            });
+            return;
+        }
+
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            if (passwordIcon) passwordIcon.className = 'bi bi-eye-slash';
+            toggleButton.innerHTML = '<i class="bi bi-eye-slash"></i> Hide password';
+        } else {
+            passwordField.type = 'password';
+            if (passwordIcon) passwordIcon.className = 'bi bi-eye';
+            toggleButton.innerHTML = '<i class="bi bi-eye"></i> Show password';
+        }
+    });
+});
+</script>
+{% endblock %}

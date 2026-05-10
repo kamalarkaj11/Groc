@@ -1,0 +1,500 @@
+{% load static %}
+<style>
+  :root {
+    --header-green: #198754;
+    --header-mint: #20c997;
+    --header-yellow: #ffc857;
+    --header-ink: #1c2b22;
+    --header-muted: #69756f;
+    --header-line: rgba(25, 135, 84, 0.16);
+    --header-shadow: 0 18px 45px rgba(20, 60, 38, 0.16);
+  }
+
+  .site-header {
+    position: sticky;
+    top: 12px;
+    z-index: 1100;
+    width: min(1180px, calc(100% - 24px));
+    margin: 12px auto 0;
+    color: var(--header-ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+
+  .header-shell {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    min-height: 76px;
+    padding: 12px 16px;
+    border: 1px solid var(--header-line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: var(--header-shadow);
+    backdrop-filter: blur(18px);
+  }
+
+  .brand-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+    color: var(--header-ink);
+    text-decoration: none;
+  }
+
+  .brand-icon {
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--header-green), var(--header-mint));
+    box-shadow: 0 12px 24px rgba(25, 135, 84, 0.28);
+    font-size: 1.55rem;
+  }
+
+  .brand-text {
+    display: grid;
+    line-height: 1.05;
+  }
+
+  .brand-name {
+    font-size: 1.45rem;
+    font-weight: 950;
+    letter-spacing: 0;
+  }
+
+  .brand-tagline {
+    color: var(--header-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .nav-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .primary-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .nav-link-custom,
+  .account-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 999px;
+    color: #3f4d46;
+    background: transparent;
+    font-weight: 750;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  }
+
+  .nav-link-custom:hover,
+  .account-trigger:hover {
+    color: var(--header-green);
+    background: rgba(25, 135, 84, 0.09);
+    transform: translateY(-1px);
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .header-search {
+    position: relative;
+    width: clamp(190px, 22vw, 290px);
+  }
+
+  .header-search input {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--header-line);
+    border-radius: 999px;
+    padding: 10px 46px 10px 42px;
+    color: var(--header-ink);
+    background: #f8fcfa;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .header-search input:focus {
+    border-color: rgba(25, 135, 84, 0.5);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    color: var(--header-muted);
+    transform: translateY(-50%);
+  }
+
+  .search-submit {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--header-green);
+    transform: translateY(-50%);
+  }
+
+  .cart-action {
+    position: relative;
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    color: var(--header-green);
+    background: rgba(25, 135, 84, 0.09);
+    text-decoration: none;
+    font-size: 1.25rem;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .cart-action:hover {
+    color: var(--header-green);
+    background: rgba(25, 135, 84, 0.16);
+    transform: translateY(-2px);
+  }
+
+  .cart-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    border: 2px solid #fff;
+    border-radius: 999px;
+    color: #fff;
+    background: #dc3545;
+    font-size: 0.72rem;
+    font-weight: 900;
+  }
+
+  .account-menu {
+    position: relative;
+  }
+
+  .account-trigger {
+    background: #f8fcfa;
+    border: 1px solid var(--header-line);
+  }
+
+  .account-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .account-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    min-width: 190px;
+    margin: 0;
+    padding: 8px;
+    list-style: none;
+    border: 1px solid var(--header-line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: var(--header-shadow);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  }
+
+  .account-menu.open .account-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .dropdown-link-custom {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border-radius: 8px;
+    color: #3f4d46;
+    font-weight: 750;
+    text-decoration: none;
+  }
+
+  .dropdown-link-custom:hover {
+    color: var(--header-green);
+    background: rgba(25, 135, 84, 0.09);
+  }
+
+  .menu-toggle {
+    display: none;
+    width: 46px;
+    height: 46px;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border: 1px solid var(--header-line);
+    border-radius: 8px;
+    color: var(--header-green);
+    background: #f8fcfa;
+    font-size: 1.45rem;
+  }
+
+  .mobile-cart {
+    display: none;
+  }
+
+  @media (max-width: 1080px) {
+    .header-shell {
+      gap: 12px;
+    }
+
+    .brand-tagline {
+      display: none;
+    }
+
+    .nav-link-custom,
+    .account-trigger {
+      padding-left: 11px;
+      padding-right: 11px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .site-header {
+      top: 8px;
+      width: min(100% - 16px, 1180px);
+      margin-top: 8px;
+    }
+
+    .header-shell {
+      min-height: 68px;
+    }
+
+    .menu-toggle {
+      display: inline-flex;
+    }
+
+    .mobile-cart {
+      display: inline-flex;
+      margin-left: auto;
+    }
+
+    .desktop-cart {
+      display: none;
+    }
+
+    .nav-wrap {
+      position: fixed;
+      inset: 88px 8px auto 8px;
+      display: none;
+      max-height: calc(100vh - 104px);
+      overflow-y: auto;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+      padding: 16px;
+      border: 1px solid var(--header-line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: var(--header-shadow);
+    }
+
+    .site-header.menu-open .nav-wrap {
+      display: flex;
+    }
+
+    .primary-nav,
+    .header-actions {
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .nav-link-custom,
+    .account-trigger {
+      width: 100%;
+      justify-content: flex-start;
+      border-radius: 8px;
+      background: #f8fcfa;
+      border: 1px solid var(--header-line);
+    }
+
+    .header-search {
+      width: 100%;
+    }
+
+    .account-dropdown {
+      position: static;
+      display: none;
+      margin-top: 8px;
+      box-shadow: none;
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
+
+    .account-menu.open .account-dropdown {
+      display: block;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      font-size: 1.35rem;
+    }
+
+    .brand-name {
+      font-size: 1.2rem;
+    }
+
+    .mobile-cart,
+    .menu-toggle {
+      width: 42px;
+      height: 42px;
+    }
+  }
+</style>
+
+<header class="site-header" id="siteHeader">
+  <div class="header-shell">
+    <a href="{% url 'store:home' %}" class="brand-link" aria-label="GroceryHub home">
+      <span class="brand-icon"><i class="bi bi-basket2-fill"></i></span>
+      <span class="brand-text">
+        <span class="brand-name">GrocHub</span>
+        <span class="brand-tagline">Fresh Daily</span>
+      </span>
+    </a>
+
+    <a href="{% url 'store:cart' %}" class="cart-action mobile-cart" aria-label="Cart">
+      <i class="bi bi-cart3"></i>
+      <span class="cart-count" id="cart-count-mobile">{{ cart_item_count|default:0 }}</span>
+    </a>
+
+    <button class="menu-toggle" type="button" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
+      <i class="bi bi-list"></i>
+    </button>
+
+    <div class="nav-wrap" id="navWrap">
+      <ul class="primary-nav">
+        <li><a href="{% url 'store:home' %}" class="nav-link-custom"><i class="bi bi-house"></i> Home</a></li>
+        <li><a href="{% url 'store:product_list' %}" class="nav-link-custom"><i class="bi bi-bag"></i> Products</a></li>
+        <li><a href="{% url 'store:about' %}" class="nav-link-custom"><i class="bi bi-info-circle"></i> About</a></li>
+        <li><a href="{% url 'store:contact' %}" class="nav-link-custom"><i class="bi bi-chat-dots"></i> Contact</a></li>
+      </ul>
+
+      <div class="header-actions">
+        <form action="{% url 'store:product_list' %}" method="get" class="header-search">
+          <i class="bi bi-search search-icon"></i>
+          <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products">
+          <button type="submit" class="search-submit" aria-label="Search">
+            <i class="bi bi-arrow-right-short"></i>
+          </button>
+        </form>
+
+        <a href="{% url 'store:cart' %}" class="cart-action desktop-cart" aria-label="Cart">
+          <i class="bi bi-cart3"></i>
+          <span class="cart-count" id="cart-count-desktop">{{ cart_item_count|default:0 }}</span>
+        </a>
+
+        <div class="account-menu" id="accountMenu">
+          {% if user.is_authenticated %}
+          <button class="account-trigger" type="button" aria-expanded="false" aria-controls="profileDropdown">
+            <i class="bi bi-person-circle"></i>
+            <span class="account-name">{{ user.first_name|default:user.username }}</span>
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <ul class="account-dropdown" id="profileDropdown">
+            <li><a href="{% url 'store:profile' %}" class="dropdown-link-custom"><i class="bi bi-person"></i> Profile</a></li>
+            <li><a href="/logout" class="dropdown-link-custom"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+          </ul>
+          {% else %}
+          <button class="account-trigger" type="button" aria-expanded="false" aria-controls="authDropdown">
+            <i class="bi bi-person"></i>
+            <span>Account</span>
+            <i class="bi bi-chevron-down"></i>
+          </button>
+          <ul class="account-dropdown" id="authDropdown">
+            <li><a href="/login/" class="dropdown-link-custom"><i class="bi bi-box-arrow-in-right"></i> Login</a></li>
+            <li><a href="{% url 'store:signup' %}" class="dropdown-link-custom"><i class="bi bi-person-plus"></i> Signup</a></li>
+          </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  const siteHeader = document.getElementById('siteHeader');
+  const menuToggle = document.getElementById('menuToggle');
+  const accountMenu = document.getElementById('accountMenu');
+  const accountTrigger = accountMenu?.querySelector('.account-trigger');
+
+  menuToggle?.addEventListener('click', () => {
+    const isOpen = siteHeader.classList.toggle('menu-open');
+    menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    menuToggle.innerHTML = isOpen ? '<i class="bi bi-x-lg"></i>' : '<i class="bi bi-list"></i>';
+  });
+
+  accountTrigger?.addEventListener('click', event => {
+    event.stopPropagation();
+    const isOpen = accountMenu.classList.toggle('open');
+    accountTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+
+  document.addEventListener('click', event => {
+    if (accountMenu && !accountMenu.contains(event.target)) {
+      accountMenu.classList.remove('open');
+      accountTrigger?.setAttribute('aria-expanded', 'false');
+    }
+
+    if (siteHeader && menuToggle && !siteHeader.contains(event.target)) {
+      siteHeader.classList.remove('menu-open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+      menuToggle.innerHTML = '<i class="bi bi-list"></i>';
+    }
+  });
+</script>

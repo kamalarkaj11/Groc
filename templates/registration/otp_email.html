@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Verify Your GroceryHub Account</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa; }
+        .header { text-align: center; padding: 30px 0; background: linear-gradient(135deg, #28a745, #20c997); color: white; border-radius: 10px 10px 0 0; }
+        .otp-container { background: white; padding: 40px; border-radius: 0 0 10px 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        .otp-code { font-size: 48px; font-weight: bold; letter-spacing: 10px; color: #28a745; background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; font-family: monospace; }
+        .button { display: inline-block; background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🌟 Welcome to GroceryHub!</h1>
+        <p>Verify your email address</p>
+    </div>
+    
+    <div class="otp-container">
+        <h2>Hello, {{ user.username }}!</h2>
+        <p>Thank you for signing up. Your verification code is:</p>
+        
+        <div class="otp-code">{{ otp }}</div>
+        
+        <p><strong>This code will expire in 5 minutes.</strong></p>
+        
+        <p>If you didn't request this, please ignore this email.</p>
+        
+        <a href="#" class="button">Start Shopping</a>
+        
+        <div class="footer">
+            <p>© 2024 GroceryHub. Fresh groceries delivered to your door.</p>
+        </div>
+    </div>
+</body>
+</html>

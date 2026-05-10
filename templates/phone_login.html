@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Phone Login - GroceryHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-5">
+                <h2 class="card-title mb-3">Login with Phone Number</h2>
+                <p class="text-muted mb-4">Enter your phone number and we will send a 6-digit OTP for login.</p>
+
+                <form method="post" id="phone-login-form">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    {{ form|crispy }}
+
+                    <button type="submit" id="send-otp-button" class="btn btn-success btn-lg w-100 mt-3">
+                        <span id="send-otp-text">Send OTP</span>
+                        <span id="send-otp-spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <p class="mb-2"><a href="{% url 'store:login' %}">← Back to login options</a></p>
+                    <p class="mb-0">Don't have an account? <a href="{% url 'store:signup' %}">Sign up here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('phone-login-form')?.addEventListener('submit', function () {
+    document.getElementById('send-otp-button').disabled = true;
+    document.getElementById('send-otp-text').textContent = 'Sending OTP...';
+    document.getElementById('send-otp-spinner').classList.remove('d-none');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,754 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Home - GroceryHub{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --gh-green: #198754;
+    --gh-mint: #20c997;
+    --gh-yellow: #ffc857;
+    --gh-orange: #ff8a3d;
+    --gh-ink: #18251f;
+    --gh-muted: #66736c;
+    --gh-soft: #f5fbf7;
+    --gh-line: rgba(25, 135, 84, 0.14);
+    --gh-shadow: 0 18px 45px rgba(18, 55, 38, 0.14);
+  }
+
+  main.container {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .grocery-home {
+    color: var(--gh-ink);
+    background:
+      radial-gradient(circle at top left, rgba(255, 200, 87, 0.15), transparent 32rem),
+      linear-gradient(180deg, #ffffff 0%, #f7fbf8 58%, #ffffff 100%);
+    overflow: hidden;
+  }
+
+  .gh-container {
+    width: min(1140px, calc(100% - 32px));
+    margin: 0 auto;
+  }
+
+  .section-pad {
+    padding: 86px 0;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--gh-green);
+    background: rgba(25, 135, 84, 0.09);
+    border: 1px solid var(--gh-line);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .section-title {
+    margin: 16px 0 12px;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+
+  .section-copy {
+    color: var(--gh-muted);
+    font-size: 1.08rem;
+    max-width: 650px;
+  }
+
+  .hero {
+    position: relative;
+    min-height: 650px;
+    display: grid;
+    align-items: center;
+    padding: 92px 0 82px;
+    color: #fff;
+    background:
+      linear-gradient(rgba(18, 72, 45, 0.58), rgba(18, 72, 45, 0.5)),
+      url("https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1800&q=85") center/cover;
+  }
+
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 160px;
+    background: linear-gradient(180deg, transparent, rgba(247, 251, 248, 0.96));
+    pointer-events: none;
+  }
+
+  .hero-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(310px, 0.75fr);
+    gap: 56px;
+    align-items: center;
+  }
+
+  .hero h1 {
+    max-width: 730px;
+    margin: 20px 0;
+    font-size: clamp(3rem, 7vw, 5.8rem);
+    font-weight: 950;
+    line-height: 0.95;
+    letter-spacing: 0;
+  }
+
+  .hero p {
+    max-width: 620px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: clamp(1.05rem, 2vw, 1.35rem);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 32px;
+  }
+
+  .gh-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 48px;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 22px;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .gh-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .gh-btn-primary {
+    color: #173523;
+    background: var(--gh-yellow);
+    box-shadow: 0 14px 28px rgba(255, 200, 87, 0.32);
+  }
+
+  .gh-btn-primary:hover {
+    color: #173523;
+    background: #ffd776;
+  }
+
+  .gh-btn-light {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(10px);
+  }
+
+  .hero-panel {
+    background: rgba(255, 255, 255, 0.93);
+    color: var(--gh-ink);
+    border-radius: 8px;
+    padding: 22px;
+    box-shadow: var(--gh-shadow);
+  }
+
+  .delivery-card {
+    display: grid;
+    gap: 16px;
+  }
+
+  .delivery-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 8px;
+    background: #f8fcfa;
+    border: 1px solid var(--gh-line);
+  }
+
+  .delivery-icon,
+  .feature-icon,
+  .empty-icon {
+    width: 52px;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--gh-green), var(--gh-mint));
+    font-size: 1.45rem;
+  }
+
+  .stat-strip {
+    position: relative;
+    z-index: 2;
+    margin-top: -54px;
+  }
+
+  .stat-box {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--gh-line);
+    box-shadow: var(--gh-shadow);
+  }
+
+  .stat-item {
+    background: #fff;
+    padding: 26px 22px;
+  }
+
+  .stat-value {
+    display: block;
+    color: var(--gh-green);
+    font-size: 2rem;
+    font-weight: 950;
+    line-height: 1;
+  }
+
+  .stat-label {
+    color: var(--gh-muted);
+    font-weight: 700;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-top: 34px;
+  }
+
+  .feature-card,
+  .product-card,
+  .category-card {
+    height: 100%;
+    border: 1px solid var(--gh-line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 10px 25px rgba(24, 37, 31, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .feature-card:hover,
+  .product-card:hover,
+  .category-card:hover {
+    transform: translateY(-7px);
+    border-color: rgba(25, 135, 84, 0.32);
+    box-shadow: var(--gh-shadow);
+  }
+
+  .feature-card {
+    padding: 26px;
+  }
+
+  .feature-card h3 {
+    margin: 18px 0 8px;
+    font-size: 1.1rem;
+    font-weight: 850;
+  }
+
+  .feature-card p,
+  .product-card p {
+    color: var(--gh-muted);
+  }
+
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: end;
+    margin-bottom: 34px;
+  }
+
+  .section-head .section-copy {
+    margin-bottom: 0;
+  }
+
+  .category-heading {
+    max-width: 720px;
+  }
+
+  .product-card {
+    overflow: hidden;
+  }
+
+  .product-media {
+    position: relative;
+    height: 210px;
+    background: #eef8f1;
+  }
+
+  .product-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .product-placeholder {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    color: var(--gh-green);
+    font-size: 3rem;
+  }
+
+  .product-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 210px;
+    padding: 20px;
+  }
+
+  .product-title {
+    font-size: 1.08rem;
+    font-weight: 850;
+    margin-bottom: 8px;
+  }
+
+  .price {
+    color: var(--gh-green);
+    font-size: 1.25rem;
+    font-weight: 950;
+  }
+
+  .add-btn {
+    border: 0;
+    border-radius: 999px;
+    padding: 9px 15px;
+    color: #fff;
+    background: var(--gh-green);
+    font-weight: 800;
+  }
+
+  .add-btn:hover {
+    background: #137248;
+  }
+
+  .empty-state {
+    border: 1px dashed rgba(25, 135, 84, 0.32);
+    border-radius: 8px;
+    padding: 48px 22px;
+    text-align: center;
+    background: #fff;
+  }
+
+  .empty-icon {
+    margin-bottom: 16px;
+  }
+
+  .categories-band {
+    background: #eef8f1;
+  }
+
+  .category-card {
+    display: block;
+    padding: 24px 12px;
+    color: var(--gh-ink);
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .category-card i {
+    display: block;
+    margin-bottom: 12px;
+    color: var(--category-color, var(--gh-green));
+    font-size: 2.4rem;
+  }
+
+  .category-card span {
+    font-weight: 850;
+  }
+
+  .deal-band {
+    color: #fff;
+    background:
+      linear-gradient(90deg, rgba(17, 79, 50, 0.94), rgba(21, 142, 93, 0.88)),
+      url("https://images.unsplash.com/photo-1573246123716-6b1782bfc499?auto=format&fit=crop&w=1600&q=85") center/cover;
+  }
+
+  .deal-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 26px;
+    align-items: center;
+  }
+
+  .deal-band .section-copy {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .newsletter-form {
+    display: flex;
+    gap: 12px;
+    max-width: 560px;
+    margin-top: 24px;
+  }
+
+  .newsletter-form input {
+    min-width: 0;
+    flex: 1;
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 999px;
+    padding: 13px 18px;
+    background: rgba(255, 255, 255, 0.95);
+  }
+
+  .nav-dots {
+    display: grid;
+    gap: 12px;
+    z-index: 1050;
+  }
+
+  .nav-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(25, 135, 84, 0.28);
+    border: 2px solid #fff;
+    box-shadow: 0 4px 12px rgba(24, 37, 31, 0.16);
+  }
+
+  .nav-dot.active {
+    background: var(--gh-green);
+    transform: scale(1.25);
+  }
+
+  .category-fruits { --category-color: #198754; }
+  .category-vegetables { --category-color: #ff8a3d; }
+  .category-dairy { --category-color: #0d6efd; }
+  .category-bakery { --category-color: #6f42c1; }
+  .category-snacks { --category-color: #dc3545; }
+  .category-beverages { --category-color: #17a2b8; }
+
+  .newsletter-eyebrow {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+
+  @media (max-width: 991px) {
+    .hero-grid,
+    .deal-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hero {
+      min-height: auto;
+      padding: 76px 0 110px;
+    }
+
+    .features-grid,
+    .stat-box {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .section-head {
+      display: block;
+    }
+  }
+
+  @media (max-width: 575px) {
+    .gh-container {
+      width: min(100% - 24px, 1140px);
+    }
+
+    .section-pad {
+      padding: 62px 0;
+    }
+
+    .features-grid,
+    .stat-box {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-actions,
+    .newsletter-form {
+      flex-direction: column;
+    }
+
+    .gh-btn,
+    .newsletter-form button {
+      width: 100%;
+    }
+
+    .hero-panel {
+      padding: 16px;
+    }
+  }
+</style>
+
+<div class="grocery-home">
+  <section id="hero" class="hero">
+    <div class="gh-container hero-grid">
+      <div>
+        <span class="eyebrow"><i class="bi bi-basket2-fill"></i> GroceryHub Fresh Market</span>
+        <h1>Fresh groceries for the whole week, delivered today.</h1>
+        <p>Shop crisp produce, daily dairy, pantry staples, snacks, and drinks with fast doorstep delivery and quality you can trust.</p>
+        <div class="hero-actions">
+          <a href="#featured" class="gh-btn gh-btn-primary">Shop Now <i class="bi bi-arrow-down"></i></a>
+          <a href="#categories" class="gh-btn gh-btn-light">Browse Categories</a>
+        </div>
+      </div>
+
+      <aside class="hero-panel" aria-label="Delivery highlights">
+        <div class="delivery-card">
+          <div class="delivery-row">
+            <span class="delivery-icon"><i class="bi bi-truck"></i></span>
+            <div>
+              <strong>30 minute delivery</strong>
+              <div class="text-muted small">Fresh picks sent fast from nearby stores.</div>
+            </div>
+          </div>
+          <div class="delivery-row">
+            <span class="delivery-icon"><i class="bi bi-patch-check"></i></span>
+            <div>
+              <strong>Quality checked</strong>
+              <div class="text-muted small">Every order is packed with care.</div>
+            </div>
+          </div>
+          <div class="delivery-row">
+            <span class="delivery-icon"><i class="bi bi-tag"></i></span>
+            <div>
+              <strong>Daily savings</strong>
+              <div class="text-muted small">Fair prices on everyday essentials.</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <nav class="nav-dots position-fixed end-0 top-50 translate-middle-y me-4 d-none d-lg-grid" aria-label="Home sections">
+    <a href="#hero" class="nav-dot active" data-section="hero" aria-label="Hero"></a>
+    <a href="#why-us" class="nav-dot" data-section="why-us" aria-label="Why choose us"></a>
+    <a href="#featured" class="nav-dot" data-section="featured" aria-label="Featured products"></a>
+    <a href="#categories" class="nav-dot" data-section="categories" aria-label="Categories"></a>
+    <a href="#newsletter" class="nav-dot" data-section="newsletter" aria-label="Newsletter"></a>
+  </nav>
+
+  <section class="stat-strip">
+    <div class="gh-container">
+      <div class="stat-box">
+        <div class="stat-item">
+          <span class="stat-value">500+</span>
+          <span class="stat-label">Fresh products</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">30m</span>
+          <span class="stat-label">Average delivery</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">4.9</span>
+          <span class="stat-label">Customer rating</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">7am</span>
+          <span class="stat-label">Daily fresh stock</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="why-us" class="section-pad">
+    <div class="gh-container">
+      <span class="eyebrow"><i class="bi bi-stars"></i> Why Choose Us</span>
+      <h2 class="section-title">Everything your kitchen needs, made simple.</h2>
+      <p class="section-copy">From farm-fresh vegetables to breakfast essentials, GroceryHub helps you fill the fridge without standing in line.</p>
+
+      <div class="features-grid">
+        <article class="feature-card">
+          <span class="feature-icon"><i class="bi bi-leaf"></i></span>
+          <h3>100% Fresh</h3>
+          <p>Picked daily and packed carefully so your order reaches you in great shape.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon"><i class="bi bi-rocket-takeoff"></i></span>
+          <h3>Fast Delivery</h3>
+          <p>Get urgent groceries, snacks, and staples delivered quickly to your door.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon"><i class="bi bi-currency-rupee"></i></span>
+          <h3>Affordable Prices</h3>
+          <p>Useful deals on the items you buy every day, without confusing coupons.</p>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon"><i class="bi bi-shield-check"></i></span>
+          <h3>Guaranteed Quality</h3>
+          <p>If something is not right, our support team helps make it right quickly.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="featured" class="section-pad bg-white">
+    <div class="gh-container">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow"><i class="bi bi-bag-heart"></i> Handpicked</span>
+          <h2 class="section-title">Featured products</h2>
+          <p class="section-copy">Best sellers and fresh picks selected for your next order.</p>
+        </div>
+        <a href="{% url 'store:product_list' %}" class="gh-btn gh-btn-primary">View All <i class="bi bi-arrow-right"></i></a>
+      </div>
+
+      <div class="row g-4">
+        {% for product in featured_products %}
+        <div class="col-lg-3 col-md-6">
+          <article class="product-card">
+            <div class="product-media">
+              {% if product.image %}
+              <img src="{{ product.image.url }}" alt="{{ product.title }}">
+              {% else %}
+              <div class="product-placeholder">
+                <i class="bi bi-basket2-fill"></i>
+              </div>
+              {% endif %}
+            </div>
+            <div class="product-body">
+              <h3 class="product-title">{{ product.title }}</h3>
+              <p class="small flex-grow-1">{{ product.description|truncatewords:12 }}</p>
+              <div class="d-flex justify-content-between align-items-center gap-3 mt-auto">
+                <span class="price">Rs. {{ product.get_price }}</span>
+                {% if product.is_out_of_stock %}
+                <span class="badge bg-danger">Out of Stock</span>
+                {% else %}
+                <form method="post" action="{% url 'store:add_to_cart' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="product_id" value="{{ product.id }}">
+                  <button type="submit" class="add-btn">
+                    <i class="bi bi-cart-plus"></i> Add
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </div>
+          </article>
+        </div>
+        {% empty %}
+        <div class="col-12">
+          <div class="empty-state">
+            <span class="empty-icon"><i class="bi bi-basket"></i></span>
+            <h3>No featured products yet</h3>
+            <p class="text-muted mb-4">Add featured products in the admin panel to showcase them here.</p>
+            <a href="{% url 'store:product_list' %}" class="gh-btn gh-btn-primary">Browse All Products</a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section id="categories" class="section-pad categories-band">
+    <div class="gh-container">
+      <div class="category-heading text-center mx-auto">
+        <span class="eyebrow"><i class="bi bi-grid"></i> Shop By Category</span>
+        <h2 class="section-title">Find what you need faster.</h2>
+        <p class="section-copy mx-auto">Start with your favorite aisle and build your cart in minutes.</p>
+      </div>
+
+      <div class="row g-3 mt-4">
+        <div class="col-lg-2 col-md-4 col-6">
+          <a href="#" class="category-card category-fruits">
+            <i class="bi bi-apple"></i>
+            <span>Fruits</span>
+          </a>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+          <a href="#" class="category-card category-vegetables">
+            <i class="bi bi-flower1"></i>
+            <span>Vegetables</span>
+          </a>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+          <a href="#" class="category-card category-dairy">
+            <i class="bi bi-basket2-fill"></i>
+            <span>Dairy</span>
+          </a>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+          <a href="#" class="category-card category-bakery">
+            <i class="bi bi-cup-hot"></i>
+            <span>Bakery</span>
+          </a>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+          <a href="#" class="category-card category-snacks">
+            <i class="bi bi-stars"></i>
+            <span>Snacks</span>
+          </a>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6">
+          <a href="#" class="category-card category-beverages">
+            <i class="bi bi-cup-straw"></i>
+            <span>Beverages</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="newsletter" class="section-pad deal-band">
+    <div class="gh-container deal-grid">
+      <div>
+        <span class="eyebrow newsletter-eyebrow">
+          <i class="bi bi-envelope-heart"></i> Fresh Updates
+        </span>
+        <h2 class="section-title">Weekly deals, new arrivals, and fresh reminders.</h2>
+        <p class="section-copy">Subscribe to hear about the best seasonal produce and quick offers before your next grocery run.</p>
+        <form class="newsletter-form">
+          <input type="email" placeholder="Enter your email" aria-label="Email address">
+          <button type="submit" class="gh-btn gh-btn-primary">Subscribe <i class="bi bi-send"></i></button>
+        </form>
+      </div>
+      <a href="{% url 'store:product_list' %}" class="gh-btn gh-btn-light">Start Shopping <i class="bi bi-arrow-right"></i></a>
+    </div>
+  </section>
+</div>
+
+<script>
+  document.querySelectorAll('.nav-dot').forEach(dot => {
+    dot.addEventListener('click', event => {
+      event.preventDefault();
+      const target = document.querySelector(dot.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  window.addEventListener('scroll', () => {
+    const sections = ['hero', 'why-us', 'featured', 'categories', 'newsletter'];
+    const scrollPosition = window.scrollY + 140;
+
+    sections.forEach(section => {
+      const element = document.getElementById(section);
+      if (!element) return;
+
+      if (element.offsetTop <= scrollPosition && scrollPosition < element.offsetTop + element.offsetHeight) {
+        document.querySelectorAll('.nav-dot').forEach(dot => dot.classList.remove('active'));
+        document.querySelector(`[data-section="${section}"]`)?.classList.add('active');
+      }
+    });
+  });
+</script>
+{% endblock %}

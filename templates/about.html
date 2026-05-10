@@ -1,0 +1,684 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}About Us - GroceryHub{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --ab-green: #198754;
+    --ab-mint: #20c997;
+    --ab-yellow: #ffc857;
+    --ab-orange: #ff8a3d;
+    --ab-ink: #18251f;
+    --ab-muted: #66736c;
+    --ab-soft: #f4fbf7;
+    --ab-line: rgba(25, 135, 84, 0.16);
+    --ab-shadow: 0 18px 45px rgba(18, 55, 38, 0.12);
+  }
+
+  main.container {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .about-page {
+    color: var(--ab-ink);
+    background:
+      radial-gradient(circle at top left, rgba(255, 200, 87, 0.16), transparent 30rem),
+      linear-gradient(180deg, #ffffff 0%, #f7fbf8 55%, #ffffff 100%);
+    overflow: hidden;
+  }
+
+  .ab-container {
+    width: min(1140px, calc(100% - 32px));
+    margin: 0 auto;
+  }
+
+  .about-hero {
+    padding: 58px 0 52px;
+  }
+
+  .hero-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 420px;
+    gap: 34px;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid var(--ab-line);
+    border-radius: 8px;
+    padding: clamp(28px, 5vw, 54px);
+    color: #fff;
+    background:
+      linear-gradient(135deg, rgba(13, 76, 45, 0.94), rgba(28, 147, 94, 0.84)),
+      url("https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1800&q=85") center/cover;
+    box-shadow: var(--ab-shadow);
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 8px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.14);
+    font-size: 0.78rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .eyebrow.dark {
+    color: var(--ab-green);
+    border-color: var(--ab-line);
+    background: rgba(25, 135, 84, 0.08);
+  }
+
+  .hero-title {
+    max-width: 760px;
+    margin: 0;
+    font-size: clamp(2.75rem, 6vw, 5.4rem);
+    font-weight: 950;
+    line-height: 0.96;
+    letter-spacing: 0;
+  }
+
+  .hero-copy {
+    max-width: 650px;
+    margin: 20px 0 0;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 1.15rem;
+    line-height: 1.75;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 30px;
+  }
+
+  .ab-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 48px;
+    border-radius: 8px;
+    padding: 12px 18px;
+    font-weight: 900;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .ab-btn-primary {
+    color: #183523;
+    background: var(--ab-yellow);
+  }
+
+  .ab-btn-light {
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.46);
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .ab-btn-primary:hover {
+    color: #183523;
+    background: #ffd775;
+  }
+
+  .ab-btn-light:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.22);
+  }
+
+  .ab-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ab-shadow);
+  }
+
+  .hero-card {
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 8px;
+    padding: 18px;
+    background: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(12px);
+  }
+
+  .hero-card img {
+    width: 100%;
+    height: 270px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+
+  .hero-card strong {
+    display: block;
+    color: #fff;
+    font-size: 1.1rem;
+  }
+
+  .hero-card span {
+    color: rgba(255, 255, 255, 0.76);
+  }
+
+  .stats-strip {
+    margin-top: -24px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    overflow: hidden;
+    border: 1px solid var(--ab-line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: var(--ab-shadow);
+  }
+
+  .stat-item {
+    padding: 26px 22px;
+    border-right: 1px solid var(--ab-line);
+  }
+
+  .stat-item:last-child {
+    border-right: 0;
+  }
+
+  .stat-value {
+    display: block;
+    color: var(--ab-green);
+    font-size: 2.2rem;
+    font-weight: 950;
+    line-height: 1;
+  }
+
+  .stat-label {
+    color: var(--ab-muted);
+    font-weight: 800;
+  }
+
+  .section-pad {
+    padding: 82px 0;
+  }
+
+  .section-head {
+    max-width: 760px;
+    margin-bottom: 34px;
+  }
+
+  .section-title {
+    margin: 14px 0 12px;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 950;
+    line-height: 1.06;
+    letter-spacing: 0;
+  }
+
+  .section-copy {
+    color: var(--ab-muted);
+    font-size: 1.08rem;
+    line-height: 1.75;
+  }
+
+  .story-grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1fr;
+    gap: 42px;
+    align-items: center;
+  }
+
+  .story-image {
+    overflow: hidden;
+    border: 1px solid var(--ab-line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: var(--ab-shadow);
+  }
+
+  .story-image img {
+    width: 100%;
+    height: 520px;
+    object-fit: cover;
+  }
+
+  .story-points {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 26px;
+  }
+
+  .point-card,
+  .mission-card,
+  .team-card,
+  .timeline-item {
+    border: 1px solid var(--ab-line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 10px 25px rgba(24, 37, 31, 0.06);
+  }
+
+  .point-card {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .icon-box {
+    width: 46px;
+    height: 46px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    color: #183523;
+    background: var(--ab-yellow);
+    font-size: 1.25rem;
+  }
+
+  .mission-band {
+    background: var(--ab-soft);
+  }
+
+  .mission-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .mission-card {
+    padding: 26px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .mission-card:hover,
+  .team-card:hover,
+  .timeline-item:hover {
+    transform: translateY(-7px);
+    box-shadow: var(--ab-shadow);
+  }
+
+  .mission-card h3,
+  .team-card h3 {
+    margin: 18px 0 10px;
+    font-size: 1.18rem;
+    font-weight: 950;
+  }
+
+  .mission-card p,
+  .team-card p,
+  .timeline-item p {
+    color: var(--ab-muted);
+    line-height: 1.65;
+  }
+
+  .timeline-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .timeline-item {
+    padding: 22px;
+  }
+
+  .timeline-year {
+    display: inline-flex;
+    margin-bottom: 14px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    color: var(--ab-green);
+    background: rgba(25, 135, 84, 0.08);
+    font-weight: 950;
+  }
+
+  .team-band {
+    background: #fff;
+  }
+
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+
+  .team-card {
+    overflow: hidden;
+  }
+
+  .team-card img,
+  .team-avatar-alt {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+    background: var(--ab-soft);
+  }
+
+  .team-avatar-alt {
+    display: grid;
+    place-items: center;
+    color: var(--ab-green);
+    font-size: 4rem;
+  }
+
+  .team-body {
+    padding: 22px;
+  }
+
+  .team-role {
+    color: var(--ab-green);
+    font-weight: 900;
+  }
+
+  .cta-section {
+    padding: 72px 0;
+  }
+
+  .cta-panel {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: center;
+    border-radius: 8px;
+    padding: clamp(26px, 5vw, 46px);
+    color: #fff;
+    background:
+      linear-gradient(135deg, rgba(13, 76, 45, 0.95), rgba(25, 135, 84, 0.9)),
+      url("https://images.unsplash.com/photo-1573246123716-6b1782bfc499?auto=format&fit=crop&w=1500&q=85") center/cover;
+    box-shadow: var(--ab-shadow);
+  }
+
+  .cta-panel h2 {
+    margin: 0 0 10px;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 950;
+  }
+
+  .cta-panel p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  @media (max-width: 991px) {
+
+    .hero-panel,
+    .story-grid,
+    .cta-panel {
+      grid-template-columns: 1fr;
+    }
+
+    .stats-grid,
+    .mission-grid,
+    .timeline-grid,
+    .team-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 575px) {
+    .ab-container {
+      width: min(100% - 24px, 1140px);
+    }
+
+    .about-hero {
+      padding-top: 34px;
+    }
+
+    .stats-grid,
+    .story-points,
+    .mission-grid,
+    .timeline-grid,
+    .team-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .stat-item {
+      border-right: 0;
+      border-bottom: 1px solid var(--ab-line);
+    }
+
+    .stat-item:last-child {
+      border-bottom: 0;
+    }
+
+    .story-image img,
+    .team-card img,
+    .team-avatar-alt {
+      height: 320px;
+    }
+
+    .hero-actions {
+      flex-direction: column;
+    }
+
+    .ab-btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="about-page">
+  <section class="about-hero">
+    <div class="ab-container">
+      <div class="hero-panel">
+        <div>
+          <span class="eyebrow"><i class="bi bi-basket2-fill"></i> About GroceryHub</span>
+          <h1 class="hero-title">Fresh groceries, fair prices, and people-first delivery.</h1>
+          <p class="hero-copy">We connect everyday households with fresh produce, quality staples, and reliable grocery
+            delivery so good food is easier to bring home.</p>
+          <div class="hero-actions">
+            <a href="#story" class="ab-btn ab-btn-primary">Our Story <i class="bi bi-arrow-down"></i></a>
+            <a href="{% url 'store:product_list' %}" class="ab-btn ab-btn-light">Shop Fresh</a>
+          </div>
+        </div>
+
+        <aside class="hero-card">
+          <img src="https://static.vecteezy.com/system/resources/thumbnails/034/078/501/small/shopping-cart-full-of-product-in-grocery-store-generative-ai-photo.jpg"
+            alt="Fresh grocery produce">
+          <strong>Quality checked before every delivery</strong>
+          <span>Freshness, careful packing, and quick support are part of every order.</span>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats-strip">
+    <div class="ab-container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-value">50k+</span>
+          <span class="stat-label">Happy customers</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">500+</span>
+          <span class="stat-label">Fresh products</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">100+</span>
+          <span class="stat-label">Local farm partners</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">24h</span>
+          <span class="stat-label">Fresh delivery cycle</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="story" class="section-pad">
+    <div class="ab-container story-grid">
+      <div class="story-image">
+        <img src="https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?auto=format&fit=crop&w=1000&q=85"
+          alt="Grocery store produce aisle">
+      </div>
+
+      <div>
+      <span class="eyebrow dark"><i class="bi bi-bookmark-heart"></i> Our Story</span>
+        <h2 class="section-title">Built to make fresh food simpler to access.</h2>
+        <p class="section-copy">GroceryHub started with a simple idea: grocery shopping should feel dependable, fast,
+          and fresh. We work with trusted suppliers and local farms to bring daily essentials closer to families,
+          professionals, and anyone who wants a better way to stock the kitchen.</p>
+        <p class="section-copy">Every order is handled with attention, from choosing the produce to packing it safely
+          for delivery. That care is what turns a grocery app into a service people can rely on.</p>
+
+        <div class="story-points">
+          <div class="point-card">
+            <span class="icon-box"><i class="bi bi-geo-alt"></i></span>
+            <div>
+              <strong>Local sourcing</strong>
+              <div class="text-muted small">Fresh picks from trusted partners.</div>
+            </div>
+          </div>
+          <div class="point-card">
+            <span class="icon-box"><i class="bi bi-truck"></i></span>
+            <div>
+              <strong>Quick delivery</strong>
+              <div class="text-muted small">Essentials reach your door fast.</div>
+            </div>
+          </div>
+          <div class="point-card">
+            <span class="icon-box"><i class="bi bi-shield-check"></i></span>
+            <div>
+              <strong>Quality promise</strong>
+              <div class="text-muted small">Careful checks before dispatch.</div>
+            </div>
+          </div>
+          <div class="point-card">
+            <span class="icon-box"><i class="bi bi-tags"></i></span>
+            <div>
+              <strong>Fair pricing</strong>
+              <div class="text-muted small">Useful deals on daily products.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="section-pad mission-band">
+    <div class="ab-container">
+      <div class="section-head">
+        <span class="eyebrow dark"><i class="bi bi-stars"></i> What We Stand For</span>
+        <h2 class="section-title">A grocery experience designed around trust.</h2>
+        <p class="section-copy">We focus on the details that matter most: fresh inventory, clean packing, reliable
+          delivery, and support that listens.</p>
+      </div>
+
+      <div class="mission-grid">
+        <article class="mission-card">
+          <span class="icon-box"><i class="bi bi-award"></i></span>
+          <h3>Freshness First</h3>
+          <p>We prioritize fresh produce and daily essentials that meet quality expectations before they reach your
+            cart.</p>
+        </article>
+        <article class="mission-card">
+          <span class="icon-box"><i class="bi bi-people"></i></span>
+          <h3>Community Driven</h3>
+          <p>Our supply network supports local partners and keeps everyday groceries accessible for more households.</p>
+        </article>
+        <article class="mission-card">
+          <span class="icon-box"><i class="bi bi-lightning-charge"></i></span>
+          <h3>Fast and Dependable</h3>
+          <p>From order placement to doorstep delivery, we keep the flow simple, transparent, and dependable.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-pad">
+    <div class="ab-container">
+      <div class="section-head">
+        <span class="eyebrow dark"><i class="bi bi-signpost"></i> How It Works</span>
+        <h2 class="section-title">From source to doorstep in four careful steps.</h2>
+      </div>
+
+      <div class="timeline-grid">
+        <article class="timeline-item">
+          <span class="timeline-year">Step 1</span>
+          <h3 class="h5 fw-bold">Select</h3>
+          <p>Fresh products are chosen from trusted suppliers and local farms.</p>
+        </article>
+        <article class="timeline-item">
+          <span class="timeline-year">Step 2</span>
+          <h3 class="h5 fw-bold">Check</h3>
+          <p>Items are inspected for quality, freshness, and safe handling.</p>
+        </article>
+        <article class="timeline-item">
+          <span class="timeline-year">Step 3</span>
+          <h3 class="h5 fw-bold">Pack</h3>
+          <p>Your order is packed neatly to keep groceries protected.</p>
+        </article>
+        <article class="timeline-item">
+          <span class="timeline-year">Step 4</span>
+          <h3 class="h5 fw-bold">Deliver</h3>
+          <p>Groceries are sent quickly so your kitchen stays stocked.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-pad team-band">
+    <div class="ab-container">
+      <div class="section-head">
+        <span class="eyebrow dark"><i class="bi bi-person-hearts"></i> Our Team</span>
+        <h2 class="section-title">People behind every fresh delivery.</h2>
+        <p class="section-copy">Our team brings together product sourcing, operations, technology, and customer care.
+        </p>
+      </div>
+
+      <div class="team-grid">
+        <article class="team-card">
+          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=85"
+            alt="Sarah Chen">
+          <div class="team-body">
+            <h3>Sarah Chen</h3>
+            <div class="team-role">Founder and CEO</div>
+            <p>Leads the vision for reliable, fresh, and affordable grocery delivery.</p>
+          </div>
+        </article>
+        <article class="team-card">
+          <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=85"
+            alt="Raj Patel">
+          <div class="team-body">
+            <h3>Raj Patel</h3>
+            <div class="team-role">Head of Farm Partners</div>
+            <p>Works closely with suppliers to keep fresh products moving daily.</p>
+          </div>
+        </article>
+        <article class="team-card">
+          <div class="team-avatar-alt"><i class="bi bi-person-badge-fill"></i></div>
+          <div class="team-body">
+            <h3>Aisha Khan</h3>
+            <div class="team-role">Customer Experience</div>
+            <p>Ensures every customer gets helpful support and a smooth order experience.</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <div class="ab-container">
+      <div class="cta-panel">
+        <div>
+          <h2>Ready to fill your cart with fresh picks?</h2>
+          <p>Explore products, compare essentials, and order groceries in minutes.</p>
+        </div>
+        <a href="{% url 'store:product_list' %}" class="ab-btn ab-btn-primary">Start Shopping <i
+            class="bi bi-arrow-right"></i></a>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

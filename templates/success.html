@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Signup Complete - GroceryHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-5 text-center">
+                <h2 class="card-title mb-3">Phone verified successfully!</h2>
+                <p class="text-muted mb-4">Your account is now active and you are logged in.</p>
+                <a href="{% url 'store:dashboard' %}" class="btn btn-success btn-lg">Go to Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

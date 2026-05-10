@@ -1,0 +1,11 @@
+Django==5.0.6
+Pillow==10.4.0
+stripe==10.5.0
+python-dotenv==1.0.1
+crispy-bootstrap5==2024.2
+django-crispy-forms==2.3
+twilio==9.10.6
+phonenumbers==9.0.29
+gunicorn==26.0.0
+waitress==3.0.0
+whitenoise==6.12.0

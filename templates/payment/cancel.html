@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment Cancelled - GroceryHub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center min-vh-100 align-items-center bg-danger bg-opacity-10">
+  <div class="col-md-6">
+    <div class="glass-card p-5 text-center">
+      <i class="bi bi-x-circle-fill display-1 text-danger mb-4"></i>
+      <h2 class="fw-bold mb-3 text-danger">Payment Cancelled</h2>
+      <p class="lead text-muted mb-4">No worries! Your cart items have been restored.</p>
+      
+      <div class="d-grid gap-2">
+        <a href="{% url 'store:cart' %}" class="btn btn-gradient btn-lg py-3">
+          <i class="bi bi-cart me-2"></i>View Cart
+        </a>
+        <a href="{% url 'store:product_list' %}" class="btn btn-outline-primary">
+          Continue Shopping
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

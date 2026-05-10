@@ -1,0 +1,1229 @@
+from datetime import timedelta
+import json
+import logging
+import random
+from decimal import Decimal
+import urllib.request as urllib_request
+
+import phonenumbers
+import re
+import stripe
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.core.paginator import Paginator
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.db import IntegrityError
+from django.db.models import Avg, Q
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, HttpResponseBadRequest
+from django.views.decorators.http import require_http_methods, require_POST
+from twilio.rest import Client
+
+
+from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm
+from .models import (Category, Order, OrderItem, Product, Review, UserProfile, CartItem,
+                     Profile, PhoneOTP, OTP)
+from .signals import generate_and_send_otp
+
+logger = logging.getLogger(__name__)
+
+
+def normalize_phone_number(phone_text):
+    phone_text = (phone_text or '').strip()
+    if not phone_text:
+        return None
+    try:
+        parsed = phonenumbers.parse(phone_text, 'IN')
+        if not phonenumbers.is_valid_number(parsed):
+            return None
+        return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+    except phonenumbers.NumberParseException:
+        return None
+
+
+def generate_otp():
+    return f"{random.randint(0, 999999):06d}"
+
+
+def build_username_from_phone(phone):
+    digits = re.sub(r'\D', '', phone)
+    if not digits:
+        digits = str(random.randint(100000, 999999))
+    base_username = f"user_{digits[-10:]}"
+    username = base_username[:30]
+    suffix = 1
+    while User.objects.filter(username=username).exists():
+        username = f"{base_username[:26]}_{suffix}"
+        suffix += 1
+    return username
+
+
+def send_otp_via_twilio(phone, otp):
+    account_sid = settings.TWILIO_ACCOUNT_SID
+    auth_token = settings.TWILIO_AUTH_TOKEN
+    from_number = settings.TWILIO_PHONE_NUMBER
+    if not account_sid or not auth_token or not from_number:
+        raise RuntimeError('Twilio credentials are not configured.')
+
+    client = Client(account_sid, auth_token)
+    message_text = f"Your OTP is {otp}"
+    message = client.messages.create(
+        body=message_text,
+        from_=from_number,
+        to=phone,
+    )
+    return message.sid
+
+
+def create_or_update_phone_otp(phone, otp_code):
+    otp_object = PhoneOTP.objects.create(phone=phone, otp=otp_code)
+    return otp_object
+
+
+def create_password_change_otp(user):
+    OTP.objects.filter(user=user, is_latest=True).update(is_latest=False)
+    otp_code = generate_otp()
+    expires_at = timezone.now() + timedelta(minutes=5)
+    otp = OTP.objects.create(
+        user=user,
+        otp=otp_code,
+        expires_at=expires_at,
+        max_attempts=3,
+        is_latest=True,
+    )
+    return otp
+
+
+def send_password_change_email(user, otp_code):
+    subject = 'Password Change Verification OTP'
+    message = f'Your OTP for password change is: {otp_code}'
+    send_mail(
+        subject,
+        message,
+        settings.EMAIL_HOST_USER,
+        [user.email],
+        fail_silently=False,
+    )
+
+
+def init_password_change_session(request, otp):
+    request.session['password_change_user_id'] = request.user.id
+    request.session['password_change_email_otp'] = otp.otp
+    request.session['password_change_otp_created_time'] = timezone.now().isoformat()
+    request.session['password_change_otp_last_sent'] = timezone.now().isoformat()
+    request.session['password_change_otp_attempts'] = 0
+    request.session['password_change_verified'] = False
+
+
+def clear_password_change_session(request):
+    keys = [
+        'password_change_user_id',
+        'password_change_email_otp',
+        'password_change_otp_created_time',
+        'password_change_otp_last_sent',
+        'password_change_otp_attempts',
+        'password_change_verified',
+    ]
+    for key in keys:
+        request.session.pop(key, None)
+
+
+def normal_login_view(request):
+    """Normal username/password login view"""
+    if request.user.is_authenticated:
+        return redirect('store:dashboard')
+    
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        remember_me = request.POST.get('remember_me')
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                if remember_me:
+                    # Set session expiry to 30 days
+                    request.session.set_expiry(60 * 60 * 24 * 30)
+                else:
+                    # Set session expiry to browser close
+                    request.session.set_expiry(0)
+                messages.success(request, f"Welcome back, {username}!")
+                next_url = request.GET.get('next')
+                if next_url:
+                    return redirect(next_url)
+                return redirect('store:dashboard')
+            else:
+                messages.error(request, "Invalid username or password.")
+        else:
+            messages.error(request, "Invalid username or password.")
+    else:
+        form = AuthenticationForm()
+    
+    return render(request, 'login.html', {'form': form})
+
+
+def signup_phone_view(request):
+    if request.user.is_authenticated:
+        return redirect('store:dashboard')
+
+    if request.method == 'POST':
+        form = PhoneSignupForm(request.POST)
+        if form.is_valid():
+            phone = form.cleaned_data['phone']
+            existing = Profile.objects.filter(phone_number=phone).exists()
+            if existing:
+                messages.warning(request, 'This phone number is already registered. Please log in instead.')
+                return render(request, 'enter_phone.html', {'form': form})
+
+            latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+            if latest_otp and not latest_otp.can_resend:
+                wait_seconds = 30 - int((timezone.now() - latest_otp.created_at).total_seconds())
+                messages.warning(request, f'Please wait {wait_seconds} seconds before requesting a new OTP.')
+                return render(request, 'enter_phone.html', {'form': form})
+
+            otp_code = generate_otp()
+            try:
+                send_otp_via_twilio(phone, otp_code)
+            except Exception:
+                logger.exception('Twilio send failed for %s', phone)
+                messages.error(request, 'Unable to send OTP at this time. Please try again later.')
+                return render(request, 'enter_phone.html', {'form': form})
+
+            create_or_update_phone_otp(phone, otp_code)
+            request.session['signup_phone'] = phone
+            request.session['signup_otp_sent_at'] = timezone.now().isoformat()
+            messages.success(request, f'OTP sent to {phone}. Please verify it within 5 minutes.')
+            return redirect('store:signup_verify_phone_otp')
+    else:
+        form = PhoneSignupForm()
+
+    return render(request, 'enter_phone.html', {'form': form})
+
+
+def login_with_phone_view(request):
+    if request.method == 'POST':
+        form = PhoneLoginForm(request.POST)
+        if form.is_valid():
+            phone = form.cleaned_data['phone']
+            logger.info('Phone login requested for: %s', phone)
+            profile = Profile.objects.filter(phone_number=phone).select_related('user').first()
+            logger.info('Phone profile found: %s', bool(profile))
+            if not profile:
+                messages.warning(request, 'This phone number is not registered. Please sign up first.')
+                return render(request, 'phone_login.html', {'form': form})
+
+            otp_code = generate_otp()
+            try:
+                send_otp_via_twilio(phone, otp_code)
+            except Exception as exc:
+                logger.exception('Twilio send failed for %s', phone)
+                messages.error(request, 'Unable to send OTP at this time. Please try again later.')
+                return render(request, 'phone_login.html', {'form': form})
+
+            create_or_update_phone_otp(phone, otp_code)
+            request.session['phone_for_otp'] = phone
+            request.session['otp_sent_at'] = timezone.now().isoformat()
+            messages.success(request, f'OTP sent to {phone}. Please verify within 5 minutes.')
+            return redirect('store:verify_phone_login_otp')
+    else:
+        form = PhoneLoginForm()
+    return render(request, 'phone_login.html', {'form': form})
+
+
+def verify_otp_view(request):
+    phone = request.session.get('phone_for_otp')
+    if not phone:
+        messages.error(request, 'Session expired or invalid. Please enter your phone number again.')
+        return redirect('store:phone_login')
+
+    latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+    if not latest_otp:
+        messages.error(request, 'No OTP request found. Please request a new OTP.')
+        return redirect('store:phone_login')
+
+    if request.method == 'POST':
+        form = PhoneOTPForm(request.POST)
+        if form.is_valid():
+            otp_input = form.cleaned_data['otp']
+            if latest_otp.is_expired:
+                messages.error(request, 'OTP expired. Please resend a new code.')
+                return render(request, 'verify_otp.html', {
+                    'form': form,
+                    'phone': phone,
+                    'change_number_url_name': 'store:phone_login',
+                    'resend_url_name': 'store:resend_phone_otp',
+                })
+
+            if latest_otp.attempts >= 3:
+                messages.error(request, 'Maximum OTP attempts reached. Please resend a new code.')
+                return render(request, 'verify_otp.html', {
+                    'form': form,
+                    'phone': phone,
+                    'change_number_url_name': 'store:phone_login',
+                    'resend_url_name': 'store:resend_phone_otp',
+                })
+
+            if otp_input != latest_otp.otp:
+                latest_otp.attempts += 1
+                latest_otp.save()
+                remaining = max(0, 3 - latest_otp.attempts)
+                messages.error(request, f'Invalid OTP. You have {remaining} attempt(s) left.')
+                return render(request, 'verify_otp.html', {
+                    'form': form,
+                    'phone': phone,
+                    'change_number_url_name': 'store:phone_login',
+                    'resend_url_name': 'store:resend_phone_otp',
+                })
+
+            profile = Profile.objects.filter(phone_number=phone).select_related('user').first()
+            logger.info('OTP verification for phone: %s, profile exists: %s', phone, bool(profile))
+            if not profile:
+                messages.error(request, 'This phone number is not registered. Please sign up first.')
+                return redirect('store:phone_login')
+
+            user = profile.user
+            profile.is_phone_verified = True
+            profile.save()
+
+            # Keep UserProfile in sync with phone OTP login so profile page shows the phone number.
+            user_profile, _ = UserProfile.objects.get_or_create(user=user)
+            user_profile.phone_number = phone
+            user_profile.save()
+
+            latest_otp.attempts += 1
+            latest_otp.save()
+
+            login(request, user)
+            request.session.pop('phone_for_otp', None)
+            messages.success(request, 'Logged in successfully using OTP!')
+            return redirect('store:dashboard')
+    else:
+        form = PhoneOTPForm()
+    return render(request, 'verify_otp.html', {'form': form, 'phone': phone, 'change_number_url_name': 'store:phone_login', 'resend_url_name': 'store:resend_phone_otp'})
+
+
+def signup_verify_otp_view(request):
+    phone = request.session.get('signup_phone')
+    if not phone:
+        messages.error(request, 'Session expired or invalid. Please enter your phone number again.')
+        return redirect('store:signup_phone')
+
+    latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+    if not latest_otp:
+        messages.error(request, 'No OTP request found. Please request a new OTP.')
+        return redirect('store:signup_phone')
+
+    if request.method == 'POST':
+        form = PhoneOTPForm(request.POST)
+        if form.is_valid():
+            otp_input = form.cleaned_data['otp']
+            if latest_otp.is_expired:
+                messages.error(request, 'OTP expired. Please resend a new code.')
+                return render(request, 'verify_otp.html', {
+                    'form': form,
+                    'phone': phone,
+                    'change_number_url_name': 'store:signup_phone',
+                    'resend_url_name': 'store:signup_resend_phone_otp',
+                })
+
+            if latest_otp.attempts >= 3:
+                messages.error(request, 'Maximum OTP attempts reached. Please resend a new code.')
+                return render(request, 'verify_otp.html', {
+                    'form': form,
+                    'phone': phone,
+                    'change_number_url_name': 'store:signup_phone',
+                    'resend_url_name': 'store:signup_resend_phone_otp',
+                })
+
+            if otp_input != latest_otp.otp:
+                latest_otp.attempts += 1
+                latest_otp.save()
+                remaining = max(0, 3 - latest_otp.attempts)
+                messages.error(request, f'Invalid OTP. You have {remaining} attempt(s) left.')
+                return render(request, 'verify_otp.html', {
+                    'form': form,
+                    'phone': phone,
+                    'change_number_url_name': 'store:signup_phone',
+                    'resend_url_name': 'store:signup_resend_phone_otp',
+                })
+
+            username = build_username_from_phone(phone)
+            user = User.objects.create(username=username)
+            user.set_unusable_password()
+            user.is_active = True
+            user.save()
+
+            profile = Profile.objects.create(user=user, phone_number=phone, is_phone_verified=True)
+            user_profile, _ = UserProfile.objects.get_or_create(user=user)
+            user_profile.phone_number = phone
+            user_profile.save()
+
+            login(request, user)
+            request.session.pop('signup_phone', None)
+            request.session.pop('signup_otp_sent_at', None)
+            messages.success(request, 'Phone verified successfully! You are now logged in.')
+            return redirect('store:signup_success')
+    else:
+        form = PhoneOTPForm()
+
+    return render(request, 'verify_otp.html', {
+        'form': form,
+        'phone': phone,
+        'change_number_url_name': 'store:signup_phone',
+        'resend_url_name': 'store:signup_resend_phone_otp',
+    })
+
+
+@require_POST
+def resend_otp_view(request):
+    phone = request.session.get('phone_for_otp')
+    if not phone:
+        return JsonResponse({'success': False, 'error': 'Session expired. Please start again.'}, status=400)
+
+    latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+    if latest_otp and not latest_otp.can_resend:
+        wait_seconds = 30 - int((timezone.now() - latest_otp.created_at).total_seconds())
+        return JsonResponse({'success': False, 'error': f'Please wait {wait_seconds} seconds before resending.'}, status=429)
+
+    otp_code = generate_otp()
+    try:
+        send_otp_via_twilio(phone, otp_code)
+    except Exception as exc:
+        logger.exception('Twilio resend failed for %s', phone)
+        return JsonResponse({'success': False, 'error': 'Unable to resend OTP right now.'}, status=500)
+
+    create_or_update_phone_otp(phone, otp_code)
+    request.session['otp_sent_at'] = timezone.now().isoformat()
+    return JsonResponse({'success': True, 'message': 'OTP resent successfully.'})
+
+
+@require_POST
+def signup_resend_otp_view(request):
+    phone = request.session.get('signup_phone')
+    if not phone:
+        return JsonResponse({'success': False, 'error': 'Session expired. Please start again.'}, status=400)
+
+    latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+    if latest_otp and not latest_otp.can_resend:
+        wait_seconds = 30 - int((timezone.now() - latest_otp.created_at).total_seconds())
+        return JsonResponse({'success': False, 'error': f'Please wait {wait_seconds} seconds before resending.'}, status=429)
+
+    otp_code = generate_otp()
+    try:
+        send_otp_via_twilio(phone, otp_code)
+    except Exception:
+        logger.exception('Twilio resend failed for %s', phone)
+        return JsonResponse({'success': False, 'error': 'Unable to resend OTP right now.'}, status=500)
+
+    create_or_update_phone_otp(phone, otp_code)
+    request.session['signup_otp_sent_at'] = timezone.now().isoformat()
+    return JsonResponse({'success': True, 'message': 'OTP resent successfully.'})
+
+
+def signup_success(request):
+    if not request.user.is_authenticated:
+        return redirect('store:login')
+    return render(request, 'success.html')
+
+
+def dashboard(request):
+    if not request.user.is_authenticated:
+        return redirect('store:login')
+    profile = None
+    if hasattr(request.user, 'phone_profile'):
+        profile = request.user.phone_profile
+    return render(request, 'dashboard.html', {'profile': profile})
+
+
+def home(request):
+    featured_products = Product.objects.filter(is_out_of_stock=False)
+    categories = Category.objects.all()[:6]
+    context = {
+        'featured_products': featured_products,
+        'products': featured_products,
+        'categories': categories,
+    }
+    return render(request, 'home.html', context)
+
+def product_list(request):
+    products = Product.objects.filter(is_out_of_stock=False)
+    query = request.GET.get('q')
+    category = request.GET.get('category')
+    
+    if query:
+        products = products.filter(Q(title__icontains=query) | Q(description__icontains=query))
+    if category:
+        products = products.filter(category__name=category)
+    
+    paginator = Paginator(products, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'products': page_obj,
+        'categories': Category.objects.all(),
+        'page_obj': page_obj,
+        'query': query,
+    }
+    return render(request, 'products/list.html', context)
+
+def product_detail(request, slug):
+    product = get_object_or_404(Product, is_out_of_stock=False, slug=slug)
+    
+    # Dynamic data
+    reviews = product.reviews.all()[:5]  # Recent 5 reviews
+    avg_rating = reviews.aggregate(Avg('rating'))['rating__avg']
+    if avg_rating:
+        avg_rating = round(float(avg_rating), 1)
+        review_count = reviews.count()
+    else:
+        avg_rating = 0
+        review_count = 0
+    
+    related_products = Product.objects.filter(
+        category=product.category,
+        is_out_of_stock=False
+    ).exclude(id=product.id)[:4]
+    
+    # Fallback highlights if empty
+    if not product.highlights:
+        product.highlights = ['100% Fresh', 'Quality Guaranteed', 'Fast Delivery']
+    
+    # Fallback nutrition
+    if not product.nutrition_info:
+        product.nutrition_info = {
+            'calories': '85 kcal',
+            'protein': '2.5g',
+            'carbs': '18g',
+            'fat': '0.3g',
+            'fiber': '2.8g'
+        }
+    
+    if request.method == 'POST' and request.user.is_authenticated:
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment') or ''
+        try:
+            Review.objects.create(
+                product=product,
+                user=request.user,
+                rating=int(rating),
+                comment=comment.strip()
+            )
+            messages.success(request, 'Review added successfully!')
+        except ValueError:
+            messages.error(request, 'Invalid rating.')
+        return redirect('store:product_detail', slug=slug)
+    
+    # Recalculate reviews after potential add
+    reviews = product.reviews.all()[:5]
+    avg_rating = reviews.aggregate(Avg('rating'))['rating__avg']
+    if avg_rating:
+        avg_rating = round(float(avg_rating), 1)
+        review_count = reviews.count()
+    else:
+        avg_rating = 0
+        review_count = 0
+    
+    context = {
+        'product': product,
+        'reviews': reviews,
+        'avg_rating': avg_rating,
+        'review_count': review_count,
+        'related_products': related_products,
+        'rating_choices': Review.RATING_CHOICES,
+    }
+    return render(request, 'products/detail.html', context)
+
+
+@login_required
+def cart_view(request):
+    cart_items = CartItem.objects.filter(user=request.user)
+    total = sum(item.total_price() for item in cart_items)
+    context = {
+        'cart_items': cart_items,
+        'total': total,
+    }
+    return render(request, 'cart.html', context)
+
+@login_required
+def update_cart_batch(request):
+    if request.method == 'POST':
+        quantities = request.POST.getlist('quantities')
+        cart_items = CartItem.objects.filter(user=request.user)
+        updated = 0
+        for item in cart_items:
+            try:
+                qty = int(quantities[updated])
+                if qty > 0:
+                    item.quantity = qty
+                    item.save()
+                    updated += 1
+                else:
+                    item.delete()
+            except (ValueError, IndexError):
+                pass
+        if updated > 0:
+            messages.success(request, f'Cart updated with {updated} items!')
+        else:
+            messages.warning(request, 'No valid quantities provided.')
+    return redirect('store:cart')
+
+@login_required
+def add_to_cart(request):
+    if request.method == 'POST':
+        product_id = request.POST.get('product_id')
+        product = get_object_or_404(Product, id=product_id)
+        cart_item, created = CartItem.objects.get_or_create(
+            user=request.user,
+            product=product,
+            defaults={'quantity': 1}
+        )
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+        messages.success(request, f'{product.title} added to cart!')
+    return redirect('store:cart')
+
+@login_required
+def update_cart(request):
+    if request.method == 'POST':
+        item_id = request.POST.get('item_id')
+        action = request.POST.get('action')
+        try:
+            item = CartItem.objects.get(id=item_id, user=request.user)
+            if action == 'increase':
+                item.quantity += 1
+            elif action == 'decrease' and item.quantity > 1:
+                item.quantity -= 1
+            item.save()
+            messages.success(request, 'Cart updated!')
+        except CartItem.DoesNotExist:
+            messages.error(request, 'Item not found.')
+    return redirect('store:cart')
+
+@login_required
+def remove_from_cart(request):
+    if request.method == 'POST':
+        item_id = request.POST.get('item_id')
+        try:
+            item = CartItem.objects.get(id=item_id, user=request.user)
+            item.delete()
+            messages.success(request, 'Item removed from cart!')
+        except CartItem.DoesNotExist:
+            pass
+    return redirect('store:cart')
+
+@login_required
+def cart_count(request):
+    """
+    Return cart item count as JSON for navbar badge.
+    """
+    count = CartItem.objects.filter(user=request.user).count()
+    return JsonResponse({'count': count})
+
+@login_required
+def cart_summary(request):
+    """
+    Return cart count and grandtotal as JSON for navbar.
+    """
+    cart_items = CartItem.objects.filter(user=request.user)
+    count = cart_items.count()
+    grandtotal = sum(item.total_price() for item in cart_items)
+    return JsonResponse({
+        'count': count,
+        'grandtotal': str(grandtotal),
+    })
+
+
+def logoutuser(request):
+    logout(request)
+    messages.info(request, 'Logged out successfully.')
+    return redirect('store:home')
+
+def signup(request):
+    if request.user.is_authenticated:
+        return redirect('store:dashboard')
+
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST, request.FILES)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+
+            profile = UserProfile.objects.get(user=user)
+            profile.age = form.cleaned_data.get('age')
+            profile.address = form.cleaned_data.get('address')
+            profile.state = form.cleaned_data.get('state')
+            profile.save()
+
+            normalized_phone = form.cleaned_data.get('phone_number')
+            request.session['signup_user_id'] = user.id
+            request.session['signup_phone'] = normalized_phone
+            request.session['email_verified'] = False
+            request.session['email_otp_resend_at'] = timezone.now().isoformat()
+
+            messages.success(request, 'Account created. Please verify your email address with the code we sent.')
+            return redirect('store:verify_email_otp')
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'registration/signup.html', {'form': form})
+
+
+def verify_email_otp_view(request):
+    signup_user_id = request.session.get('signup_user_id')
+    if not signup_user_id:
+        messages.error(request, 'Your session expired. Please sign up again.')
+        return redirect('store:signup')
+
+    user = get_object_or_404(User, id=signup_user_id, is_active=False)
+
+    if request.method == 'POST':
+        form = OTPVerificationForm(request.POST, user=user)
+        if form.is_valid():
+            latest_otp = user.otps.filter(is_latest=True).first()
+            if latest_otp:
+                latest_otp.is_used = True
+                latest_otp.save()
+
+            request.session['email_verified'] = True
+            messages.success(request, 'Email verified successfully. Now verify your phone number.')
+            return redirect('store:verify_signup_phone_otp')
+    else:
+        form = OTPVerificationForm(user=user)
+
+    return render(request, 'registration/verify_email_otp.html', {
+        'form': form,
+        'user_email': user.email,
+    })
+
+
+def send_signup_phone_otp(request, phone):
+    latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+    if latest_otp and not latest_otp.can_resend:
+        wait_seconds = 30 - int((timezone.now() - latest_otp.created_at).total_seconds())
+        return False, wait_seconds
+
+    otp_code = generate_otp()
+    send_otp_via_twilio(phone, otp_code)
+    create_or_update_phone_otp(phone, otp_code)
+    request.session['signup_phone_otp_sent_at'] = timezone.now().isoformat()
+    return True, None
+
+
+def verify_phone_otp_view(request):
+    signup_user_id = request.session.get('signup_user_id')
+    email_verified = request.session.get('email_verified')
+    phone = request.session.get('signup_phone')
+
+    if not signup_user_id or not email_verified or not phone:
+        messages.error(request, 'Please complete signup and email verification first.')
+        return redirect('store:signup')
+
+    user = get_object_or_404(User, id=signup_user_id, is_active=False)
+    latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+
+    if request.method == 'POST':
+        form = PhoneOTPForm(request.POST)
+        if form.is_valid():
+            otp_input = form.cleaned_data['otp']
+            if not latest_otp:
+                messages.error(request, 'No OTP request found. Please resend the code.')
+                return render(request, 'registration/verify_phone_otp.html', {
+                    'form': form,
+                    'phone': phone,
+                })
+
+            if latest_otp.is_expired:
+                messages.error(request, 'OTP expired. Please resend a new code.')
+                return render(request, 'registration/verify_phone_otp.html', {
+                    'form': form,
+                    'phone': phone,
+                })
+
+            if latest_otp.attempts >= 3:
+                messages.error(request, 'Maximum OTP attempts reached. Please resend a new code.')
+                return render(request, 'registration/verify_phone_otp.html', {
+                    'form': form,
+                    'phone': phone,
+                })
+
+            if otp_input != latest_otp.otp:
+                latest_otp.attempts += 1
+                latest_otp.save()
+                remaining = max(0, 3 - latest_otp.attempts)
+                messages.error(request, f'Invalid Phone OTP. You have {remaining} attempt(s) left.')
+                return render(request, 'registration/verify_phone_otp.html', {
+                    'form': form,
+                    'phone': phone,
+                })
+
+            # Check if phone number is already taken by another user
+            existing_profile = Profile.objects.filter(phone_number=phone).exclude(user=user).first()
+            if existing_profile:
+                messages.error(request, 'This phone number is already registered to another account. Please use a different phone number.')
+                return redirect('store:signup')
+
+            latest_otp.attempts += 1
+            latest_otp.save()
+            user.is_active = True
+            user.save()
+
+            profile, _ = Profile.objects.get_or_create(user=user)
+            profile.phone_number = phone
+            profile.is_email_verified = True
+            profile.is_phone_verified = True
+            try:
+                profile.save()
+            except IntegrityError:
+                messages.error(request, 'This phone number is already in use. Please try signing up with a different phone number.')
+                return redirect('store:signup')
+
+            user_profile = UserProfile.objects.get_or_create(user=user)[0]
+            user_profile.phone_number = phone
+            user_profile.save()
+
+            login(request, user)
+            request.session.pop('signup_user_id', None)
+            request.session.pop('signup_phone', None)
+            request.session.pop('email_verified', None)
+            request.session.pop('email_otp_resend_at', None)
+            request.session.pop('signup_phone_otp_sent_at', None)
+
+            messages.success(request, 'Phone verified and account activated. Welcome to GroceryHub!')
+            return redirect('store:dashboard')
+    else:
+        form = PhoneOTPForm()
+        if not latest_otp:
+            try:
+                success, wait_seconds = send_signup_phone_otp(request, phone)
+                if not success:
+                    messages.warning(request, f'Please wait {wait_seconds} seconds before requesting a new code.')
+                latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+            except Exception:
+                logger.exception('Failed to send signup phone OTP for %s', phone)
+                messages.error(request, 'Unable to send phone OTP right now. Please try again later.')
+
+    return render(request, 'registration/verify_phone_otp.html', {
+        'form': form,
+        'phone': phone,
+    })
+
+
+def resend_email_otp_view(request):
+    if request.method != 'POST':
+        return HttpResponseBadRequest('POST required.')
+
+    signup_user_id = request.session.get('signup_user_id')
+    if not signup_user_id:
+        return JsonResponse({'success': False, 'error': 'Session expired. Please sign up again.'}, status=400)
+
+    user = get_object_or_404(User, id=signup_user_id, is_active=False)
+    now = timezone.now()
+    last_resend = request.session.get('email_otp_resend_at')
+    if last_resend:
+        last_resend = timezone.datetime.fromisoformat(last_resend)
+        if (now - last_resend).seconds < 30:
+            remaining = 30 - (now - last_resend).seconds
+            return JsonResponse({'success': False, 'error': f'Please wait {remaining}s before resending.'}, status=429)
+
+    try:
+        generate_and_send_otp(user)
+        request.session['email_otp_resend_at'] = now.isoformat()
+        return JsonResponse({'success': True, 'message': 'Email OTP resent successfully.'})
+    except Exception:
+        logger.exception('Failed to resend email OTP for %s', user.email)
+        return JsonResponse({'success': False, 'error': 'Unable to resend OTP right now.'}, status=500)
+
+
+def resend_phone_otp_view(request):
+    if request.method != 'POST':
+        return HttpResponseBadRequest('POST required.')
+
+    phone = request.session.get('signup_phone')
+    if not phone:
+        return JsonResponse({'success': False, 'error': 'Session expired. Please sign up again.'}, status=400)
+
+    latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+    if latest_otp and not latest_otp.can_resend:
+        wait_seconds = 30 - int((timezone.now() - latest_otp.created_at).total_seconds())
+        return JsonResponse({'success': False, 'error': f'Please wait {wait_seconds} seconds before resending.'}, status=429)
+
+    otp_code = generate_otp()
+    try:
+        send_otp_via_twilio(phone, otp_code)
+        create_or_update_phone_otp(phone, otp_code)
+        request.session['signup_phone_otp_sent_at'] = timezone.now().isoformat()
+        return JsonResponse({'success': True, 'message': 'Phone OTP resent successfully.'})
+    except Exception:
+        logger.exception('Twilio resend failed for %s', phone)
+        return JsonResponse({'success': False, 'error': 'Unable to resend OTP right now.'}, status=500)
+
+
+def verify_otp(request, username):
+    try:
+        user = User.objects.get(username=username, is_active=False)
+    except User.DoesNotExist:
+        messages.error(request, 'User not found or already verified.')
+        return redirect('store:signup')
+    
+    if request.method == 'POST':
+        form = OTPVerificationForm(request.POST, user=user)
+        if form.is_valid():
+            # Activate user
+            user.is_active = True
+            user.save()
+            
+            # Mark OTP as used
+            latest_otp = user.otps.filter(is_latest=True).first()
+            if latest_otp:
+                latest_otp.is_used = True
+                latest_otp.save()
+            
+            login(request, user)
+            messages.success(request, 'Email verified successfully! Welcome to GroceryHub.')
+            return redirect('store:profile')
+    else:
+        form = OTPVerificationForm(user=user)
+    
+    context = {
+        'form': form,
+        'username': username,
+        'user_email': user.email,
+    }
+    return render(request, 'registration/verify_otp.html', context)
+
+
+@require_http_methods(["POST"])
+def resend_otp(request):
+    username = request.POST.get('username')
+    try:
+        user = User.objects.get(username=username, is_active=False)
+    except User.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'User not found.'}, status=404)
+    
+    # Cooldown check (simple session based)
+    now = timezone.now()
+    last_resend = request.session.get('otp_resend_time', None)
+    if last_resend and (now - last_resend).seconds < 30:
+        remaining = 30 - (now - last_resend).seconds
+        return JsonResponse({
+            'success': False, 
+            'error': f'Please wait {remaining}s before resending.'
+        })
+    
+    try:
+        generate_and_send_otp(user)
+        request.session['otp_resend_time'] = now
+        return JsonResponse({'success': True, 'message': 'New OTP sent to your email!'})
+    except Exception as e:
+        logger.error(f"Resend OTP error: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Failed to send OTP.'}, status=500)
+
+
+@login_required
+def profile(request):
+    profile = request.user.userprofile
+    recent_orders = Order.objects.filter(user=request.user).order_by('-created_at')[:3]
+    context = {
+        'profile': profile,
+        'recent_orders': recent_orders,
+        'total_orders': Order.objects.filter(user=request.user).count()
+    }
+    return render(request, 'profile.html', context)
+
+@login_required
+def edit_profile(request):
+    profile = request.user.userprofile
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated!')
+            return redirect('store:profile')
+    else:
+        form = ProfileForm(instance=profile)
+    return render(request, 'edit_profile.html', {'form': form})
+
+@login_required
+def checkout(request):
+    cart_items = CartItem.objects.filter(user=request.user)
+    if not cart_items:
+        messages.error(request, 'Your cart is empty.')
+        return redirect('store:cart')
+
+    total = sum(item.total_price() for item in cart_items)
+    initial_data = dict(request.session.get('checkout_location', {}))
+
+    if not initial_data.get('phone'):
+        profile_phone = None
+        user_profile = getattr(request.user, 'userprofile', None)
+        if user_profile and user_profile.phone_number:
+            profile_phone = user_profile.phone_number
+        else:
+            phone_profile = getattr(request.user, 'phone_profile', None)
+            if phone_profile and phone_profile.phone_number:
+                profile_phone = phone_profile.phone_number
+
+        if profile_phone:
+            initial_data['phone'] = profile_phone
+
+    if request.method == 'POST':
+        form = CheckoutShippingForm(request.POST)
+        if form.is_valid():
+            checkout_shipping = form.cleaned_data.copy()
+            latitude = checkout_shipping.get('latitude')
+            longitude = checkout_shipping.get('longitude')
+            if isinstance(latitude, Decimal):
+                checkout_shipping['latitude'] = str(latitude)
+            if isinstance(longitude, Decimal):
+                checkout_shipping['longitude'] = str(longitude)
+
+            request.session['checkout_shipping'] = checkout_shipping
+            request.session['checkout_total'] = str(total)
+            request.session['checkout_items'] = [
+                {'product': item.product.id, 'quantity': item.quantity} for item in cart_items
+            ]
+            messages.success(request, 'Shipping details saved. Proceed to payment.')
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True})
+            return redirect('store:checkout')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+            messages.error(request, 'Please correct shipping details.')
+    else:
+        form = CheckoutShippingForm(initial=initial_data)
+
+    context = {
+        'form': form,
+        'total': total,
+        'cart_items': cart_items,
+        'STRIPE_PUBLISHABLE_KEY': settings.STRIPE_PUBLISHABLE_KEY,
+    }
+    return render(request, 'checkout.html', context)
+
+@login_required
+@require_http_methods(['POST'])
+def checkout_save_location(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+        latitude = payload.get('latitude')
+        longitude = payload.get('longitude')
+
+        if latitude is None or longitude is None:
+            return JsonResponse({'success': False, 'error': 'Latitude and longitude are required.'}, status=400)
+
+        lat = float(latitude)
+        lon = float(longitude)
+        nominatim_url = (
+            f'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat}&lon={lon}&addressdetails=1'
+        )
+        request_obj = urllib_request.Request(
+            nominatim_url,
+            headers={'User-Agent': 'GroceryHub/1.0'}
+        )
+
+        with urllib_request.urlopen(request_obj, timeout=10) as response:
+            data = json.loads(response.read().decode('utf-8'))
+
+        display_name = data.get('display_name', '')
+        address_data = data.get('address', {})
+        city = address_data.get('city') or address_data.get('town') or address_data.get('village') or ''
+        state_name = address_data.get('state') or address_data.get('region') or ''
+        pincode = address_data.get('postcode', '')
+
+        location_info = {
+            'address_line1': display_name,
+            'city': city,
+            'pincode': pincode,
+            'latitude': str(lat),
+            'longitude': str(lon),
+        }
+        request.session['checkout_location'] = location_info
+        checkout_shipping = request.session.get('checkout_shipping', {})
+        checkout_shipping.update(location_info)
+        request.session['checkout_shipping'] = checkout_shipping
+
+        return JsonResponse({
+            'success': True,
+            'address': display_name,
+            'city': city,
+            'state_name': state_name,
+            'pincode': pincode,
+        })
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Invalid coordinates provided.'}, status=400)
+    except Exception as exc:
+        logger.error(f"Location save failed: {str(exc)}")
+        return JsonResponse({'success': False, 'error': 'Unable to fetch location details. Please enter address manually.'}, status=500)
+
+@login_required
+def create_session(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST only'}, status=405)
+    
+    # Get from session
+    shipping_data = request.session.get('checkout_shipping', {})
+    total_str = request.session.get('checkout_total', '0')
+    items_data = request.session.get('checkout_items', [])
+    
+    try:
+        total = float(total_str)
+    except:
+        return JsonResponse({'error': 'Invalid total'}, status=400)
+    
+    if not items_data:
+        return JsonResponse({'error': 'No cart items'}, status=400)
+    
+    # Get cart_items
+    cart_items = CartItem.objects.filter(user=request.user, product_id__in=[item['product'] for item in items_data])
+    if len(cart_items) != len(items_data):
+        return JsonResponse({'error': 'Cart mismatch'}, status=400)
+    
+    # Stripe setup
+    stripe_secret_key = getattr(settings, 'STRIPE_SECRET_KEY', None)
+    if not stripe_secret_key:
+        return JsonResponse({'error': 'Stripe not configured'}, status=500)
+    
+    import re
+    if not re.match(r'^sk_(test|live)_[0-9a-zA-Z]{24,}$', stripe_secret_key):
+        logger.error(f"Invalid Stripe key: {stripe_secret_key[:10]}...")
+        return JsonResponse({'error': 'Invalid Stripe key'}, status=500)
+    
+    stripe.api_key = stripe_secret_key
+    currency = getattr(settings, 'STRIPE_CURRENCY', 'inr')
+    
+    latitude = None
+    longitude = None
+    try:
+        latitude = float(shipping_data.get('latitude')) if shipping_data.get('latitude') else None
+        longitude = float(shipping_data.get('longitude')) if shipping_data.get('longitude') else None
+    except (TypeError, ValueError):
+        latitude = None
+        longitude = None
+
+    try:
+        # Create order
+        order = Order.objects.create(
+            user=request.user,
+            total_amount=total,
+            address=shipping_data.get('address_line1', ''),
+            latitude=latitude,
+            longitude=longitude,
+            address_line1=shipping_data.get('address_line1', ''),
+            city=shipping_data.get('city', ''),
+            state=shipping_data.get('state', ''),
+            pincode=shipping_data.get('pincode', ''),
+            phone=shipping_data.get('phone', ''),
+        )
+        
+        # Create order items
+        for item_data in items_data:
+            cart_item = cart_items.get(product_id=item_data['product'])
+            if cart_item.quantity != item_data['quantity']:
+                raise ValueError('Quantity mismatch')
+            OrderItem.objects.create(
+                order=order,
+                product=cart_item.product,
+                quantity=cart_item.quantity,
+                price=cart_item.product.get_price(),
+            )
+        
+        cart_items.delete()  # Clear cart
+        
+        # Stripe session
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': currency,
+                        'product_data': {
+                            'name': f'Order #{order.id} - GroceryHub',
+                        },
+                        'unit_amount': int(total * 100),
+                    },
+                    'quantity': 1,
+                }
+            ],
+            mode='payment',
+            success_url=request.build_absolute_uri(f'/checkout/success/{order.id}/'),
+            cancel_url=request.build_absolute_uri('/checkout/cancel/'),
+            metadata={
+                'user_id': str(request.user.id),
+                'order_id': str(order.id),
+            },
+        )
+        
+        order.stripe_session_id = session.id
+        order.save()
+        
+        logger.info(f"Stripe session created for order {order.id}")
+        
+    except Exception as e:
+        logger.error(f"Checkout error: {str(e)}")
+        if 'order' in locals():
+            order.delete()
+        return JsonResponse({'error': 'Checkout failed: ' + str(e)}, status=500)
+    
+    return JsonResponse({'url': session.url})
+
+def checkout_success(request, order_id):
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    if order.status != 'paid':
+        messages.warning(request, 'Order payment is still processing.')
+    context = {'order': order}
+    return render(request, 'payment/success.html', context)
+
+def checkout_cancel(request):
+    messages.error(request, 'Payment cancelled.')
+    return render(request, 'payment/cancel.html')
+
+@csrf_exempt
+def stripe_webhook(request):
+    stripe_secret_key = getattr(settings, 'STRIPE_SECRET_KEY', None)
+    if not stripe_secret_key:
+        return JsonResponse({'error': 'Config error'}, status=500)
+    
+    stripe.api_key = stripe_secret_key
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, getattr(settings, 'STRIPE_WEBHOOK_SECRET', '')
+        )
+    except ValueError:
+        return JsonResponse({'error': 'Invalid payload'}, status=400)
+    except stripe.error.SignatureVerificationError:
+        return JsonResponse({'error': 'Invalid signature'}, status=400)
+    
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        try:
+            order = Order.objects.get(stripe_session_id=session['id'])
+            order.status = 'paid'
+            order.save()
+            # TODO: Deduct stock, send email
+            logger.info(f"Order {order.id} marked as paid")
+        except Order.DoesNotExist:
+            logger.error("Order not found for session")
+    
+    return JsonResponse({'status': 'success'})
+
+
+def about(request):
+    return render(request, 'about.html')
+
+
+def contact(request):
+    return render(request, 'contact.html')
+

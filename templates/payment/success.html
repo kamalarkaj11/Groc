@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Payment Success - GroceryHub{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --glass-bg: rgba(255, 255, 255, 0.25);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --shadow-xl: 0 25px 45px rgba(0,0,0,0.1);
+    --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.5);
+  }
+
+  .hero-section {
+    min-height: 70vh;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1.5" fill="white" opacity="0.05"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grain)"/></svg>');
+    pointer-events: none;
+  }
+
+  .glass-hero {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: var(--shadow-xl);
+    position: relative;
+    z-index: 2;
+    animation: floatIn 1s ease-out;
+  }
+
+  @keyframes floatIn {
+    from {
+      opacity: 0;
+      transform: translateY(30px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .success-icon {
+    background: var(--gradient-success);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 10px 20px rgba(56, 239, 125, 0.3));
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .glass-card-mini {
+    background: var(--glass-bg);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+  }
+
+  .glass-card-mini:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  }
+
+  .btn-gradient-success {
+    background: var(--gradient-success);
+    border: none;
+    border-radius: 12px;
+    padding: 14px 28px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(56, 239, 125, 0.4);
+  }
+
+  .btn-gradient-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(56, 239, 125, 0.6);
+  }
+
+  .order-item {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 12px 0;
+  }
+
+  .progress-glow {
+    background: var(--gradient-primary);
+    height: 6px;
+    border-radius: 3px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress-glow::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    100% { left: 100%; }
+  }
+
+  .testimonial {
+    background: rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+</style>
+
+<div class="hero-section py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10 col-xl-8">
+        <div class="glass-hero p-5 p-lg-7 text-center">
+          <!-- Success Icon & Header -->
+          <div class="mb-5">
+            <i class="bi bi-check-circle-fill display-1 success-icon mb-4"></i>
+            <h1 class="display-4 fw-bold mb-3 lh-1">Order Confirmed!</h1>
+            <p class="lead text-muted mb-0">Your payment was successful. Get ready for delicious groceries delivered to your door!</p>
+          </div>
+
+          <!-- Order Summary -->
+          <div class="row g-4 mb-5">
+            <div class="col-md-6">
+              <div class="glass-card-mini p-4">
+                <h5 class="mb-3"><i class="bi bi-receipt text-success me-2"></i>Order Summary</h5>
+                <div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Order ID:</span>
+                    <strong><span class="badge bg-success">{{ order.id }}</span></strong>
+                  </div>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>Date:</span>
+                    <span>{{ order.created_at|date:"M d, Y h:i A" }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between mb-3">
+                    <span>Total Items:</span>
+                    <span>{{ order.items.count }}</span>
+                  </div>
+                  <div class="h5 fw-bold text-success">
+                    ₹{{ order.total_amount|floatformat:2 }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="glass-card-mini p-4">
+                <h5 class="mb-3"><i class="bi bi-credit-card text-primary me-2"></i>Payment Details</h5>
+                <p class="small text-muted mb-2">Method: <strong>Card **** {{ order.payment.last4 }}</strong></p>
+                <p class="small text-muted mb-0">Status: <span class="badge bg-success fs-6">✓ Paid</span></p>
+                <div class="progress-glow mt-3">
+                  <div class="progress-bar w-100 bg-success" role="progressbar"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Delivery Info -->
+          {% if order.address %}
+          <div class="glass-card-mini p-4 mb-5 mx-auto" style="max-width: 500px;">
+            <h5 class="mb-3"><i class="bi bi-truck text-warning me-2"></i>Delivery Information</h5>
+            <div class="row text-start">
+              <div class="col-3"><strong>Name:</strong></div>
+              <div class="col-9">{{ order.address.name }}</div>
+              <div class="col-3"><strong>Address:</strong></div>
+              <div class="col-9">{{ order.address.address_line1 }}{% if order.address.address_line2 %}, {{ order.address.address_line2 }}{% endif %}</div>
+              <div class="col-3"><strong>City:</strong></div>
+              <div class="col-9">{{ order.address.city }} {{ order.address.state }}  {{ order.address.pincode }}</div>
+              <div class="col-3"><strong>Phone:</strong></div>
+              <div class="col-9">{{ order.address.phone }}</div>
+            </div>
+            <div class="progress-glow mt-3 mb-0">
+              <div class="progress-bar w-40 bg-warning" role="progressbar" style="animation-delay: 1s;">Preparing...</div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Quick Order Items Preview -->
+          {% if order.items.all %}
+          <div class="glass-card-mini p-4 mb-5">
+            <h5 class="mb-4"><i class="bi bi-basket2-fill text-success me-2"></i>Your Order Items</h5>
+            <div class="row g-3">
+              {% for item in order.items.all|slice:":3" %}
+              <div class="col-12">
+                <div class="order-item d-flex align-items-center">
+                  <div class="flex-shrink-0">
+                    {% if item.product.image %}
+                    <img src="{{ item.product.image.url }}" class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                    {% else %}
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px;">
+                      <i class="bi bi-basket text-muted fs-6"></i>
+                    </div>
+                    {% endif %}
+                  </div>
+                  <div class="flex-grow-1">
+                    <div class="fw-semibold">{{ item.product.title }}</div>
+                    <small class="text-muted">Qty: {{ item.quantity }} × ₹{{ item.price|floatformat:0 }}</small>
+                  </div>
+                  <strong class="text-success">₹{{ item.total_price|floatformat:0 }}</strong>
+                </div>
+              </div>
+              {% endfor %}
+              {% if order.items.count > 3 %}
+              <div class="col-12 mt-2">
+                <small class="text-muted">... and {{ order.items.count|add:"-3" }} more items</small>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Customer Love Section -->
+          <div class="row g-4 mb-5">
+            <div class="col-md-4">
+              <div class="glass-card-mini p-4 text-center">
+                <i class="bi bi-shield-check display-6 text-success mb-3"></i>
+                <h6 class="fw-bold">100% Secure</h6>
+                <small class="text-muted">Your payment info is protected</small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="glass-card-mini p-4 text-center">
+                <i class="bi bi-arrow-clockwise display-6 text-primary mb-3"></i>
+                <h6 class="fw-bold">Fast Delivery</h6>
+                <small class="text-muted">Usually within 2-4 hours</small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="glass-card-mini p-4 text-center">
+                <i class="bi bi-headset display-6 text-info mb-3"></i>
+                <h6 class="fw-bold">24/7 Support</h6>
+                <small class="text-muted">Contact us anytime</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Testimonials -->
+          <div class="testimonial mx-auto" style="max-width: 600px;">
+            <div class="row align-items-center">
+              <div class="col-md-3 text-md-end">
+                <div class="bg-warning bg-opacity-20 rounded-circle d-inline-flex p-3 mx-md-3 mb-3 mb-md-0">
+                  <i class="bi bi-star-fill text-warning fs-4"></i>
+                  <i class="bi bi-star-fill text-warning fs-4"></i>
+                  <i class="bi bi-star-fill text-warning fs-4"></i>
+                  <i class="bi bi-star-fill text-warning fs-4"></i>
+                  <i class="bi bi-star-fill text-warning fs-4"></i>
+                </div>
+              </div>
+              <div class="col-md-9">
+                <p class="mb-2">"Lightning fast delivery and fresh groceries! Will definitely order again."</p>
+                <div class="d-flex align-items-center">
+                  <div class="bg-light rounded-circle me-3" style="width: 40px; height: 40px;"></div>
+                  <div>
+                    <div class="fw-semibold">Priya Sharma</div>
+                    <small class="text-muted">Happy Customer</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTA Buttons -->
+          <div class="d-grid d-md-flex gap-3 justify-content-center">
+            <a href="{% url 'store:product_list' %}" class="btn btn-gradient-success btn-lg px-5 py-3 flex-fill">
+              <i class="bi bi-shop me-2"></i>Continue Shopping
+            </a>
+            <a href="{% url 'store:profile' %}" class="btn btn-outline-success btn-lg px-5 py-3">
+              <i class="bi bi-person-lines-fill me-2"></i>View Orders
+            </a>
+            <a href="{% url 'store:product_list' %}?category=vegetables" class="btn btn-outline-primary btn-lg px-5 py-3">
+              <i class="bi bi-basket2 me-2"></i>Reorder Favorites
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Track Order Modal -->
+<div class="modal fade" id="trackModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-card-mini">
+      <div class="modal-header border-0">
+        <h5 class="modal-title"><i class="bi bi-map me-2 text-primary"></i>Track Your Order</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center py-5">
+        <i class="bi bi-search display-4 text-muted mb-4"></i>
+        <p class="lead">Track your order status in real-time from your profile dashboard.</p>
+        <a href="{% url 'store:profile' %}" class="btn btn-primary">Go to Orders</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-open track modal after 5 seconds (optional)
+setTimeout(() => {
+  // new bootstrap.Modal(document.getElementById('trackModal')).show();
+}, 5000);
+
+// Confetti effect on load
+// Add confetti.js or simple canvas confetti if desired
+</script>
+{% endblock %}

@@ -1,0 +1,316 @@
+/* Centralized Responsive Styles for GroceryHub - Compiled for full responsiveness */
+
+/* Global Resets & Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', -apple-system, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure all images are responsive */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.table-responsive table {
+  min-width: 100%;
+}
+
+/* Custom Button Styles - Enhanced from base.html for all pages */
+.btn {
+  position: relative;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  overflow: hidden;
+  border: none;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.6s;
+}
+
+.btn:hover::before {
+  left: 100%;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+/* Gradient Primary (main action buttons) */
+.btn-gradient,
+.btn.btn-primary,
+.btn.btn-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 50%, #17a2b8 100%);
+  color: white;
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.btn-gradient:hover,
+.btn.btn-primary:hover,
+.btn.btn-success:hover {
+  background: linear-gradient(135deg, #218838 0%, #28a745 50%, #1bb3c1 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(40, 167, 69, 0.6);
+}
+
+/* Outline buttons */
+.btn-outline-primary,
+.btn-outline-success,
+.btn-outline-secondary {
+  background: transparent;
+  color: #28a745;
+  border: 2px solid #28a745;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-success:hover,
+.btn-outline-secondary:hover {
+  background: #28a745;
+  color: white;
+  transform: translateY(-3px);
+}
+
+/* Danger/Remove */
+.btn-danger,
+.btn-outline-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #ff4757 100%);
+  color: white;
+  border: none;
+}
+
+.btn-outline-danger {
+  background: transparent;
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover,
+.btn-outline-danger:hover {
+  background: linear-gradient(135deg, #c82333 0%, #e74c3c 100%);
+  transform: translateY(-3px);
+}
+
+/* Sizes */
+.btn-lg {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  min-height: 56px;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  min-height: 40px;
+}
+
+/* Quantity controls */
+.qty-btn,
+.qty-control .btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qty-btn:active {
+  transform: scale(0.95);
+}
+
+/* Links styled as buttons */
+a.btn {
+  text-decoration: none;
+}
+
+a.btn:hover {
+  color: inherit;
+}
+
+/* Responsive Button Adjustments */
+@media (max-width: 768px) {
+  .btn,
+  a.btn {
+    padding: 0.75rem 1.25rem;
+    min-height: 44px;
+    font-size: 0.95rem;
+  }
+  
+  .btn-lg {
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+  }
+  
+  .qty-control {
+    flex-wrap: wrap;
+  }
+}
+
+/* Loading state */
+.btn.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.btn.loading::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: 0.5rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Card Enhancements for Products */
+.card {
+  border-radius: 15px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+}
+
+.card-img-top {
+  height: 200px;
+  object-fit: cover;
+}
+
+/* Responsive Grid Overrides */
+@media (max-width: 576px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Form Controls Responsive */
+.form-control,
+.form-select {
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .form-control-lg,
+  .form-select-lg {
+    font-size: 1rem;
+  }
+}
+
+/* Navbar & Header Complements (non-conflicting) */
+.navbar-toggler {
+  border: 2px solid #28a745;
+}
+
+.navbar-toggler:focus {
+  box-shadow: 0 0 0 0.25rem rgba(40,167,69,0.25);
+}
+
+/* Ensure consistent spacing */
+.section-padding {
+  padding: 5rem 0;
+}
+
+@media (max-width: 768px) {
+  .section-padding {
+    padding: 3rem 0;
+  }
+}
+
+/* Print styles */
+@media print {
+  .btn,
+  .card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Toast Notifications */
+.toast-notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  min-width: 280px;
+  max-width: 400px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+  transform: translateX(120%);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.toast-notification.show {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.toast-notification.success {
+  background: linear-gradient(135deg, #198754, #20c997);
+}
+
+.toast-notification.error {
+  background: linear-gradient(135deg, #dc3545, #ff4757);
+}
+
+.toast-notification.info {
+  background: linear-gradient(135deg, #0d6efd, #17a2b8);
+}
+
+@media (max-width: 575px) {
+  .toast-notification {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    min-width: auto;
+    max-width: none;
+  }
+}
+

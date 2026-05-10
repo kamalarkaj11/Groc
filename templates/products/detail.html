@@ -1,0 +1,963 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.title }} - GroceryHub{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --pd-green: #198754;
+    --pd-mint: #20c997;
+    --pd-yellow: #ffc857;
+    --pd-orange: #ff8a3d;
+    --pd-ink: #18251f;
+    --pd-muted: #66736c;
+    --pd-soft: #f4fbf7;
+    --pd-line: rgba(25, 135, 84, 0.16);
+    --pd-shadow: 0 18px 45px rgba(18, 55, 38, 0.12);
+  }
+
+  main.container {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .product-page {
+    color: var(--pd-ink);
+    background:
+      radial-gradient(circle at top left, rgba(255, 200, 87, 0.16), transparent 30rem),
+      linear-gradient(180deg, #ffffff 0%, #f7fbf8 56%, #ffffff 100%);
+  }
+
+  .pd-container {
+    width: min(1140px, calc(100% - 32px));
+    margin: 0 auto;
+  }
+
+  .pd-hero {
+    padding: 54px 0 42px;
+  }
+
+  .breadcrumb-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 24px;
+    color: var(--pd-muted);
+    font-size: 0.92rem;
+    font-weight: 750;
+  }
+
+  .breadcrumb-row a {
+    color: var(--pd-green);
+    text-decoration: none;
+  }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1fr);
+    gap: 34px;
+    align-items: start;
+  }
+
+  .panel {
+    border: 1px solid var(--pd-line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: var(--pd-shadow);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .panel:hover {
+    box-shadow: 0 20px 50px rgba(18, 55, 38, 0.15);
+  }
+
+  .media-panel {
+    position: sticky;
+    top: 110px;
+    overflow: hidden;
+    padding: 18px;
+  }
+
+  .product-media {
+    position: relative;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    min-height: 520px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #eef8f1, #ffffff);
+  }
+
+  .product-media img {
+    width: 100%;
+    height: 520px;
+    object-fit: cover;
+    border-radius: 8px;
+    transition: transform 0.3s ease;
+  }
+
+  .product-media:hover img {
+    transform: scale(1.05);
+  }
+
+  .product-placeholder {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 520px;
+    color: var(--pd-green);
+    font-size: 5rem;
+  }
+
+  .media-badge {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    color: #183523;
+    background: var(--pd-yellow);
+    font-size: 0.78rem;
+    font-weight: 900;
+  }
+
+  .summary-panel {
+    padding: clamp(24px, 4vw, 38px);
+  }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--pd-line);
+    color: var(--pd-green);
+    background: rgba(25, 135, 84, 0.08);
+    font-size: 0.82rem;
+    font-weight: 850;
+  }
+
+  .stock-pill {
+    margin-left: auto;
+    color: #fff;
+    background: var(--pd-green);
+    border-color: transparent;
+  }
+
+  .stock-pill.out {
+    background: #dc3545;
+  }
+
+  .product-title {
+    margin: 0 0 14px;
+    font-size: clamp(2.35rem, 5vw, 4.4rem);
+    font-weight: 950;
+    line-height: 0.98;
+    letter-spacing: 0;
+  }
+
+  .rating-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    color: var(--pd-muted);
+    font-weight: 750;
+  }
+
+  .stars {
+    display: inline-flex;
+    gap: 2px;
+    color: #f4b400;
+    letter-spacing: 0;
+  }
+
+  .price-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+    padding: 18px;
+    border: 1px solid var(--pd-line);
+    border-radius: 8px;
+    background: var(--pd-soft);
+  }
+
+  .current-price {
+    color: var(--pd-green);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 950;
+    line-height: 1;
+  }
+
+  .old-price {
+    color: var(--pd-muted);
+    font-size: 1.2rem;
+    font-weight: 800;
+    text-decoration: line-through;
+  }
+
+  .discount-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 12px;
+    border-radius: 999px;
+    color: #183523;
+    background: var(--pd-yellow);
+    font-weight: 900;
+  }
+
+  .cart-form {
+    margin: 26px 0;
+  }
+
+  .cart-controls {
+    display: grid;
+    grid-template-columns: 170px 1fr;
+    gap: 14px;
+    align-items: end;
+  }
+
+  .quantity-box label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--pd-muted);
+    font-weight: 850;
+  }
+
+  .qty-control {
+    display: grid;
+    grid-template-columns: 44px 1fr 44px;
+    overflow: hidden;
+    border: 1px solid var(--pd-line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .qty-control button,
+  .qty-control input {
+    height: 48px;
+    border: 0;
+    background: transparent;
+  }
+
+  .qty-control button {
+    color: var(--pd-green);
+    font-size: 1.1rem;
+  }
+
+  .qty-control input {
+    min-width: 0;
+    text-align: center;
+    font-weight: 900;
+    outline: none;
+  }
+
+  .add-cart-btn,
+  .review-btn,
+  .back-btn,
+  .related-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 48px;
+    border: 0;
+    border-radius: 8px;
+    padding: 12px 18px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--pd-green), var(--pd-mint));
+    font-weight: 900;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .add-cart-btn {
+    width: 100%;
+    min-height: 56px;
+    font-size: 1.05rem;
+    box-shadow: 0 14px 28px rgba(25, 135, 84, 0.24);
+  }
+
+  .add-cart-btn:hover,
+  .review-btn:hover,
+  .back-btn:hover,
+  .related-btn:hover {
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: var(--pd-shadow);
+  }
+
+  .out-stock-card {
+    display: flex;
+    gap: 14px;
+    margin: 26px 0;
+    padding: 18px;
+    border: 1px solid rgba(220, 53, 69, 0.2);
+    border-radius: 8px;
+    color: #842029;
+    background: #f8d7da;
+  }
+
+  .mini-benefits {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  .mini-benefit {
+    padding: 14px;
+    border: 1px solid var(--pd-line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .mini-benefit i {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--pd-green);
+    font-size: 1.35rem;
+  }
+
+  .mini-benefit strong {
+    display: block;
+    font-size: 0.9rem;
+  }
+
+  .section-pad {
+    padding: 36px 0;
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 28px;
+    align-items: start;
+  }
+
+  .info-card {
+    padding: clamp(22px, 3vw, 30px);
+    margin-bottom: 22px;
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 18px;
+    color: var(--pd-ink);
+    font-size: 1.35rem;
+    font-weight: 950;
+  }
+
+  .section-heading i {
+    color: var(--pd-green);
+  }
+
+  .description-copy {
+    color: #405149;
+    font-size: 1.06rem;
+    line-height: 1.8;
+  }
+
+  .highlight-grid,
+  .spec-grid,
+  .delivery-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .highlight-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .highlight-item,
+  .spec-item,
+  .delivery-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--pd-line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .highlight-item i,
+  .spec-item i,
+  .delivery-item i {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    color: #183523;
+    background: var(--pd-yellow);
+  }
+
+  .spec-item span,
+  .delivery-item span {
+    display: block;
+    color: var(--pd-muted);
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .nutrition-table {
+    overflow: hidden;
+    border: 1px solid var(--pd-line);
+    border-radius: 8px;
+  }
+
+  .nutrition-table table {
+    margin: 0;
+  }
+
+  .nutrition-table th {
+    color: var(--pd-ink);
+    background: var(--pd-soft);
+  }
+
+  .side-panel {
+    position: sticky;
+    top: 110px;
+  }
+
+  .share-links {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .share-links a {
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--pd-line);
+    border-radius: 8px;
+    color: var(--pd-green);
+    background: #fff;
+    text-decoration: none;
+    font-size: 1.1rem;
+  }
+
+  .review-item {
+    padding: 18px;
+    border: 1px solid var(--pd-line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .review-item + .review-item {
+    margin-top: 12px;
+  }
+
+  .review-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .review-form {
+    margin-top: 22px;
+    padding-top: 22px;
+    border-top: 1px solid var(--pd-line);
+  }
+
+  .related-section {
+    padding: 48px 0 70px;
+  }
+
+  .related-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+
+  .related-title {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 950;
+  }
+
+  .related-card {
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid var(--pd-line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 10px 25px rgba(24, 37, 31, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .related-card:hover {
+    transform: translateY(-7px);
+    box-shadow: var(--pd-shadow);
+  }
+
+  .related-media {
+    position: relative;
+    height: 190px;
+    background: var(--pd-soft);
+  }
+
+  .related-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .related-placeholder {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    color: var(--pd-green);
+    font-size: 2.6rem;
+  }
+
+  .related-body {
+    padding: 18px;
+  }
+
+  .related-price {
+    color: var(--pd-green);
+    font-weight: 950;
+  }
+
+  .empty-note {
+    padding: 28px;
+    border: 1px dashed rgba(25, 135, 84, 0.32);
+    border-radius: 8px;
+    color: var(--pd-muted);
+    background: #fff;
+    text-align: center;
+  }
+
+  .back-row {
+    text-align: center;
+    padding-bottom: 70px;
+  }
+
+  @media (max-width: 991px) {
+    .product-grid,
+    .content-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .media-panel,
+    .side-panel {
+      position: static;
+    }
+
+    .product-media,
+    .product-media img,
+    .product-placeholder {
+      min-height: 420px;
+      height: 420px;
+    }
+
+    .highlight-grid,
+    .mini-benefits {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 575px) {
+    .pd-container {
+      width: min(100% - 24px, 1140px);
+    }
+
+    .pd-hero {
+      padding-top: 34px;
+    }
+
+    .cart-controls {
+      grid-template-columns: 1fr;
+    }
+
+    .product-media,
+    .product-media img,
+    .product-placeholder {
+      min-height: 320px;
+      height: 320px;
+    }
+
+    .related-head {
+      display: block;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .pd-hero {
+      padding: 40px 0 30px;
+    }
+
+    .product-grid {
+      gap: 20px;
+    }
+
+    .product-media,
+    .product-media img,
+    .product-placeholder {
+      min-height: 360px;
+      height: 360px;
+    }
+
+    .product-title {
+      font-size: clamp(1.8rem, 5vw, 2.5rem);
+    }
+
+    .current-price {
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+    }
+
+    .highlight-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mini-benefits {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="product-page">
+  <section class="pd-hero">
+    <div class="pd-container">
+      <div class="breadcrumb-row">
+        <a href="{% url 'store:home' %}">Home</a>
+        <i class="bi bi-chevron-right"></i>
+        <a href="{% url 'store:product_list' %}">Products</a>
+        <i class="bi bi-chevron-right"></i>
+        <span>{{ product.title }}</span>
+      </div>
+
+      <div class="product-grid animate__animated animate__fadeInUp">
+        <div class="panel media-panel">
+          <div class="product-media">
+            {% if product.discount_price %}
+            <span class="media-badge"><i class="bi bi-tag-fill"></i> {{ product.discount_percentage }}% OFF</span>
+            {% endif %}
+            {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.title }}">
+            {% else %}
+            <div class="product-placeholder">
+              <i class="bi bi-basket2-fill"></i>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="panel summary-panel">
+          <div class="meta-row">
+            <span class="pill"><i class="bi bi-grid"></i> {{ product.category }}</span>
+            <span class="pill"><i class="bi bi-patch-check"></i> Quality checked</span>
+            <span class="pill stock-pill {% if product.is_out_of_stock %}out{% endif %}">
+              {% if product.is_out_of_stock %}
+              <i class="bi bi-x-circle"></i> Out of Stock
+              {% else %}
+              <i class="bi bi-check-circle"></i> In Stock
+              {% endif %}
+            </span>
+          </div>
+
+          <h1 class="product-title">{{ product.title }}</h1>
+
+          <div class="rating-row">
+            <span class="stars" aria-label="{{ avg_rating }} out of 5 stars">
+              {% for i in "12345"|make_list %}
+                {% if forloop.counter <= avg_rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}
+              {% endfor %}
+            </span>
+            <span>{{ avg_rating|floatformat:1 }} rating</span>
+            <span>{{ review_count }} reviews</span>
+          </div>
+
+          <div class="price-card">
+            <span class="current-price">Rs. {{ product.get_price }}</span>
+            {% if product.discount_price %}
+            <span class="old-price">Rs. {{ product.price }}</span>
+            <span class="discount-badge"><i class="bi bi-lightning-charge-fill"></i> Limited offer</span>
+            {% endif %}
+          </div>
+
+          {% if product.is_out_of_stock %}
+          <div class="out-stock-card">
+            <i class="bi bi-bell fs-3"></i>
+            <div>
+              <h5 class="mb-1">Currently unavailable</h5>
+              <p class="mb-0">This product is out of stock. Please check back soon for fresh availability.</p>
+            </div>
+          </div>
+          {% else %}
+          <form method="post" action="{% url 'store:add_to_cart' %}" class="cart-form">
+            {% csrf_token %}
+            <input type="hidden" name="product_id" value="{{ product.id }}">
+            <div class="cart-controls">
+              <div class="quantity-box">
+                <label for="qty">Quantity</label>
+                <div class="qty-control">
+                  <button type="button" id="qty-minus" aria-label="Decrease quantity"><i class="bi bi-dash"></i></button>
+                  <input type="number" value="1" min="1" id="qty" name="qty" aria-label="Quantity">
+                  <button type="button" id="qty-plus" aria-label="Increase quantity"><i class="bi bi-plus"></i></button>
+                </div>
+              </div>
+              <button type="submit" class="add-cart-btn">
+                <i class="bi bi-cart-plus-fill"></i> Add to Cart
+              </button>
+            </div>
+          </form>
+          {% endif %}
+
+          <div class="mini-benefits">
+            <div class="mini-benefit">
+              <i class="bi bi-truck"></i>
+              <strong>Fast delivery</strong>
+              <small class="text-muted">Fresh at your door</small>
+            </div>
+            <div class="mini-benefit">
+              <i class="bi bi-shield-check"></i>
+              <strong>Freshness promise</strong>
+              <small class="text-muted">Packed with care</small>
+            </div>
+            <div class="mini-benefit">
+              <i class="bi bi-arrow-repeat"></i>
+              <strong>Easy support</strong>
+              <small class="text-muted">Quick help if needed</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-pad animate__animated animate__fadeInUp">
+    <div class="pd-container content-grid">
+      <div>
+        <div class="panel info-card">
+          <h2 class="section-heading"><i class="bi bi-stars"></i> Product Highlights</h2>
+          <div class="highlight-grid">
+            {% for highlight in product.highlights %}
+            <div class="highlight-item">
+              <i class="bi bi-check2"></i>
+              <strong>{{ highlight }}</strong>
+            </div>
+            {% empty %}
+            <div class="empty-note">No highlights available.</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="panel info-card">
+          <h2 class="section-heading"><i class="bi bi-card-text"></i> Description</h2>
+          <div class="description-copy">{{ product.description|linebreaks }}</div>
+        </div>
+
+        <div class="panel info-card">
+          <h2 class="section-heading"><i class="bi bi-list-check"></i> Specifications</h2>
+          <div class="spec-grid">
+            <div class="spec-item">
+              <i class="bi bi-box-seam"></i>
+              <div><span>Weight</span><strong>{{ product.weight|default:"N/A" }}</strong></div>
+            </div>
+            <div class="spec-item">
+              <i class="bi bi-calendar-check"></i>
+              <div><span>Best Before</span><strong>{{ product.expiry_date|date:"M d, Y"|default:"N/A" }}</strong></div>
+            </div>
+            <div class="spec-item">
+              <i class="bi bi-geo-alt"></i>
+              <div><span>Origin</span><strong>{{ product.origin|default:"N/A" }}</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel info-card">
+          <h2 class="section-heading"><i class="bi bi-heart-pulse"></i> Nutritional Information</h2>
+          <div class="nutrition-table table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th>Nutrient</th>
+                  <th>Per 100g</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for key, value in product.nutrition_info.items %}
+                <tr><td>{{ key|title }}</td><td>{{ value }}</td></tr>
+                {% empty %}
+                <tr><td colspan="2" class="text-muted">No nutrition info available.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel info-card">
+          <h2 class="section-heading"><i class="bi bi-star-fill"></i> Customer Reviews</h2>
+          <div class="rating-row">
+            <span class="stars">
+              {% for i in "12345"|make_list %}
+                {% if forloop.counter <= avg_rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}
+              {% endfor %}
+            </span>
+            <span>{{ avg_rating|floatformat:1 }} average from {{ review_count }} reviews</span>
+          </div>
+
+          {% for review in reviews %}
+          <div class="review-item">
+            <div class="review-meta">
+              <span class="stars">{{ review.get_rating_display }}</span>
+              <strong>{{ review.user.username }}</strong>
+              <small class="text-muted">{{ review.created_at|date:"M d" }}</small>
+            </div>
+            {% if review.comment %}
+            <p class="mb-0">{{ review.comment }}</p>
+            {% endif %}
+          </div>
+          {% empty %}
+          <div class="empty-note">No reviews yet. Be the first to review this product.</div>
+          {% endfor %}
+
+          {% if user.is_authenticated %}
+          <form method="post" action="" class="review-form">
+            {% csrf_token %}
+            <h3 class="section-heading"><i class="bi bi-pencil-square"></i> Add Your Review</h3>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Rating</label>
+              <select name="rating" class="form-select">
+                {% for value, display in rating_choices %}
+                <option value="{{ value }}">{{ display }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Comment</label>
+              <textarea name="comment" class="form-control" rows="4" placeholder="Share your experience..."></textarea>
+            </div>
+            <button type="submit" class="review-btn">Submit Review <i class="bi bi-send"></i></button>
+          </form>
+          {% else %}
+          <a href="/login/" class="review-btn mt-3">Login to Review</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="panel info-card">
+          <h2 class="section-heading"><i class="bi bi-truck"></i> Delivery Info</h2>
+          <div class="delivery-grid">
+            <div class="delivery-item">
+              <i class="bi bi-clock"></i>
+              <div><span>Express Delivery</span><strong>Within 2 hours</strong></div>
+            </div>
+            <div class="delivery-item">
+              <i class="bi bi-currency-rupee"></i>
+              <div><span>Delivery Fee</span><strong>Free over Rs. 499</strong></div>
+            </div>
+            <div class="delivery-item">
+              <i class="bi bi-geo"></i>
+              <div><span>Availability</span><strong>Your area confirmed</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel info-card">
+          <h2 class="section-heading"><i class="bi bi-share"></i> Share</h2>
+          <div class="share-links">
+            <a href="#" aria-label="Share on Facebook"><i class="bi bi-facebook"></i></a>
+            <a href="#" aria-label="Share on Twitter"><i class="bi bi-twitter"></i></a>
+            <a href="#" aria-label="Share on Instagram"><i class="bi bi-instagram"></i></a>
+            <a href="#" aria-label="Share on WhatsApp"><i class="bi bi-whatsapp"></i></a>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="related-section animate__animated animate__fadeInUp">
+    <div class="pd-container">
+      <div class="related-head">
+        <div>
+          <span class="pill"><i class="bi bi-grid-3x3-gap"></i> More Fresh Picks</span>
+          <h2 class="related-title">Related products</h2>
+        </div>
+        <a href="{% url 'store:product_list' %}" class="back-btn">View All Products <i class="bi bi-arrow-right"></i></a>
+      </div>
+
+      <div class="row g-4">
+        {% for product in related_products %}
+        <div class="col-lg-3 col-md-6">
+          <article class="related-card">
+            <div class="related-media">
+              {% if product.image %}
+              <img src="{{ product.image.url }}" alt="{{ product.title }}">
+              {% else %}
+              <div class="related-placeholder">
+                <i class="bi bi-basket2-fill"></i>
+              </div>
+              {% endif %}
+            </div>
+            <div class="related-body">
+              <h3 class="h6 fw-bold mb-2">{{ product.title|truncatewords:4 }}</h3>
+              <p class="related-price mb-3">Rs. {{ product.get_price }}</p>
+              <a href="{% url 'store:product_detail' product.slug %}" class="related-btn w-100">View Details</a>
+            </div>
+          </article>
+        </div>
+        {% empty %}
+        <div class="col-12">
+          <div class="empty-note">No related products available.</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <div class="back-row">
+    <a href="{% url 'store:product_list' %}" class="back-btn">
+      <i class="bi bi-arrow-left"></i> Back to All Products
+    </a>
+  </div>
+</div>
+
+<script>
+  const qtyInput = document.getElementById('qty');
+
+  document.getElementById('qty-plus')?.addEventListener('click', () => {
+    qtyInput?.stepUp();
+  });
+
+  document.getElementById('qty-minus')?.addEventListener('click', () => {
+    if (qtyInput && Number(qtyInput.value) > Number(qtyInput.min || 1)) {
+      qtyInput.stepDown();
+    }
+  });
+</script>
+{% endblock %}

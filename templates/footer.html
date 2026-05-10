@@ -1,0 +1,450 @@
+<style>
+  :root {
+    --footer-green: #198754;
+    --footer-mint: #20c997;
+    --footer-yellow: #ffc857;
+    --footer-ink: #10241a;
+    --footer-soft: rgba(255, 255, 255, 0.1);
+    --footer-line: rgba(255, 255, 255, 0.16);
+  }
+
+  .site-footer {
+    position: relative;
+    overflow: hidden;
+    margin-top: 40px;
+    border-radius: 28px 28px 0 0;
+    color: rgba(255, 255, 255, 0.9);
+    background:
+      linear-gradient(135deg, rgba(13, 62, 38, 0.96), rgba(18, 126, 80, 0.94)),
+      url("https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1600&q=80") center/cover;
+  }
+
+  .site-footer::before {
+    content: "";
+    position: absolute;
+    inset: 4px 0 0;
+    background:
+      radial-gradient(circle at 14% 15%, rgba(255, 200, 87, 0.22), transparent 22rem),
+      radial-gradient(circle at 92% 18%, rgba(32, 201, 151, 0.16), transparent 20rem);
+    pointer-events: none;
+  }
+
+  .site-footer::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 5px;
+    border-radius: 28px 28px 0 0;
+    background: linear-gradient(90deg, var(--footer-yellow), var(--footer-mint), var(--footer-green));
+    pointer-events: none;
+  }
+
+  .footer-container {
+    position: relative;
+    z-index: 1;
+    width: min(1140px, calc(100% - 32px));
+    margin: 0 auto;
+  }
+
+  .footer-top {
+    display: grid;
+    grid-template-columns: 1.25fr 0.85fr;
+    gap: 28px;
+    align-items: center;
+    padding: 44px 0;
+    border-bottom: 1px solid var(--footer-line);
+  }
+
+  .footer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 8px 14px;
+    border: 1px solid var(--footer-line);
+    border-radius: 999px;
+    color: #fff;
+    background: var(--footer-soft);
+    font-size: 0.78rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .footer-title {
+    max-width: 680px;
+    margin: 0;
+    color: #fff;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 950;
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+
+  .footer-newsletter {
+    display: flex;
+    gap: 10px;
+    padding: 8px;
+    border: 1px solid var(--footer-line);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+  }
+
+  .footer-newsletter input {
+    min-width: 0;
+    flex: 1;
+    border: 0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--footer-ink);
+    background: rgba(255, 255, 255, 0.94);
+    outline: none;
+  }
+
+  .footer-newsletter button,
+  .footer-shop-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 46px;
+    border: 0;
+    border-radius: 8px;
+    padding: 11px 16px;
+    color: #183523;
+    background: var(--footer-yellow);
+    font-weight: 900;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .footer-newsletter button:hover,
+  .footer-shop-link:hover {
+    color: #183523;
+    background: #ffd775;
+    transform: translateY(-2px);
+  }
+
+  .footer-main {
+    display: grid;
+    grid-template-columns: 1.2fr 0.7fr 0.8fr 1fr;
+    gap: 32px;
+    padding: 52px 0 42px;
+  }
+
+  .footer-brand {
+    max-width: 360px;
+  }
+
+  .footer-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .footer-logo-icon {
+    width: 52px;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--footer-green), var(--footer-mint));
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+    font-size: 1.65rem;
+  }
+
+  .footer-logo-text {
+    display: grid;
+    line-height: 1.05;
+  }
+
+  .footer-logo-name {
+    color: #fff;
+    font-size: 1.55rem;
+    font-weight: 950;
+  }
+
+  .footer-logo-tag {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.74rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .footer-brand p {
+    margin-bottom: 22px;
+    color: rgba(255, 255, 255, 0.78);
+    line-height: 1.7;
+  }
+
+  .footer-shop-link {
+    width: fit-content;
+  }
+
+  .footer-heading {
+    margin: 0 0 18px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+  }
+
+  .footer-links {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .footer-links a,
+  .contact-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.78);
+    text-decoration: none;
+    font-weight: 700;
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+
+  .footer-links a:hover,
+  .contact-link:hover {
+    color: #fff;
+    transform: translateX(4px);
+  }
+
+  .footer-links i,
+  .contact-link i {
+    color: var(--footer-yellow);
+  }
+
+  .contact-list {
+    display: grid;
+    gap: 14px;
+  }
+
+  .contact-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--footer-line);
+    border-radius: 8px;
+    background: var(--footer-soft);
+  }
+
+  .contact-card i {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    color: #183523;
+    background: var(--footer-yellow);
+  }
+
+  .contact-card span {
+    display: block;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .social-links a {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--footer-line);
+    border-radius: 8px;
+    color: #fff;
+    background: var(--footer-soft);
+    text-decoration: none;
+    font-size: 1.1rem;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .social-links a:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-4px);
+  }
+
+  .footer-bottom {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--footer-line);
+  }
+
+  .footer-bottom-inner {
+    width: min(1140px, calc(100% - 32px));
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 0;
+    color: rgba(255, 255, 255, 0.66);
+    font-size: 0.92rem;
+  }
+
+  .footer-bottom-links {
+    display: flex;
+    gap: 16px;
+  }
+
+  .footer-bottom-links a {
+    color: rgba(255, 255, 255, 0.72);
+    text-decoration: none;
+  }
+
+  .footer-bottom-links a:hover {
+    color: #fff;
+  }
+
+  @media (max-width: 991px) {
+    .footer-top,
+    .footer-main {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .footer-brand {
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .footer-top,
+    .footer-main {
+      grid-template-columns: 1fr;
+    }
+
+    .footer-top {
+      padding-top: 36px;
+    }
+
+    .footer-newsletter {
+      flex-direction: column;
+    }
+
+    .footer-newsletter button,
+    .footer-shop-link {
+      width: 100%;
+    }
+
+    .footer-bottom-inner {
+      flex-direction: column;
+      text-align: center;
+      align-items: center;
+    }
+  }
+</style>
+
+<footer class="site-footer">
+  <div class="footer-container">
+    <div class="footer-top">
+      <div>
+        <span class="footer-badge"><i class="bi bi-lightning-charge"></i> Fresh deals every week</span>
+        <h2 class="footer-title">Bring home fresh groceries without the market rush.</h2>
+      </div>
+      <form class="footer-newsletter">
+        <input type="email" placeholder="Enter your email" aria-label="Email address">
+        <button type="submit">Subscribe <i class="bi bi-send"></i></button>
+      </form>
+    </div>
+
+    <div class="footer-main">
+      <div class="footer-brand">
+        <a href="{% url 'store:home' %}" class="footer-logo" aria-label="GrocHub home">
+          <span class="footer-logo-icon"><i class="bi bi-basket2-fill"></i></span>
+          <span class="footer-logo-text">
+            <span class="footer-logo-name">GrocHub</span>
+            <span class="footer-logo-tag">Fresh Daily</span>
+          </span>
+        </a>
+        <p>Your trusted online grocery store for fresh produce, pantry staples, daily essentials, and quick doorstep delivery.</p>
+        <a href="{% url 'store:product_list' %}" class="footer-shop-link">Start Shopping <i class="bi bi-arrow-right"></i></a>
+      </div>
+
+      <div>
+        <h3 class="footer-heading">Quick Links</h3>
+        <ul class="footer-links">
+          <li><a href="{% url 'store:home' %}"><i class="bi bi-house"></i> Home</a></li>
+          <li><a href="{% url 'store:product_list' %}"><i class="bi bi-bag"></i> Products</a></li>
+          <li><a href="{% url 'store:cart' %}"><i class="bi bi-cart3"></i> Cart</a></li>
+          <li><a href="{% url 'store:about' %}"><i class="bi bi-info-circle"></i> About</a></li>
+          <li><a href="{% url 'store:contact' %}"><i class="bi bi-chat-dots"></i> Contact</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="footer-heading">Shop Categories</h3>
+        <ul class="footer-links">
+          <li><a href="{% url 'store:product_list' %}"><i class="bi bi-apple"></i> Fruits</a></li>
+          <li><a href="{% url 'store:product_list' %}"><i class="bi bi-flower1"></i> Vegetables</a></li>
+          <li><a href="{% url 'store:product_list' %}"><i class="bi bi-cup-hot"></i> Bakery</a></li>
+          <li><a href="{% url 'store:product_list' %}"><i class="bi bi-stars"></i> Snacks</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="footer-heading">Contact</h3>
+        <div class="contact-list">
+          <div class="contact-card">
+            <i class="bi bi-telephone"></i>
+            <a href="tel:+918988545540" class="contact-link">
+              <span>Call Us</span>
+              +91 8988545540
+            </a>
+          </div>
+          <div class="contact-card">
+            <i class="bi bi-envelope"></i>
+            <a href="https://mail.google.com/mail/u/0/#inbox?compose=GTvVlcSGMhkZDQDDPlkrkwGJsHjvdsCTzSQGVvbgpncbWghgNwhrfNgnxXgtxMqqDVMWdnQFtpMhN" class="contact-link">
+              <span>Email</span>
+              kamalarkaj11@gmail.com
+            </a>
+          </div>
+        </div>
+
+        <div class="social-links" aria-label="Social links">
+          <a href="https://www.facebook.com/Arkaj5540/" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+          <a href="https://www.instagram.com/_arkaj_5540_/?__pwa=1" target="_blank" rel="noopener" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+          <a href="https://twitter.com" target="_blank" rel="noopener" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+          <a href="https://wa.me/918988545540" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="footer-bottom-inner">
+      <span>&copy; {% now "Y" %} GroceryHub. All rights reserved.</span>
+      <div class="footer-bottom-links">
+        <a href="{% url 'store:product_list' %}">Fresh Deals</a>
+        <a href="{% url 'store:contact' %}">Support</a>
+      </div>
+    </div>
+  </div>
+</footer>
