@@ -654,7 +654,11 @@
       <div class="breadcrumb-row">
         <a href="{% url 'store:home' %}">Home</a>
         <i class="bi bi-chevron-right"></i>
-        <a href="{% url 'store:product_list' %}">Products</a>
+        <a href="{% url 'store:category_products' product.category.slug %}">{{ product.category }}</a>
+        {% if product.subcategory %}
+        <i class="bi bi-chevron-right"></i>
+        <a href="{% url 'store:subcategory_products' product.category.slug product.subcategory.slug %}">{{ product.subcategory }}</a>
+        {% endif %}
         <i class="bi bi-chevron-right"></i>
         <span>{{ product.title }}</span>
       </div>
@@ -677,7 +681,10 @@
 
         <div class="panel summary-panel">
           <div class="meta-row">
-            <span class="pill"><i class="bi bi-grid"></i> {{ product.category }}</span>
+            <a href="{% url 'store:category_products' product.category.slug %}" class="pill"><i class="bi bi-grid"></i> {{ product.category }}</a>
+            {% if product.subcategory %}
+            <a href="{% url 'store:subcategory_products' product.category.slug product.subcategory.slug %}" class="pill"><i class="bi bi-tag"></i> {{ product.subcategory }}</a>
+            {% endif %}
             <span class="pill"><i class="bi bi-patch-check"></i> Quality checked</span>
             <span class="pill stock-pill {% if product.is_out_of_stock %}out{% endif %}">
               {% if product.is_out_of_stock %}

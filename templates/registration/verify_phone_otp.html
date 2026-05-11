@@ -13,7 +13,7 @@
                     <i class="bi bi-phone display-3 text-success mb-4"></i>
                     <h2 class="fw-bold text-success mb-2">Verify your phone</h2>
                     <p class="text-muted lead mb-1">A 6-digit code was sent to <strong>{{ phone }}</strong></p>
-                    <p class="text-muted">Enter the code below to finish account setup.</p>
+                    <p class="text-muted">Enter the code below to finish account setup. The code expires in 5 minutes.</p>
                 </div>
 
                 <form method="post" id="phone-otp-form">
@@ -29,7 +29,7 @@
 
                 <div class="text-center">
                     <p class="text-muted mb-2">Didn't get the SMS?</p>
-                    <button class="btn btn-outline-success btn-lg px-5" id="resend-btn">
+                    <button class="btn btn-outline-success btn-lg px-5" id="resend-btn" type="button">
                         <span class="spinner-border spinner-border-sm d-none me-2" id="resend-spinner"></span>
                         Resend Phone OTP
                     </button>
@@ -56,13 +56,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const verifyBtn = document.getElementById('verify-btn');
     const verifySpinner = document.getElementById('verify-spinner');
 
+    const defaultCooldown = Number('{{ resend_cooldown_seconds|default:30 }}');
+    const initialWait = Number('{{ resend_wait_seconds|default:0 }}');
+    let cooldownTimer = null;
+
+    if (initialWait > 0) {
+        startCooldown(initialWait);
+    }
+
     resendBtn.addEventListener('click', async function() {
         resendBtn.disabled = true;
         resendSpinner.classList.remove('d-none');
         resendStatus.textContent = '';
 
         try {
-            const response = await fetch('{% url "store:resend_phone_otp" %}', {
+            const response = await fetch('{% url "store:resend_signup_phone_otp" %}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -75,31 +83,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 resendStatus.textContent = data.message;
                 resendStatus.classList.remove('text-danger');
                 resendStatus.classList.add('text-success');
-                startCooldown();
+                startCooldown(data.cooldown_seconds || defaultCooldown);
             } else {
                 resendStatus.textContent = data.error;
                 resendStatus.classList.remove('text-success');
                 resendStatus.classList.add('text-danger');
+                if (data.wait_seconds) {
+                    startCooldown(data.wait_seconds);
+                }
             }
         } catch (error) {
             resendStatus.textContent = 'Unable to resend right now. Please try again.';
             resendStatus.classList.add('text-danger');
         } finally {
             resendSpinner.classList.add('d-none');
-            setTimeout(() => resendBtn.disabled = false, 1000);
+            if (!cooldownTimer) {
+                setTimeout(() => resendBtn.disabled = false, 1000);
+            }
         }
     });
 
-    function startCooldown() {
-        let timeLeft = 30;
+    function startCooldown(seconds) {
+        let timeLeft = Number(seconds || defaultCooldown);
+        if (cooldownTimer) {
+            clearInterval(cooldownTimer);
+        }
+        resendBtn.disabled = true;
         cooldown.classList.remove('d-none');
         cooldown.textContent = `Resend available in ${timeLeft}s`;
-        const timer = setInterval(() => {
+        cooldownTimer = setInterval(() => {
             timeLeft -= 1;
             cooldown.textContent = `Resend available in ${timeLeft}s`;
             if (timeLeft <= 0) {
-                clearInterval(timer);
+                clearInterval(cooldownTimer);
+                cooldownTimer = null;
                 cooldown.classList.add('d-none');
+                resendBtn.disabled = false;
             }
         }, 1000);
     }

@@ -7,14 +7,16 @@
 {% block content %}
 <style>
   :root {
-    --auth-green: #198754;
-    --auth-mint: #20c997;
-    --auth-yellow: #ffc857;
-    --auth-ink: #18251f;
+    --auth-green: #15803d;
+    --auth-green-deep: #0f5132;
+    --auth-mint: #2dd4bf;
+    --auth-yellow: #facc15;
+    --auth-ink: #16231d;
     --auth-muted: #66736c;
-    --auth-soft: #f4fbf7;
-    --auth-line: rgba(25, 135, 84, 0.16);
-    --auth-shadow: 0 18px 45px rgba(18, 55, 38, 0.12);
+    --auth-soft: #f6fbf4;
+    --auth-field: #fbfefc;
+    --auth-line: rgba(21, 128, 61, 0.16);
+    --auth-shadow: 0 28px 70px rgba(15, 81, 50, 0.16);
   }
 
   main.container {
@@ -26,37 +28,68 @@
   }
 
   .auth-page {
-    min-height: 78vh;
+    position: relative;
+    isolation: isolate;
+    min-height: 82vh;
     display: grid;
     place-items: center;
-    padding: 56px 16px 78px;
+    padding: 64px 16px 86px;
     color: var(--auth-ink);
     background:
-      radial-gradient(circle at top left, rgba(255, 200, 87, 0.16), transparent 30rem),
-      linear-gradient(180deg, #ffffff 0%, #f7fbf8 58%, #ffffff 100%);
+      radial-gradient(circle at 12% 16%, rgba(250, 204, 21, 0.2), transparent 23rem),
+      radial-gradient(circle at 88% 10%, rgba(45, 212, 191, 0.16), transparent 22rem),
+      linear-gradient(135deg, #fbfff8 0%, #eef8ef 48%, #fffaf0 100%);
+  }
+
+  .auth-page::before {
+    content: "";
+    position: absolute;
+    inset: 18px;
+    z-index: -1;
+    border: 1px solid rgba(21, 128, 61, 0.08);
+    border-radius: 8px;
+    pointer-events: none;
   }
 
   .auth-shell {
-    width: min(1120px, 100%);
+    width: min(1160px, 100%);
     display: grid;
-    grid-template-columns: 0.9fr 1.08fr;
+    grid-template-columns: minmax(360px, 0.92fr) minmax(0, 1.08fr);
     overflow: hidden;
     border: 1px solid var(--auth-line);
     border-radius: 8px;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.92);
     box-shadow: var(--auth-shadow);
+    backdrop-filter: blur(14px);
   }
 
   .auth-story {
+    position: relative;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 720px;
+    min-height: 740px;
     padding: clamp(28px, 5vw, 46px);
     color: #fff;
     background:
-      linear-gradient(135deg, rgba(13, 76, 45, 0.94), rgba(26, 148, 96, 0.84)),
+      linear-gradient(145deg, rgba(12, 58, 37, 0.94), rgba(21, 128, 61, 0.8) 52%, rgba(249, 115, 22, 0.58)),
       url("https://images.unsplash.com/photo-1573246123716-6b1782bfc499?auto=format&fit=crop&w=1300&q=85") center/cover;
+  }
+
+  .auth-story::after {
+    content: "";
+    position: absolute;
+    inset: auto -18% -22% 16%;
+    height: 280px;
+    background: rgba(255, 255, 255, 0.14);
+    transform: rotate(-8deg);
+    border-radius: 8px;
+  }
+
+  .auth-story > * {
+    position: relative;
+    z-index: 1;
   }
 
   .brand-mark {
@@ -67,6 +100,7 @@
     text-decoration: none;
     font-size: 1.4rem;
     font-weight: 950;
+    width: fit-content;
   }
 
   .brand-mark i {
@@ -78,21 +112,24 @@
     border-radius: 8px;
     color: #183523;
     background: var(--auth-yellow);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
   }
 
   .story-title {
     margin: 0;
-    font-size: clamp(2.4rem, 5vw, 4.2rem);
+    max-width: 520px;
+    font-size: clamp(2.5rem, 5vw, 4.35rem);
     font-weight: 950;
     line-height: 0.98;
     letter-spacing: 0;
   }
 
   .story-copy {
-    max-width: 440px;
-    margin: 18px 0 0;
-    color: rgba(255, 255, 255, 0.82);
+    max-width: 470px;
+    margin: 20px 0 0;
+    color: rgba(255, 255, 255, 0.86);
     line-height: 1.75;
+    font-size: 1.03rem;
   }
 
   .story-points {
@@ -105,18 +142,33 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px;
+    padding: 13px 14px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(8px);
+    font-weight: 700;
   }
 
   .story-point i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border-radius: 8px;
     color: var(--auth-yellow);
+    background: rgba(255, 255, 255, 0.14);
   }
 
   .auth-card {
-    padding: clamp(28px, 5vw, 52px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: clamp(30px, 5vw, 56px);
   }
 
   .auth-icon {
@@ -127,7 +179,7 @@
     justify-content: center;
     border-radius: 8px;
     color: #fff;
-    background: linear-gradient(135deg, var(--auth-green), var(--auth-mint));
+    background: linear-gradient(135deg, var(--auth-green-deep), var(--auth-green) 58%, var(--auth-mint));
     box-shadow: 0 14px 28px rgba(25, 135, 84, 0.22);
     font-size: 2rem;
   }
@@ -141,15 +193,20 @@
 
   .auth-subtitle {
     color: var(--auth-muted);
-    margin-bottom: 28px;
+    margin-bottom: 26px;
+    line-height: 1.65;
   }
 
   .auth-card form .form-control,
   .auth-card form .form-select {
-    min-height: 52px;
-    border: 1px solid var(--auth-line);
+    width: 100%;
+    min-height: 54px;
+    border: 1px solid rgba(21, 128, 61, 0.18);
     border-radius: 8px;
-    background: #fbfefc;
+    background: var(--auth-field);
+    color: var(--auth-ink);
+    box-shadow: 0 8px 20px rgba(15, 81, 50, 0.04);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
   }
 
   .auth-card form textarea.form-control {
@@ -158,38 +215,94 @@
 
   .auth-card form .form-control:focus,
   .auth-card form .form-select:focus {
-    border-color: rgba(25, 135, 84, 0.55);
-    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.1);
+    border-color: rgba(21, 128, 61, 0.62);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.16), 0 12px 26px rgba(15, 81, 50, 0.08);
   }
 
   .auth-card form label {
-    color: var(--auth-green);
+    margin-bottom: 7px;
+    color: var(--auth-green-deep);
     font-weight: 800;
+  }
+
+  .auth-card form .form-text,
+  .auth-card form .invalid-feedback,
+  .auth-card form .alert {
+    font-size: 0.92rem;
+  }
+
+  .password-toggle-wrap {
+    position: relative;
+  }
+
+  .password-toggle-wrap .form-control {
+    padding-right: 86px;
+  }
+
+  .password-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    min-width: 68px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 1px solid rgba(21, 128, 61, 0.18);
+    border-radius: 8px;
+    color: var(--auth-green-deep);
+    background: rgba(255, 255, 255, 0.92);
+    font-size: 0.82rem;
+    font-weight: 850;
+    transform: translateY(-50%);
+    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+  }
+
+  .password-toggle-btn:hover,
+  .password-toggle-btn:focus {
+    border-color: rgba(21, 128, 61, 0.44);
+    color: var(--auth-green);
+    background: #f4fff8;
+  }
+
+  .password-toggle-btn:focus {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.18);
   }
 
   .auth-submit {
     width: 100%;
-    min-height: 54px;
+    min-height: 56px;
     border: 0;
     border-radius: 8px;
     color: #fff;
-    background: linear-gradient(135deg, var(--auth-green), var(--auth-mint));
+    background: linear-gradient(135deg, var(--auth-green-deep), var(--auth-green) 55%, #18b981);
     font-weight: 950;
-    box-shadow: 0 14px 28px rgba(25, 135, 84, 0.22);
+    box-shadow: 0 16px 32px rgba(21, 128, 61, 0.24);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    white-space: normal;
   }
 
   .auth-submit:hover {
     color: #fff;
     transform: translateY(-2px);
+    box-shadow: 0 22px 40px rgba(21, 128, 61, 0.28);
+    filter: saturate(1.08);
+  }
+
+  .auth-submit:active {
+    transform: translateY(0);
   }
 
   .auth-switch,
   .otp-note {
-    margin-top: 18px;
-    padding: 16px;
+    margin-top: 20px;
+    padding: 16px 18px;
     border: 1px solid var(--auth-line);
     border-radius: 8px;
-    background: var(--auth-soft);
+    background: linear-gradient(135deg, #f9fff7, #fffdf4);
     color: var(--auth-muted);
   }
 
@@ -203,25 +316,212 @@
     text-decoration: none;
   }
 
+  .auth-switch a:hover {
+    color: var(--auth-green-deep);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
   .otp-note {
     display: flex;
     gap: 12px;
     align-items: flex-start;
+    line-height: 1.55;
   }
 
   .otp-note i {
-    color: var(--auth-green);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 8px;
+    color: var(--auth-green-deep);
+    background: rgba(45, 212, 191, 0.16);
     font-size: 1.25rem;
   }
 
+  @media (max-width: 1200px) {
+    .auth-shell {
+      width: min(1040px, 100%);
+      grid-template-columns: minmax(320px, 0.88fr) minmax(0, 1.12fr);
+    }
+
+    .auth-story {
+      min-height: 700px;
+    }
+
+    .story-title {
+      font-size: clamp(2.25rem, 4.6vw, 3.8rem);
+    }
+  }
+
   @media (max-width: 900px) {
+    main.container {
+      width: 100%;
+    }
+
+    .auth-page {
+      min-height: auto;
+      align-items: stretch;
+      padding: 34px 14px 56px;
+    }
+
     .auth-shell {
       grid-template-columns: 1fr;
     }
 
     .auth-story {
       min-height: auto;
-      gap: 48px;
+      gap: 38px;
+      padding: 34px;
+      background-position: center 42%;
+    }
+
+    .story-title {
+      max-width: 660px;
+      font-size: clamp(2.2rem, 7vw, 3.35rem);
+      line-height: 1.02;
+    }
+
+    .story-copy {
+      max-width: 620px;
+    }
+
+    .story-points {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .story-point {
+      align-items: flex-start;
+      min-width: 0;
+      font-size: 0.94rem;
+      line-height: 1.35;
+    }
+
+    .auth-card {
+      padding: 34px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .auth-page {
+      padding: 18px 10px 38px;
+    }
+
+    .auth-page::before {
+      inset: 8px;
+    }
+
+    .auth-shell {
+      width: 100%;
+    }
+
+    .auth-story,
+    .auth-card {
+      padding: 22px;
+    }
+
+    .brand-mark {
+      gap: 10px;
+      font-size: 1.18rem;
+    }
+
+    .brand-mark i {
+      width: 42px;
+      height: 42px;
+    }
+
+    .story-title {
+      font-size: 2.18rem;
+      line-height: 1.04;
+    }
+
+    .story-copy {
+      font-size: 0.98rem;
+      line-height: 1.6;
+    }
+
+    .story-points {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .story-point {
+      align-items: flex-start;
+    }
+
+    .auth-icon {
+      width: 58px;
+      height: 58px;
+      font-size: 1.65rem;
+    }
+
+    .auth-title {
+      font-size: 2rem;
+    }
+
+    .auth-subtitle {
+      margin-bottom: 20px;
+    }
+
+    .auth-card form .form-control,
+    .auth-card form .form-select {
+      min-height: 50px;
+    }
+
+    .password-toggle-wrap .form-control {
+      padding-right: 76px;
+    }
+
+    .password-toggle-btn {
+      right: 8px;
+      min-width: 60px;
+      height: 32px;
+      font-size: 0.76rem;
+    }
+
+    .otp-note {
+      padding: 14px;
+    }
+
+    .auth-switch {
+      padding: 14px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .auth-story,
+    .auth-card {
+      padding: 18px;
+    }
+
+    .story-title {
+      font-size: 1.92rem;
+    }
+
+    .auth-title {
+      font-size: 1.75rem;
+    }
+
+    .password-toggle-wrap .form-control {
+      padding-right: 52px;
+    }
+
+    .password-toggle-btn {
+      min-width: 40px;
+      width: 40px;
+      padding: 0;
+    }
+
+    .password-toggle-btn span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
     }
   }
 </style>
@@ -252,11 +552,6 @@
       <form method="post" action="{% url 'store:signup' %}" id="signup-form">
         {% csrf_token %}
         {{ form|crispy }}
-        <div class="mb-3 text-end">
-          <button type="button" id="toggle-password-btn" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-eye" id="signup-password-icon"></i> Show password
-          </button>
-        </div>
         <button type="submit" class="auth-submit">
           <i class="bi bi-person-plus me-2"></i>Create Account
         </button>
@@ -279,30 +574,33 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const toggleButton = document.getElementById('toggle-password-btn');
-    const passwordIcon = document.getElementById('signup-password-icon');
     const form = document.getElementById('signup-form');
 
-    if (!toggleButton || !form) return;
+    if (!form) return;
 
-    toggleButton.addEventListener('click', function() {
-        const passwordFields = form.querySelectorAll('input[type="password"]');
-        let show = false;
+    form.querySelectorAll('input[type="password"]').forEach((input, index) => {
+        const wrapper = document.createElement('div');
+        const button = document.createElement('button');
 
-        passwordFields.forEach((input) => {
-            if (input.type === 'password') {
-                input.type = 'text';
-                show = true;
-            } else {
-                input.type = 'password';
-            }
+        wrapper.className = 'password-toggle-wrap';
+        input.parentNode.insertBefore(wrapper, input);
+        wrapper.appendChild(input);
+
+        button.type = 'button';
+        button.className = 'password-toggle-btn';
+        button.setAttribute('aria-label', `Show password ${index + 1}`);
+        button.innerHTML = '<i class="bi bi-eye"></i><span>Show</span>';
+        wrapper.appendChild(button);
+
+        button.addEventListener('click', function() {
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            button.setAttribute('aria-label', `${isHidden ? 'Hide' : 'Show'} password ${index + 1}`);
+            button.innerHTML = isHidden
+                ? '<i class="bi bi-eye-slash"></i><span>Hide</span>'
+                : '<i class="bi bi-eye"></i><span>Show</span>';
+            input.focus();
         });
-
-        if (show) {
-            toggleButton.innerHTML = '<i class="bi bi-eye-slash" id="signup-password-icon"></i> Hide password';
-        } else {
-            toggleButton.innerHTML = '<i class="bi bi-eye" id="signup-password-icon"></i> Show password';
-        }
     });
 });
 </script>

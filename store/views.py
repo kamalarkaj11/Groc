@@ -19,7 +19,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.db import IntegrityError
-from django.db.models import Avg, Q
+from django.db.models import Avg, Count, Q
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_http_methods, require_POST
@@ -27,11 +27,13 @@ from twilio.rest import Client
 
 
 from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm
-from .models import (Category, Order, OrderItem, Product, Review, UserProfile, CartItem,
+from .models import (Category, Subcategory, Order, OrderItem, Product, Review, UserProfile, CartItem,
                      Profile, PhoneOTP, OTP)
 from .signals import generate_and_send_otp
 
 logger = logging.getLogger(__name__)
+PHONE_OTP_RESEND_COOLDOWN_SECONDS = 30
+PHONE_OTP_MAX_ATTEMPTS = 3
 
 
 def normalize_phone_number(phone_text):
@@ -443,8 +445,10 @@ def dashboard(request):
 
 
 def home(request):
-    featured_products = Product.objects.filter(is_out_of_stock=False)
-    categories = Category.objects.all()[:6]
+    featured_products = Product.objects.filter(is_out_of_stock=False).select_related('category', 'subcategory').order_by('-created_at')[:12]
+    categories = Category.objects.prefetch_related('subcategories').annotate(
+        active_product_count=Count('products', filter=Q(products__is_out_of_stock=False))
+    ).filter(is_active=True).order_by('sort_order')[:6]
     context = {
         'featured_products': featured_products,
         'products': featured_products,
@@ -453,29 +457,39 @@ def home(request):
     return render(request, 'home.html', context)
 
 def product_list(request):
-    products = Product.objects.filter(is_out_of_stock=False)
+    products = Product.objects.filter(is_out_of_stock=False).select_related('category', 'subcategory').order_by('-created_at', '-id')
     query = request.GET.get('q')
-    category = request.GET.get('category')
-    
+    category_slug = request.GET.get('category')
+    subcategory_slug = request.GET.get('subcategory')
+
     if query:
         products = products.filter(Q(title__icontains=query) | Q(description__icontains=query))
-    if category:
-        products = products.filter(category__name=category)
-    
+    if category_slug:
+        products = products.filter(category__slug=category_slug)
+    if subcategory_slug:
+        products = products.filter(subcategory__slug=subcategory_slug)
+
+    categories = Category.objects.prefetch_related('subcategories').annotate(
+        active_product_count=Count('products', filter=Q(products__is_out_of_stock=False))
+    ).filter(is_active=True).order_by('sort_order')
+
     paginator = Paginator(products, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'products': page_obj,
-        'categories': Category.objects.all(),
+        'categories': categories,
         'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
         'query': query,
+        'selected_category': category_slug,
+        'selected_subcategory': subcategory_slug,
     }
     return render(request, 'products/list.html', context)
 
 def product_detail(request, slug):
-    product = get_object_or_404(Product, is_out_of_stock=False, slug=slug)
+    product = get_object_or_404(Product.objects.select_related('category', 'subcategory'), is_out_of_stock=False, slug=slug)
     
     # Dynamic data
     reviews = product.reviews.all()[:5]  # Recent 5 reviews
@@ -694,7 +708,15 @@ def verify_email_otp_view(request):
                 latest_otp.save()
 
             request.session['email_verified'] = True
-            messages.success(request, 'Email verified successfully. Now verify your phone number.')
+            try:
+                success, wait_seconds = send_signup_phone_otp(request, request.session['signup_phone'])
+                if success:
+                    messages.success(request, 'OTP has been sent to your phone number.')
+                else:
+                    messages.warning(request, f'Email verified. Please wait {wait_seconds} seconds before requesting a new phone OTP.')
+            except Exception:
+                logger.exception('Failed to automatically send signup phone OTP for user %s', user.id)
+                messages.error(request, 'Email verified, but we could not send the phone OTP right now. Please use resend OTP.')
             return redirect('store:verify_signup_phone_otp')
     else:
         form = OTPVerificationForm(user=user)
@@ -705,16 +727,35 @@ def verify_email_otp_view(request):
     })
 
 
-def send_signup_phone_otp(request, phone):
+def get_phone_otp_wait_seconds(phone):
     latest_otp = PhoneOTP.objects.filter(phone=phone).first()
-    if latest_otp and not latest_otp.can_resend:
-        wait_seconds = 30 - int((timezone.now() - latest_otp.created_at).total_seconds())
+    if not latest_otp or latest_otp.can_resend:
+        return 0
+    elapsed = int((timezone.now() - latest_otp.created_at).total_seconds())
+    return max(0, PHONE_OTP_RESEND_COOLDOWN_SECONDS - elapsed)
+
+
+def render_phone_otp_page(request, form, phone, status_code=200):
+    return render(request, 'registration/verify_phone_otp.html', {
+        'form': form,
+        'phone': phone,
+        'resend_cooldown_seconds': PHONE_OTP_RESEND_COOLDOWN_SECONDS,
+        'resend_wait_seconds': get_phone_otp_wait_seconds(phone),
+    }, status=status_code)
+
+
+def send_signup_phone_otp(request, phone, force=False):
+    """Send the signup phone OTP and store resend metadata in the session."""
+    latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+    if latest_otp and not latest_otp.can_resend and not force:
+        wait_seconds = get_phone_otp_wait_seconds(phone)
         return False, wait_seconds
 
     otp_code = generate_otp()
     send_otp_via_twilio(phone, otp_code)
     create_or_update_phone_otp(phone, otp_code)
     request.session['signup_phone_otp_sent_at'] = timezone.now().isoformat()
+    request.session['signup_phone_otp_phone'] = phone
     return True, None
 
 
@@ -728,6 +769,11 @@ def verify_phone_otp_view(request):
         return redirect('store:signup')
 
     user = get_object_or_404(User, id=signup_user_id, is_active=False)
+    normalized_phone = normalize_phone_number(phone)
+    if not normalized_phone or normalized_phone != phone:
+        messages.error(request, 'Wrong phone number in signup session. Please sign up again.')
+        return redirect('store:signup')
+
     latest_otp = PhoneOTP.objects.filter(phone=phone).first()
 
     if request.method == 'POST':
@@ -736,34 +782,22 @@ def verify_phone_otp_view(request):
             otp_input = form.cleaned_data['otp']
             if not latest_otp:
                 messages.error(request, 'No OTP request found. Please resend the code.')
-                return render(request, 'registration/verify_phone_otp.html', {
-                    'form': form,
-                    'phone': phone,
-                })
+                return render_phone_otp_page(request, form, phone)
 
             if latest_otp.is_expired:
                 messages.error(request, 'OTP expired. Please resend a new code.')
-                return render(request, 'registration/verify_phone_otp.html', {
-                    'form': form,
-                    'phone': phone,
-                })
+                return render_phone_otp_page(request, form, phone)
 
-            if latest_otp.attempts >= 3:
+            if latest_otp.attempts >= PHONE_OTP_MAX_ATTEMPTS:
                 messages.error(request, 'Maximum OTP attempts reached. Please resend a new code.')
-                return render(request, 'registration/verify_phone_otp.html', {
-                    'form': form,
-                    'phone': phone,
-                })
+                return render_phone_otp_page(request, form, phone)
 
             if otp_input != latest_otp.otp:
                 latest_otp.attempts += 1
                 latest_otp.save()
-                remaining = max(0, 3 - latest_otp.attempts)
+                remaining = max(0, PHONE_OTP_MAX_ATTEMPTS - latest_otp.attempts)
                 messages.error(request, f'Invalid Phone OTP. You have {remaining} attempt(s) left.')
-                return render(request, 'registration/verify_phone_otp.html', {
-                    'form': form,
-                    'phone': phone,
-                })
+                return render_phone_otp_page(request, form, phone)
 
             # Check if phone number is already taken by another user
             existing_profile = Profile.objects.filter(phone_number=phone).exclude(user=user).first()
@@ -776,12 +810,15 @@ def verify_phone_otp_view(request):
             user.is_active = True
             user.save()
 
-            profile, _ = Profile.objects.get_or_create(user=user)
-            profile.phone_number = phone
-            profile.is_email_verified = True
-            profile.is_phone_verified = True
             try:
-                profile.save()
+                Profile.objects.update_or_create(
+                    user=user,
+                    defaults={
+                        'phone_number': phone,
+                        'is_email_verified': True,
+                        'is_phone_verified': True,
+                    }
+                )
             except IntegrityError:
                 messages.error(request, 'This phone number is already in use. Please try signing up with a different phone number.')
                 return redirect('store:signup')
@@ -796,25 +833,26 @@ def verify_phone_otp_view(request):
             request.session.pop('email_verified', None)
             request.session.pop('email_otp_resend_at', None)
             request.session.pop('signup_phone_otp_sent_at', None)
+            request.session.pop('signup_phone_otp_phone', None)
 
             messages.success(request, 'Phone verified and account activated. Welcome to GroceryHub!')
             return redirect('store:dashboard')
     else:
         form = PhoneOTPForm()
-        if not latest_otp:
+        otp_sent_for_phone = request.session.get('signup_phone_otp_phone')
+        if not latest_otp or otp_sent_for_phone != phone:
             try:
                 success, wait_seconds = send_signup_phone_otp(request, phone)
                 if not success:
                     messages.warning(request, f'Please wait {wait_seconds} seconds before requesting a new code.')
+                else:
+                    messages.success(request, 'OTP has been sent to your phone number.')
                 latest_otp = PhoneOTP.objects.filter(phone=phone).first()
             except Exception:
                 logger.exception('Failed to send signup phone OTP for %s', phone)
                 messages.error(request, 'Unable to send phone OTP right now. Please try again later.')
 
-    return render(request, 'registration/verify_phone_otp.html', {
-        'form': form,
-        'phone': phone,
-    })
+    return render_phone_otp_page(request, form, phone)
 
 
 def resend_email_otp_view(request):
@@ -848,20 +886,28 @@ def resend_phone_otp_view(request):
         return HttpResponseBadRequest('POST required.')
 
     phone = request.session.get('signup_phone')
-    if not phone:
-        return JsonResponse({'success': False, 'error': 'Session expired. Please sign up again.'}, status=400)
+    signup_user_id = request.session.get('signup_user_id')
+    email_verified = request.session.get('email_verified')
+    if not signup_user_id or not email_verified or not phone:
+        return JsonResponse({'success': False, 'error': 'Please complete email verification first.'}, status=400)
 
-    latest_otp = PhoneOTP.objects.filter(phone=phone).first()
-    if latest_otp and not latest_otp.can_resend:
-        wait_seconds = 30 - int((timezone.now() - latest_otp.created_at).total_seconds())
-        return JsonResponse({'success': False, 'error': f'Please wait {wait_seconds} seconds before resending.'}, status=429)
+    normalized_phone = normalize_phone_number(phone)
+    if not normalized_phone or normalized_phone != phone:
+        return JsonResponse({'success': False, 'error': 'Invalid phone number in signup session.'}, status=400)
 
-    otp_code = generate_otp()
     try:
-        send_otp_via_twilio(phone, otp_code)
-        create_or_update_phone_otp(phone, otp_code)
-        request.session['signup_phone_otp_sent_at'] = timezone.now().isoformat()
-        return JsonResponse({'success': True, 'message': 'Phone OTP resent successfully.'})
+        success, wait_seconds = send_signup_phone_otp(request, phone)
+        if not success:
+            return JsonResponse({
+                'success': False,
+                'error': f'Please wait {wait_seconds} seconds before resending.',
+                'wait_seconds': wait_seconds,
+            }, status=429)
+        return JsonResponse({
+            'success': True,
+            'message': 'OTP has been sent to your phone number.',
+            'cooldown_seconds': PHONE_OTP_RESEND_COOLDOWN_SECONDS,
+        })
     except Exception:
         logger.exception('Twilio resend failed for %s', phone)
         return JsonResponse({'success': False, 'error': 'Unable to resend OTP right now.'}, status=500)
@@ -1226,4 +1272,88 @@ def about(request):
 
 def contact(request):
     return render(request, 'contact.html')
+
+
+# ---------- Category & Subcategory Product Pages ----------
+
+def category_products(request, category_slug):
+    """Display all products under a specific category. URL: /category/fruits/"""
+    category = get_object_or_404(Category, slug=category_slug, is_active=True)
+    products = Product.objects.filter(
+        category=category, is_out_of_stock=False
+    ).select_related('category', 'subcategory')
+
+    # Optional subcategory filter within this category page
+    subcategory_slug = request.GET.get('subcategory')
+    active_subcategory = None
+    if subcategory_slug:
+        active_subcategory = get_object_or_404(Subcategory, slug=subcategory_slug, category=category, is_active=True)
+        products = products.filter(subcategory=active_subcategory)
+
+    paginator = Paginator(products, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Annotate subcategories with active product counts
+    subcategories = Subcategory.objects.filter(category=category, is_active=True).annotate(
+        active_product_count=Count('products', filter=Q(products__is_out_of_stock=False))
+    ).order_by('sort_order', 'name')
+
+    context = {
+        'category': category,
+        'subcategories': subcategories,
+        'active_subcategory': active_subcategory,
+        'products': page_obj,
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'breadcrumbs': [
+            {'label': 'Home', 'url': '/'},
+            {'label': category.name, 'url': None},
+        ],
+    }
+    return render(request, 'products/category_products.html', context)
+
+
+def subcategory_products(request, category_slug, subcategory_slug):
+    """Display all products under a specific subcategory. URL: /category/fruits/apple/"""
+    category = get_object_or_404(Category, slug=category_slug, is_active=True)
+    subcategory = get_object_or_404(
+        Subcategory.objects.select_related('category'),
+        slug=subcategory_slug, category=category, is_active=True
+    )
+    products = Product.objects.filter(
+        category=category, subcategory=subcategory, is_out_of_stock=False
+    ).select_related('category', 'subcategory')
+
+    paginator = Paginator(products, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Annotate sibling subcategories with active product counts
+    subcategories = Subcategory.objects.filter(category=category, is_active=True).annotate(
+        active_product_count=Count('products', filter=Q(products__is_out_of_stock=False))
+    ).order_by('sort_order', 'name')
+
+    context = {
+        'category': category,
+        'subcategory': subcategory,
+        'subcategories': subcategories,
+        'products': page_obj,
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'breadcrumbs': [
+            {'label': 'Home', 'url': '/'},
+            {'label': category.name, 'url': f'/category/{category.slug}/'},
+            {'label': subcategory.name, 'url': None},
+        ],
+    }
+    return render(request, 'products/subcategory_products.html', context)
+
+
+def load_subcategories(request):
+    """AJAX endpoint: return subcategories for a given category_id.
+    Used in Django admin and product filtering."""
+    category_id = request.GET.get('category_id')
+    subcategories = Subcategory.objects.filter(category_id=category_id).values('id', 'name', 'slug')
+    return JsonResponse(list(subcategories), safe=False)
 

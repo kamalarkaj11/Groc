@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load store_extras %}
 
 {% block title %}Products - GroceryHub{% endblock %}
 
@@ -356,11 +357,16 @@
 
         <div class="filter-card">
           <label for="category-filter"><i class="bi bi-funnel"></i> Filter by category</label>
-          <select id="category-filter" class="form-select" onchange="filterByCategory(this.value)">
+          <select id="category-filter" class="form-select mb-2" onchange="filterByCategory(this.value)">
             <option value="">All Categories</option>
             {% for category in categories %}
-            <option value="{{ category.name }}" {% if request.GET.category == category.name %}selected{% endif %}>{{ category.name }}</option>
+            <option value="{{ category.slug }}" {% if selected_category == category.slug %}selected{% endif %}>{{ category.name }} ({{ category.active_product_count }})</option>
             {% endfor %}
+          </select>
+
+          <label for="subcategory-filter" class="mt-2"><i class="bi bi-tag"></i> Filter by subcategory</label>
+          <select id="subcategory-filter" class="form-select" onchange="filterBySubcategory(this.value)">
+            <option value="">All Subcategories</option>
           </select>
         </div>
       </div>
@@ -441,7 +447,7 @@
         <ul class="pagination justify-content-center">
           {% if page_obj.has_previous %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Previous</a>
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.subcategory %}&subcategory={{ request.GET.subcategory }}{% endif %}">Previous</a>
           </li>
           {% endif %}
           {% for num in page_obj.paginator.page_range %}
@@ -451,13 +457,13 @@
           </li>
           {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">{{ num }}</a>
+            <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.subcategory %}&subcategory={{ request.GET.subcategory }}{% endif %}">{{ num }}</a>
           </li>
           {% endif %}
           {% endfor %}
           {% if page_obj.has_next %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Next</a>
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.subcategory %}&subcategory={{ request.GET.subcategory }}{% endif %}">Next</a>
           </li>
           {% endif %}
         </ul>
@@ -468,6 +474,36 @@
 </div>
 
 <script>
+  // Subcategory data from server for initial population
+  const categorySubcategories = {
+    {% for category in categories %}
+    "{{ category.slug }}": [
+      {% for sub in category.subcategories.all %}
+      {% if sub.is_active %}
+      {"slug": "{{ sub.slug }}", "name": "{{ sub.name }}", "count": {{ global_subcategory_counts|get_item:sub.id|default:0 }}}{% if not forloop.last %},{% endif %}
+      {% endif %}
+      {% endfor %}
+    ]{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  const selectedCategory = "{{ selected_category|default:'' }}";
+  const selectedSubcategory = "{{ selected_subcategory|default:'' }}";
+
+  function populateSubcategories(categorySlug) {
+    const subSelect = document.getElementById('subcategory-filter');
+    subSelect.innerHTML = '<option value="">All Subcategories</option>';
+    if (categorySlug && categorySubcategories[categorySlug]) {
+      categorySubcategories[categorySlug].forEach(function(sub) {
+        const opt = document.createElement('option');
+        opt.value = sub.slug;
+        opt.textContent = sub.name + ' (' + sub.count + ')';
+        if (sub.slug === selectedSubcategory) opt.selected = true;
+        subSelect.appendChild(opt);
+      });
+    }
+  }
+
   function filterByCategory(category) {
     const url = new URL(window.location);
     if (category) {
@@ -475,8 +511,25 @@
     } else {
       url.searchParams.delete('category');
     }
+    url.searchParams.delete('subcategory');
     url.searchParams.delete('page');
     window.location = url;
+  }
+
+  function filterBySubcategory(subcategory) {
+    const url = new URL(window.location);
+    if (subcategory) {
+      url.searchParams.set('subcategory', subcategory);
+    } else {
+      url.searchParams.delete('subcategory');
+    }
+    url.searchParams.delete('page');
+    window.location = url;
+  }
+
+  // Populate subcategories on page load if category is selected
+  if (selectedCategory) {
+    populateSubcategories(selectedCategory);
   }
 </script>
 {% endblock %}

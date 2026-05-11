@@ -10,6 +10,13 @@ urlpatterns = [
     # Products
     path('products/', views.product_list, name='product_list'),
     path('products/<slug:slug>/', views.product_detail, name='product_detail'),
+
+    # Category & Subcategory pages
+    path('category/<slug:category_slug>/', views.category_products, name='category_products'),
+    path('category/<slug:category_slug>/<slug:subcategory_slug>/', views.subcategory_products, name='subcategory_products'),
+
+    # AJAX: load subcategories for a category
+    path('ajax/load-subcategories/', views.load_subcategories, name='load_subcategories'),
     
     # Cart
     path('cart/', views.cart_view, name='cart'),
@@ -34,7 +41,7 @@ urlpatterns = [
     path('verify-email-otp/', views.verify_email_otp_view, name='verify_email_otp'),
     path('verify-phone-otp/', views.verify_phone_otp_view, name='verify_signup_phone_otp'),
     path('resend-email-otp/', views.resend_email_otp_view, name='resend_email_otp'),
-    path('resend-phone-otp/', views.resend_phone_otp_view, name='resend_phone_otp'),
+    path('resend-phone-otp/', views.resend_phone_otp_view, name='resend_signup_phone_otp'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('verify-otp/<str:username>/', views.verify_otp, name='verify_otp'),
     path('profile/', views.profile, name='profile'),

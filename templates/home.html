@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load store_extras %}
 
-{% block title %}Home - GroceryHub{% endblock %}
+{% block title %}Home - GrocHub{% endblock %}
 
 {% block content %}
 <style>
@@ -108,6 +109,7 @@
     font-weight: 950;
     line-height: 0.95;
     letter-spacing: 0;
+    text-shadow: 0 4px 24px rgba(0,0,0,0.18);
   }
 
   .hero p {
@@ -216,6 +218,17 @@
   .stat-item {
     background: #fff;
     padding: 26px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-item::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(25,135,84,0.04), transparent);
+    animation: shimmer 3s infinite;
   }
 
   .stat-value {
@@ -238,27 +251,37 @@
     margin-top: 34px;
   }
 
-  .feature-card,
-  .product-card,
-  .category-card {
+  .feature-card {
     height: 100%;
     border: 1px solid var(--gh-line);
     border-radius: 8px;
     background: #fff;
     box-shadow: 0 10px 25px rgba(24, 37, 31, 0.06);
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    padding: 26px;
   }
 
-  .feature-card:hover,
-  .product-card:hover,
-  .category-card:hover {
+  .feature-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 4px;
+    background: linear-gradient(90deg, var(--gh-green), var(--gh-mint));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  .feature-card:hover::before {
+    transform: scaleX(1);
+  }
+
+  .feature-card:hover {
     transform: translateY(-7px);
     border-color: rgba(25, 135, 84, 0.32);
     box-shadow: var(--gh-shadow);
-  }
-
-  .feature-card {
-    padding: 26px;
   }
 
   .feature-card h3 {
@@ -267,8 +290,7 @@
     font-weight: 850;
   }
 
-  .feature-card p,
-  .product-card p {
+  .feature-card p {
     color: var(--gh-muted);
   }
 
@@ -284,12 +306,37 @@
     margin-bottom: 0;
   }
 
-  .category-heading {
-    max-width: 720px;
+  /* ── Enhanced product card ── */
+  .product-card {
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid var(--gh-line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 10px 25px rgba(24, 37, 31, 0.06);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    position: relative;
   }
 
-  .product-card {
-    overflow: hidden;
+  .product-card::after {
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gh-green), var(--gh-yellow));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  .product-card:hover::after {
+    transform: scaleX(1);
+  }
+
+  .product-card:hover {
+    transform: translateY(-7px);
+    border-color: rgba(25, 135, 84, 0.32);
+    box-shadow: var(--gh-shadow);
   }
 
   .product-media {
@@ -356,34 +403,314 @@
     margin-bottom: 16px;
   }
 
-  .categories-band {
-    background: #eef8f1;
+  /* ============================================
+     SHOP BY CATEGORY — REDESIGNED
+     ============================================ */
+
+  .categories-section {
+    background: linear-gradient(180deg, #eef8f1 0%, #e2f3e8 50%, #eef8f1 100%);
   }
 
-  .category-card {
-    display: block;
-    padding: 24px 12px;
+  /* ── Quick Nav Strip (Blinkit-style circular icons) ── */
+  .cat-quick-strip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 24px 0 8px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .cat-quick-strip::-webkit-scrollbar { display: none; }
+
+  .cat-quick-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    flex-shrink: 0;
+    min-width: 88px;
+    transition: transform 0.2s ease;
+  }
+
+  .cat-quick-item:hover {
+    transform: translateY(-4px);
+  }
+
+  .cat-quick-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #fff;
+    box-shadow: 0 6px 20px rgba(24, 37, 31, 0.12);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    background: linear-gradient(135deg, #f0faf4, #e6f5ec);
+    display: grid;
+    place-items: center;
+  }
+
+  .cat-quick-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cat-quick-circle i {
+    font-size: 1.6rem;
+    color: var(--gh-green);
+  }
+
+  .cat-quick-item:hover .cat-quick-circle {
+    border-color: var(--gh-mint);
+    box-shadow: 0 8px 28px rgba(25, 135, 84, 0.25);
+    transform: scale(1.08);
+  }
+
+  .cat-quick-label {
+    font-size: 0.72rem;
+    font-weight: 800;
     color: var(--gh-ink);
     text-align: center;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cat-quick-item:hover .cat-quick-label {
+    color: var(--gh-green);
+  }
+
+  /* ── Category Mega Cards ── */
+  .cat-mega-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 22px;
+    margin-top: 32px;
+  }
+
+  .cat-mega-card {
+    --card-accent: var(--gh-green);
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid var(--gh-line);
+    box-shadow: 0 8px 24px rgba(24, 37, 31, 0.07);
+    transition: transform 0.35s cubic-bezier(.4,0,.2,1), box-shadow 0.35s ease, border-color 0.35s ease;
+  }
+
+  .cat-mega-card:hover {
+    transform: translateY(-10px) scale(1.01);
+    border-color: var(--card-accent);
+    box-shadow: 0 24px 56px rgba(24, 37, 31, 0.16);
+  }
+
+  /* Card image area */
+  .cat-mega-img {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f0faf4, #e6f5ec);
+  }
+
+  .cat-mega-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(.4,0,.2,1);
+  }
+
+  .cat-mega-card:hover .cat-mega-img img {
+    transform: scale(1.1);
+  }
+
+  /* Gradient overlay on image */
+  .cat-mega-img::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+  }
+
+  /* Floating badge on image */
+  .cat-mega-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    color: var(--gh-ink);
+    font-size: 0.75rem;
+    font-weight: 800;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  }
+
+  .cat-mega-badge i {
+    color: var(--card-accent);
+  }
+
+  /* Image text overlay */
+  .cat-mega-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    padding: 16px 20px;
+    color: #fff;
+  }
+
+  .cat-mega-overlay h3 {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 950;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .cat-mega-overlay span {
+    font-size: 0.85rem;
+    font-weight: 700;
+    opacity: 0.88;
+  }
+
+  /* Card body with subcategories */
+  .cat-mega-body {
+    padding: 18px 20px 20px;
+  }
+
+  .cat-mega-body-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .cat-mega-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: rgba(25, 135, 84, 0.08);
+    color: var(--card-accent);
+    font-size: 0.78rem;
+    font-weight: 800;
     text-decoration: none;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   }
 
-  .category-card i {
-    display: block;
-    margin-bottom: 12px;
-    color: var(--category-color, var(--gh-green));
-    font-size: 2.4rem;
+  .cat-mega-view-all:hover {
+    background: var(--card-accent);
+    color: #fff;
+    transform: translateX(4px);
   }
 
-  .category-card span {
-    font-weight: 850;
+  /* Subcategory chips inside card */
+  .cat-mega-subs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
+  .cat-sub-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: #f7fbf8;
+    border: 1px solid var(--gh-line);
+    color: var(--gh-ink);
+    font-weight: 750;
+    font-size: 0.82rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .cat-sub-chip i {
+    font-size: 0.7rem;
+    color: var(--card-accent);
+  }
+
+  .cat-sub-chip .chip-count {
+    font-size: 0.68rem;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(25, 135, 84, 0.08);
+    color: var(--gh-muted);
+    font-weight: 800;
+  }
+
+  .cat-sub-chip:hover {
+    background: var(--card-accent);
+    border-color: var(--card-accent);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(24, 37, 31, 0.12);
+  }
+
+  .cat-sub-chip:hover i {
+    color: #fff;
+  }
+
+  .cat-sub-chip:hover .chip-count {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+  }
+
+  /* Accent colors per card */
+  .cat-mega-card[data-accent="green"]  { --card-accent: #198754; }
+  .cat-mega-card[data-accent="orange"] { --card-accent: #ff8a3d; }
+  .cat-mega-card[data-accent="blue"]   { --card-accent: #0d6efd; }
+  .cat-mega-card[data-accent="purple"] { --card-accent: #6f42c1; }
+  .cat-mega-card[data-accent="red"]    { --card-accent: #dc3545; }
+  .cat-mega-card[data-accent="teal"]   { --card-accent: #17a2b8; }
+
+  .cat-mega-card[data-accent="orange"] .cat-mega-view-all { background: rgba(255,138,61,0.1); color: #d9700e; }
+  .cat-mega-card[data-accent="orange"] .cat-mega-view-all:hover { background: #ff8a3d; color: #fff; }
+  .cat-mega-card[data-accent="orange"] .cat-sub-chip i { color: #ff8a3d; }
+  .cat-mega-card[data-accent="orange"] .cat-sub-chip:hover { background: #ff8a3d; border-color: #ff8a3d; }
+
+  .cat-mega-card[data-accent="blue"] .cat-mega-view-all { background: rgba(13,110,253,0.08); color: #0a58ca; }
+  .cat-mega-card[data-accent="blue"] .cat-mega-view-all:hover { background: #0d6efd; color: #fff; }
+  .cat-mega-card[data-accent="blue"] .cat-sub-chip i { color: #0d6efd; }
+  .cat-mega-card[data-accent="blue"] .cat-sub-chip:hover { background: #0d6efd; border-color: #0d6efd; }
+
+  .cat-mega-card[data-accent="purple"] .cat-mega-view-all { background: rgba(111,66,193,0.08); color: #6f42c1; }
+  .cat-mega-card[data-accent="purple"] .cat-mega-view-all:hover { background: #6f42c1; color: #fff; }
+  .cat-mega-card[data-accent="purple"] .cat-sub-chip i { color: #6f42c1; }
+  .cat-mega-card[data-accent="purple"] .cat-sub-chip:hover { background: #6f42c1; border-color: #6f42c1; }
+
+  .cat-mega-card[data-accent="red"] .cat-mega-view-all { background: rgba(220,53,69,0.08); color: #c42333; }
+  .cat-mega-card[data-accent="red"] .cat-mega-view-all:hover { background: #dc3545; color: #fff; }
+  .cat-mega-card[data-accent="red"] .cat-sub-chip i { color: #dc3545; }
+  .cat-mega-card[data-accent="red"] .cat-sub-chip:hover { background: #dc3545; border-color: #dc3545; }
+
+  .cat-mega-card[data-accent="teal"] .cat-mega-view-all { background: rgba(23,162,184,0.08); color: #128293; }
+  .cat-mega-card[data-accent="teal"] .cat-mega-view-all:hover { background: #17a2b8; color: #fff; }
+  .cat-mega-card[data-accent="teal"] .cat-sub-chip i { color: #17a2b8; }
+  .cat-mega-card[data-accent="teal"] .cat-sub-chip:hover { background: #17a2b8; border-color: #17a2b8; }
+
+  /* ── Newsletter Section ── */
   .deal-band {
     color: #fff;
     background:
       linear-gradient(90deg, rgba(17, 79, 50, 0.94), rgba(21, 142, 93, 0.88)),
       url("https://images.unsplash.com/photo-1573246123716-6b1782bfc499?auto=format&fit=crop&w=1600&q=85") center/cover;
+  }
+
+  .deal-band .section-title {
+    text-shadow: 0 2px 12px rgba(0,0,0,0.15);
   }
 
   .deal-grid {
@@ -433,19 +760,35 @@
     transform: scale(1.25);
   }
 
-  .category-fruits { --category-color: #198754; }
-  .category-vegetables { --category-color: #ff8a3d; }
-  .category-dairy { --category-color: #0d6efd; }
-  .category-bakery { --category-color: #6f42c1; }
-  .category-snacks { --category-color: #dc3545; }
-  .category-beverages { --category-color: #17a2b8; }
-
   .newsletter-eyebrow {
     color: #fff;
     background: rgba(255, 255, 255, 0.16);
     border-color: rgba(255, 255, 255, 0.28);
   }
 
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes shimmer {
+    0%   { left: -100%; }
+    100% { left: 200%; }
+  }
+
+  .fade-up {
+    opacity: 0;
+    animation: fadeUp 0.6s cubic-bezier(.4,0,.2,1) forwards;
+  }
+
+  .fade-up-d1 { animation-delay: 0.08s; }
+  .fade-up-d2 { animation-delay: 0.16s; }
+  .fade-up-d3 { animation-delay: 0.24s; }
+  .fade-up-d4 { animation-delay: 0.32s; }
+  .fade-up-d5 { animation-delay: 0.40s; }
+
+  /* ── Responsive ── */
   @media (max-width: 991px) {
     .hero-grid,
     .deal-grid {
@@ -464,6 +807,10 @@
 
     .section-head {
       display: block;
+    }
+
+    .cat-mega-grid {
+      grid-template-columns: 1fr;
     }
   }
 
@@ -494,6 +841,33 @@
     .hero-panel {
       padding: 16px;
     }
+
+    .cat-quick-circle {
+      width: 60px;
+      height: 60px;
+    }
+
+    .cat-quick-item {
+      min-width: 74px;
+    }
+
+    .cat-mega-img {
+      height: 160px;
+    }
+
+    .cat-mega-overlay h3 {
+      font-size: 1.15rem;
+    }
+
+    .cat-sub-chip {
+      padding: 6px 11px;
+      font-size: 0.76rem;
+    }
+  }
+
+  #eyebrow1 {
+    color: yellow;
+    border-color: yellowgreen;
   }
 </style>
 
@@ -501,7 +875,7 @@
   <section id="hero" class="hero">
     <div class="gh-container hero-grid">
       <div>
-        <span class="eyebrow"><i class="bi bi-basket2-fill"></i> GroceryHub Fresh Market</span>
+        <span class="eyebrow" id="eyebrow1"><i class="bi bi-basket2-fill"></i> GrocHub Fresh Market</span>
         <h1>Fresh groceries for the whole week, delivered today.</h1>
         <p>Shop crisp produce, daily dairy, pantry staples, snacks, and drinks with fast doorstep delivery and quality you can trust.</p>
         <div class="hero-actions">
@@ -546,7 +920,7 @@
     <a href="#newsletter" class="nav-dot" data-section="newsletter" aria-label="Newsletter"></a>
   </nav>
 
-  <section class="stat-strip">
+  <section class="stat-strip fade-up">
     <div class="gh-container">
       <div class="stat-box">
         <div class="stat-item">
@@ -569,11 +943,11 @@
     </div>
   </section>
 
-  <section id="why-us" class="section-pad">
+  <section id="why-us" class="section-pad fade-up fade-up-d1">
     <div class="gh-container">
       <span class="eyebrow"><i class="bi bi-stars"></i> Why Choose Us</span>
       <h2 class="section-title">Everything your kitchen needs, made simple.</h2>
-      <p class="section-copy">From farm-fresh vegetables to breakfast essentials, GroceryHub helps you fill the fridge without standing in line.</p>
+      <p class="section-copy">From farm-fresh vegetables to breakfast essentials, GrocHub helps you fill the fridge without standing in line.</p>
 
       <div class="features-grid">
         <article class="feature-card">
@@ -600,7 +974,7 @@
     </div>
   </section>
 
-  <section id="featured" class="section-pad bg-white">
+  <section id="featured" class="section-pad bg-white fade-up fade-up-d2">
     <div class="gh-container">
       <div class="section-head">
         <div>
@@ -658,56 +1032,92 @@
     </div>
   </section>
 
-  <section id="categories" class="section-pad categories-band">
+  <!-- ======== SHOP BY CATEGORY — FULLY REDESIGNED ======== -->
+  <section id="categories" class="section-pad categories-section fade-up fade-up-d3">
     <div class="gh-container">
-      <div class="category-heading text-center mx-auto">
+      <div class="text-center mx-auto" style="max-width:720px;">
         <span class="eyebrow"><i class="bi bi-grid"></i> Shop By Category</span>
         <h2 class="section-title">Find what you need faster.</h2>
         <p class="section-copy mx-auto">Start with your favorite aisle and build your cart in minutes.</p>
       </div>
 
-      <div class="row g-3 mt-4">
-        <div class="col-lg-2 col-md-4 col-6">
-          <a href="#" class="category-card category-fruits">
-            <i class="bi bi-apple"></i>
-            <span>Fruits</span>
-          </a>
+      <!-- Quick Nav Strip: Blinkit-style circular icons -->
+      {% if categories %}
+      <div class="cat-quick-strip">
+        {% for category in categories %}
+        <a href="{% url 'store:category_products' category.slug %}" class="cat-quick-item">
+          <span class="cat-quick-circle">
+            {% if category.image %}
+              <img src="{{ category.image.url }}" alt="{{ category.name }}">
+            {% elif category.icon %}
+              <i class="bi {{ category.icon }}"></i>
+            {% else %}
+              <i class="bi bi-folder2"></i>
+            {% endif %}
+          </span>
+          <span class="cat-quick-label">{{ category.name }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Category Mega Cards -->
+      <div class="cat-mega-grid">
+        {% for category in categories %}
+        <div class="cat-mega-card" data-accent="{% cycle 'green' 'orange' 'blue' 'purple' 'red' 'teal' %}">
+          <!-- Image area with overlay -->
+          <div class="cat-mega-img">
+            {% if category.image %}
+            <img src="{{ category.image.url }}" alt="{{ category.name }}">
+            {% else %}
+            <div style="width:100%;height:100%;display:grid;place-items:center;">
+              <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}" style="font-size:4rem;color:var(--card-accent);opacity:0.3;"></i>
+            </div>
+            {% endif %}
+            <span class="cat-mega-badge">
+              <i class="bi bi-bag-check"></i> {{ category.active_product_count }} items
+            </span>
+            <div class="cat-mega-overlay">
+              <h3>{{ category.name }}</h3>
+              <span>Explore all {{ category.name|lower }}</span>
+            </div>
+          </div>
+
+          <!-- Subcategories -->
+          <div class="cat-mega-body">
+            <div class="cat-mega-body-header">
+              <span style="font-weight:800;font-size:0.88rem;color:var(--gh-muted);">Popular in {{ category.name }}</span>
+              <a href="{% url 'store:category_products' category.slug %}" class="cat-mega-view-all">
+                View All <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+            {% if category.subcategories.all %}
+            <div class="cat-mega-subs">
+              {% for sub in category.subcategories.all %}
+              {% if sub.is_active %}
+              <a href="{% url 'store:subcategory_products' category.slug sub.slug %}" class="cat-sub-chip">
+                <i class="bi {% if sub.icon %}{{ sub.icon }}{% else %}bi-tag{% endif %}"></i>
+                {{ sub.name }}
+                <span class="chip-count">{{ global_subcategory_counts|get_item:sub.id|default:0 }}</span>
+              </a>
+              {% endif %}
+              {% endfor %}
+            </div>
+            {% else %}
+            <p style="color:var(--gh-muted);font-size:0.85rem;">Subcategories coming soon.</p>
+            {% endif %}
+          </div>
         </div>
-        <div class="col-lg-2 col-md-4 col-6">
-          <a href="#" class="category-card category-vegetables">
-            <i class="bi bi-flower1"></i>
-            <span>Vegetables</span>
-          </a>
+        {% empty %}
+        <div class="text-center text-muted py-4">
+          <p>No categories added yet. Add them in the admin panel.</p>
         </div>
-        <div class="col-lg-2 col-md-4 col-6">
-          <a href="#" class="category-card category-dairy">
-            <i class="bi bi-basket2-fill"></i>
-            <span>Dairy</span>
-          </a>
-        </div>
-        <div class="col-lg-2 col-md-4 col-6">
-          <a href="#" class="category-card category-bakery">
-            <i class="bi bi-cup-hot"></i>
-            <span>Bakery</span>
-          </a>
-        </div>
-        <div class="col-lg-2 col-md-4 col-6">
-          <a href="#" class="category-card category-snacks">
-            <i class="bi bi-stars"></i>
-            <span>Snacks</span>
-          </a>
-        </div>
-        <div class="col-lg-2 col-md-4 col-6">
-          <a href="#" class="category-card category-beverages">
-            <i class="bi bi-cup-straw"></i>
-            <span>Beverages</span>
-          </a>
-        </div>
+        {% endfor %}
       </div>
     </div>
   </section>
 
-  <section id="newsletter" class="section-pad deal-band">
+  <section id="newsletter" class="section-pad deal-band fade-up fade-up-d4">
     <div class="gh-container deal-grid">
       <div>
         <span class="eyebrow newsletter-eyebrow">
@@ -749,6 +1159,21 @@
         document.querySelector(`[data-section="${section}"]`)?.classList.add('active');
       }
     });
+  });
+
+  // Intersection Observer for fade-up animations
+  const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animationPlayState = 'running';
+        fadeObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.fade-up').forEach(el => {
+    el.style.animationPlayState = 'paused';
+    fadeObserver.observe(el);
   });
 </script>
 {% endblock %}

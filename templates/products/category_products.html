@@ -1,0 +1,667 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load store_extras %}
+
+{% block title %}{{ category.name }} - GrocHub{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --cp-green: #198754;
+    --cp-mint: #20c997;
+    --cp-yellow: #ffc857;
+    --cp-orange: #ff8a3d;
+    --cp-ink: #18251f;
+    --cp-muted: #66736c;
+    --cp-soft: #f4fbf7;
+    --cp-line: rgba(25, 135, 84, 0.16);
+    --cp-shadow: 0 18px 45px rgba(18, 55, 38, 0.12);
+  }
+
+  main.container { max-width: none; padding-left: 0; padding-right: 0; margin-top: 0 !important; margin-bottom: 0 !important; }
+
+  .cp-page {
+    color: var(--cp-ink);
+    background: radial-gradient(circle at top left, rgba(255,200,87,0.15), transparent 32rem), linear-gradient(180deg, #fff 0%, #f7fbf8 55%, #fff 100%);
+    padding-bottom: 70px;
+  }
+
+  .cp-container { width: min(1140px, calc(100% - 32px)); margin: 0 auto; }
+
+  /* Breadcrumb */
+  .cp-breadcrumb { padding: 28px 0 8px; }
+  .cp-breadcrumb ol { display: flex; gap: 8px; list-style: none; margin: 0; padding: 0; font-weight: 750; font-size: 0.92rem; }
+  .cp-breadcrumb li { display: flex; align-items: center; gap: 8px; }
+  .cp-breadcrumb li::after { content: "\F285"; font-family: "bootstrap-icons"; color: var(--cp-muted); font-size: 0.7rem; }
+  .cp-breadcrumb li:last-child::after { display: none; }
+  .cp-breadcrumb a { color: var(--cp-green); text-decoration: none; }
+  .cp-breadcrumb a:hover { text-decoration: underline; }
+  .cp-breadcrumb .active { color: var(--cp-muted); }
+
+  /* ====== HERO ====== */
+  .cp-hero {
+    position: relative;
+    border-radius: 20px;
+    padding: 56px 48px;
+    color: #fff;
+    background: linear-gradient(135deg, rgba(13,76,45,0.92), rgba(28,147,94,0.85));
+    box-shadow: var(--cp-shadow);
+    margin-bottom: 40px;
+    overflow: hidden;
+    min-height: 280px;
+    display: flex;
+    align-items: center;
+  }
+
+  .cp-hero-bg {
+    position: absolute;
+    inset: 0;
+    opacity: 0.2;
+  }
+
+  .cp-hero-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cp-hero-bg::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(13,76,45,0.6), rgba(28,147,94,0.3));
+  }
+
+  .cp-hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 680px;
+  }
+
+  .cp-hero h1 {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 950;
+    margin: 0 0 12px;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+
+  .cp-hero p {
+    color: rgba(255,255,255,0.88);
+    font-size: 1.1rem;
+    margin: 0 0 20px;
+  }
+
+  .cp-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .cp-hero-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  /* ====== SUBCATEGORY VISUAL CARDS ====== */
+  .sub-section-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    margin: 0 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sub-section-title i { color: var(--cp-green); }
+
+  .sub-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .sub-card {
+    --sub-accent: var(--cp-green);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 24px 16px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid var(--cp-line);
+    box-shadow: 0 6px 18px rgba(24,37,31,0.05);
+    text-decoration: none;
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1), box-shadow 0.3s ease, border-color 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sub-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--sub-accent), var(--cp-mint));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  .sub-card:hover::before {
+    transform: scaleX(1);
+  }
+
+  .sub-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--sub-accent);
+    box-shadow: 0 16px 40px rgba(24,37,31,0.12);
+  }
+
+  .sub-card-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f0faf4, #e6f5ec);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 3px solid #fff;
+    box-shadow: 0 6px 16px rgba(24,37,31,0.1);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .sub-card-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .sub-card-circle i {
+    font-size: 1.6rem;
+    color: var(--sub-accent);
+  }
+
+  .sub-card:hover .sub-card-circle {
+    border-color: var(--sub-accent);
+    box-shadow: 0 8px 24px rgba(25,135,84,0.2);
+    transform: scale(1.08);
+  }
+
+  .sub-card-name {
+    color: var(--cp-ink);
+    font-weight: 850;
+    font-size: 1rem;
+    text-align: center;
+    margin: 0;
+  }
+
+  .sub-card-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: rgba(25,135,84,0.08);
+    color: var(--cp-muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    transition: all 0.2s ease;
+  }
+
+  .sub-card:hover .sub-card-count {
+    background: var(--sub-accent);
+    color: #fff;
+  }
+
+  /* Accent colors for sub cards */
+  .sub-card[data-accent="green"]  { --sub-accent: #198754; }
+  .sub-card[data-accent="orange"] { --sub-accent: #ff8a3d; }
+  .sub-card[data-accent="blue"]   { --sub-accent: #0d6efd; }
+  .sub-card[data-accent="purple"] { --sub-accent: #6f42c1; }
+  .sub-card[data-accent="red"]    { --sub-accent: #dc3545; }
+  .sub-card[data-accent="teal"]   { --sub-accent: #17a2b8; }
+
+  .sub-card[data-accent="orange"] .sub-card-circle { background: linear-gradient(135deg, #fff5eb, #ffe8d5); }
+  .sub-card[data-accent="orange"] .sub-card-circle i { color: #ff8a3d; }
+  .sub-card[data-accent="orange"] .sub-card-count { background: rgba(255,138,61,0.1); color: #d9700e; }
+  .sub-card[data-accent="orange"]:hover .sub-card-count { background: #ff8a3d; }
+
+  .sub-card[data-accent="blue"] .sub-card-circle { background: linear-gradient(135deg, #eef5ff, #dce8ff); }
+  .sub-card[data-accent="blue"] .sub-card-circle i { color: #0d6efd; }
+  .sub-card[data-accent="blue"] .sub-card-count { background: rgba(13,110,253,0.08); color: #0a58ca; }
+  .sub-card[data-accent="blue"]:hover .sub-card-count { background: #0d6efd; }
+
+  .sub-card[data-accent="purple"] .sub-card-circle { background: linear-gradient(135deg, #f5efff, #e8dcff); }
+  .sub-card[data-accent="purple"] .sub-card-circle i { color: #6f42c1; }
+  .sub-card[data-accent="purple"] .sub-card-count { background: rgba(111,66,193,0.08); color: #6f42c1; }
+  .sub-card[data-accent="purple"]:hover .sub-card-count { background: #6f42c1; }
+
+  .sub-card[data-accent="red"] .sub-card-circle { background: linear-gradient(135deg, #fff5f5, #ffe0e0); }
+  .sub-card[data-accent="red"] .sub-card-circle i { color: #dc3545; }
+  .sub-card[data-accent="red"] .sub-card-count { background: rgba(220,53,69,0.08); color: #c42333; }
+  .sub-card[data-accent="red"]:hover .sub-card-count { background: #dc3545; }
+
+  .sub-card[data-accent="teal"] .sub-card-circle { background: linear-gradient(135deg, #effafc, #d7f0f5); }
+  .sub-card[data-accent="teal"] .sub-card-circle i { color: #17a2b8; }
+  .sub-card[data-accent="teal"] .sub-card-count { background: rgba(23,162,184,0.08); color: #128293; }
+  .sub-card[data-accent="teal"]:hover .sub-card-count { background: #17a2b8; }
+
+  /* ====== LAYOUT ====== */
+  .cp-layout { display: grid; grid-template-columns: 260px 1fr; gap: 28px; }
+
+  .cp-sidebar {
+    border: 1px solid var(--cp-line);
+    border-radius: 16px;
+    padding: 20px;
+    background: #fff;
+    box-shadow: 0 10px 25px rgba(24,37,31,0.06);
+    align-self: start;
+    position: sticky;
+    top: 100px;
+  }
+
+  .cp-sidebar h4 {
+    font-weight: 900;
+    font-size: 1rem;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .sidebar-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--cp-ink);
+    font-weight: 750;
+    transition: all 0.15s ease;
+    border-left: 3px solid transparent;
+  }
+
+  .sidebar-item:hover, .sidebar-item.active {
+    background: rgba(25,135,84,0.08);
+    color: var(--cp-green);
+    border-left-color: var(--cp-green);
+  }
+
+  .sidebar-item .item-count {
+    font-size: 0.78rem;
+    color: var(--cp-muted);
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(25,135,84,0.08);
+    transition: all 0.15s ease;
+  }
+
+  .sidebar-item.active .item-count,
+  .sidebar-item:hover .item-count {
+    background: var(--cp-green);
+    color: #fff;
+  }
+
+  /* ====== PRODUCT CARD ====== */
+  .product-card {
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid var(--cp-line);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 10px 25px rgba(24,37,31,0.06);
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1), box-shadow 0.25s ease, border-color 0.25s ease;
+    position: relative;
+  }
+
+  .product-card::after {
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--cp-green), var(--cp-yellow));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  .product-card:hover::after { transform: scaleX(1); }
+
+  .product-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(25,135,84,0.32);
+    box-shadow: var(--cp-shadow);
+  }
+
+  .product-media {
+    position: relative;
+    height: 220px;
+    background: var(--cp-soft);
+    overflow: hidden;
+  }
+
+  .product-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .product-card:hover .product-media img {
+    transform: scale(1.08);
+  }
+
+  .product-placeholder {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    color: var(--cp-green);
+    font-size: 3rem;
+  }
+
+  .deal-badge {
+    position: absolute; left: 12px; top: 12px;
+    display: inline-flex; align-items: center;
+    gap: 6px; padding: 7px 10px; border-radius: 999px; color: #183523;
+    background: var(--cp-yellow); font-size: 0.74rem; font-weight: 900;
+    z-index: 2;
+  }
+
+  .stock-badge {
+    position: absolute; right: 12px; top: 12px;
+    display: inline-flex; align-items: center;
+    gap: 6px; padding: 7px 10px; border-radius: 999px; color: #fff;
+    background: #dc3545; font-size: 0.74rem; font-weight: 900;
+    z-index: 2;
+  }
+
+  .product-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 210px;
+    padding: 20px;
+  }
+
+  .product-title { margin: 0 0 6px; font-size: 1.05rem; font-weight: 900; line-height: 1.28; }
+  .product-sub { font-size: 0.82rem; color: var(--cp-green); font-weight: 800; margin-bottom: 8px; }
+  .price-row { display: flex; align-items: baseline; gap: 8px; margin: 10px 0 14px; }
+  .price { color: var(--cp-green); font-size: 1.3rem; font-weight: 950; }
+  .old-price { color: var(--cp-muted); font-weight: 800; text-decoration: line-through; }
+
+  .card-actions {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    margin-top: auto;
+  }
+
+  .view-btn, .add-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 42px; border-radius: 10px; padding: 10px 14px; font-weight: 900;
+    text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .view-btn {
+    color: var(--cp-green);
+    background: rgba(25,135,84,0.08);
+    border: 1px solid var(--cp-line);
+  }
+
+  .add-btn {
+    border: 0;
+    color: #fff;
+    background: linear-gradient(135deg, var(--cp-green), var(--cp-mint));
+  }
+
+  .view-btn:hover { color: var(--cp-green); }
+  .view-btn:hover, .add-btn:hover { color: #fff; transform: translateY(-2px); box-shadow: var(--cp-shadow); }
+
+  .out-label {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 42px;
+    border-radius: 10px; padding: 10px 14px; color: #842029; background: #f8d7da; font-weight: 900;
+  }
+
+  .empty-state {
+    border: 1px dashed rgba(25,135,84,0.32); border-radius: 12px; padding: 58px 22px;
+    color: var(--cp-muted); background: #fff; text-align: center;
+    box-shadow: 0 10px 25px rgba(24,37,31,0.06);
+  }
+  .empty-state i { color: var(--cp-green); font-size: 4rem; }
+
+  .pagination .page-link {
+    border: 1px solid var(--cp-line);
+    color: var(--cp-green);
+    font-weight: 850;
+    border-radius: 10px;
+    margin: 0 3px;
+  }
+
+  .pagination .page-item.active .page-link {
+    border-color: var(--cp-green);
+    background: linear-gradient(135deg, var(--cp-green), var(--cp-mint));
+    color: #fff;
+  }
+
+  /* ====== ANIMATIONS ====== */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-up {
+    opacity: 0;
+    animation: fadeUp 0.5s cubic-bezier(.4,0,.2,1) forwards;
+  }
+
+  .fade-up-d1 { animation-delay: 0.06s; }
+  .fade-up-d2 { animation-delay: 0.12s; }
+  .fade-up-d3 { animation-delay: 0.18s; }
+
+  @media (max-width: 991px) {
+    .cp-layout { grid-template-columns: 1fr; }
+    .cp-sidebar { position: static; }
+    .sub-cards-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  }
+
+  @media (max-width: 575px) {
+    .cp-container { width: min(100% - 24px, 1140px); }
+    .cp-hero { padding: 36px 24px; min-height: auto; border-radius: 14px; }
+    .sub-cards-grid { grid-template-columns: repeat(2, 1fr); }
+    .card-actions { grid-template-columns: 1fr; }
+    .sub-card { padding: 18px 12px; }
+    .sub-card-circle { width: 60px; height: 60px; }
+  }
+</style>
+
+<div class="cp-page">
+  <div class="cp-container">
+    <!-- Breadcrumb -->
+    <nav class="cp-breadcrumb" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="{% url 'store:home' %}"><i class="bi bi-house"></i> Home</a></li>
+        <li><span class="active">{{ category.name }}</span></li>
+      </ol>
+    </nav>
+
+    <!-- Hero -->
+    <div class="cp-hero fade-up">
+      <div class="cp-hero-bg">
+        {% if category.image %}
+        <img src="{{ category.image.url }}" alt="{{ category.name }}">
+        {% endif %}
+      </div>
+      <div class="cp-hero-content">
+        <h1>{{ category.name }}</h1>
+        <p>Browse all {{ category.name|lower }} products and find exactly what you need.</p>
+        <div class="cp-hero-meta">
+          <span><i class="bi bi-bag-check"></i> {{ category.active_product_count|default:category.product_count }} products</span>
+          <span><i class="bi bi-grid"></i> {{ subcategories|length }} subcategories</span>
+          <span><i class="bi bi-truck"></i> Free delivery</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subcategory Visual Cards -->
+    {% if subcategories %}
+    <h2 class="sub-section-title fade-up fade-up-d1">
+      <i class="bi bi-grid-3x3-gap"></i> Browse by Subcategory
+    </h2>
+    <div class="sub-cards-grid fade-up fade-up-d1">
+      <a href="{% url 'store:category_products' category.slug %}"
+         class="sub-card {% if not active_subcategory %}active{% endif %}"
+         data-accent="green">
+        <span class="sub-card-circle">
+          {% if category.image %}
+            <img src="{{ category.image.url }}" alt="All">
+          {% elif category.icon %}
+            <i class="bi {{ category.icon }}"></i>
+          {% else %}
+            <i class="bi bi-grid"></i>
+          {% endif %}
+        </span>
+        <p class="sub-card-name">All {{ category.name }}</p>
+        <span class="sub-card-count"><i class="bi bi-bag-check"></i> {{ category.active_product_count|default:category.product_count }}</span>
+      </a>
+      {% for sub in subcategories %}
+      <a href="{% url 'store:category_products' category.slug %}?subcategory={{ sub.slug }}"
+         class="sub-card {% if active_subcategory == sub %}active{% endif %}"
+         data-accent="{% cycle 'green' 'orange' 'blue' 'purple' 'red' 'teal' %}">
+        <span class="sub-card-circle">
+          {% if sub.image %}
+            <img src="{{ sub.image.url }}" alt="{{ sub.name }}">
+          {% elif sub.icon %}
+            <i class="bi {{ sub.icon }}"></i>
+          {% else %}
+            <i class="bi bi-tag"></i>
+          {% endif %}
+        </span>
+        <p class="sub-card-name">{{ sub.name }}</p>
+        <span class="sub-card-count"><i class="bi bi-bag-check"></i> {{ sub.active_product_count }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main layout: sidebar + products -->
+    <div class="cp-layout">
+      <!-- Sidebar -->
+      <aside class="cp-sidebar fade-up fade-up-d2">
+        <h4><i class="bi bi-funnel"></i> Filter</h4>
+        <a href="{% url 'store:category_products' category.slug %}" class="sidebar-item {% if not active_subcategory %}active{% endif %}">
+          All {{ category.name }}
+          <span class="item-count">{{ category.active_product_count|default:category.product_count }}</span>
+        </a>
+        {% for sub in subcategories %}
+        <a href="{% url 'store:category_products' category.slug %}?subcategory={{ sub.slug }}"
+           class="sidebar-item {% if active_subcategory == sub %}active{% endif %}">
+          {{ sub.name }}
+          <span class="item-count">{{ sub.active_product_count }}</span>
+        </a>
+        {% endfor %}
+      </aside>
+
+      <!-- Product grid -->
+      <div class="fade-up fade-up-d3">
+        <div class="row g-4">
+          {% for product in products %}
+          <div class="col-lg-4 col-md-6">
+            <article class="product-card">
+              <div class="product-media">
+                {% if product.discount_price %}<span class="deal-badge"><i class="bi bi-tag-fill"></i> Deal</span>{% endif %}
+                {% if product.is_out_of_stock %}<span class="stock-badge">Out</span>{% endif %}
+                {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.title }}">
+                {% else %}
+                <div class="product-placeholder"><i class="bi bi-basket2-fill"></i></div>
+                {% endif %}
+              </div>
+              <div class="product-body">
+                <h3 class="product-title">{{ product.title|truncatewords:5 }}</h3>
+                {% if product.subcategory %}
+                <div class="product-sub">{{ product.subcategory.name }}</div>
+                {% endif %}
+                <div class="price-row">
+                  <span class="price">Rs. {{ product.get_price }}</span>
+                  {% if product.discount_price %}<span class="old-price">Rs. {{ product.price }}</span>{% endif %}
+                </div>
+                <div class="card-actions">
+                  <a href="{% url 'store:product_detail' product.slug %}" class="view-btn">Details <i class="bi bi-arrow-right"></i></a>
+                  {% if product.is_out_of_stock %}
+                  <span class="out-label">Out of Stock</span>
+                  {% else %}
+                  <form method="post" action="{% url 'store:add_to_cart' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <button type="submit" class="add-btn"><i class="bi bi-cart-plus"></i> Add</button>
+                  </form>
+                  {% endif %}
+                </div>
+              </div>
+            </article>
+          </div>
+          {% empty %}
+          <div class="col-12">
+            <div class="empty-state">
+              <i class="bi bi-search"></i>
+              <h3 class="mt-3">No products found</h3>
+              <p class="mb-4">No products in this category yet.</p>
+              <a href="{% url 'store:product_list' %}" class="add-btn">Browse All Products</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav class="mt-4" aria-label="Product pagination">
+          <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if active_subcategory %}&subcategory={{ active_subcategory.slug }}{% endif %}">Previous</a></li>
+            {% endif %}
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if active_subcategory %}&subcategory={{ active_subcategory.slug }}{% endif %}">{{ num }}</a></li>
+            {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if active_subcategory %}&subcategory={{ active_subcategory.slug }}{% endif %}">Next</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Intersection Observer for fade-up animations
+  const fadeObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animationPlayState = 'running';
+        fadeObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-up').forEach(el => {
+    el.style.animationPlayState = 'paused';
+    fadeObserver.observe(el);
+  });
+</script>
+{% endblock %}

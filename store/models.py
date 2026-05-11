@@ -135,22 +135,111 @@ def generate_initial_otp(sender, instance, created, **kwargs):
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, blank=True)
+    image = models.ImageField(upload_to='categories/', blank=True, null=True)
+    description = models.TextField(blank=True, help_text="Brief description for SEO and display.")
+    icon = models.CharField(
+        max_length=50, blank=True,
+        help_text='Bootstrap Icons class, e.g. "bi-apple" or "bi-cup-straw".'
+    )
+    is_active = models.BooleanField(default=True, help_text="Inactive categories are hidden from the storefront.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Lower numbers appear first.")
 
     class Meta:
         verbose_name_plural = 'categories'
+        ordering = ['sort_order', 'name']
+        indexes = [
+            models.Index(fields=['is_active', 'sort_order']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while Category.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
 
+    def product_count(self):
+        """Return the number of in-stock products in this category."""
+        return self.products.filter(is_out_of_stock=False).count()
+
+
+class Subcategory(models.Model):
+    """Subcategory under a Category. E.g. Fruits -> Apple, Banana."""
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True, blank=True)
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, related_name='subcategories'
+    )
+    image = models.ImageField(upload_to='subcategories/', blank=True, null=True)
+    description = models.TextField(blank=True, help_text="Brief description for SEO and display.")
+    icon = models.CharField(
+        max_length=50, blank=True,
+        help_text='Bootstrap Icons class, e.g. "bi-apple" or "bi-cup-straw".'
+    )
+    is_active = models.BooleanField(default=True, help_text="Inactive subcategories are hidden from the storefront.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Lower numbers appear first.")
+
+    class Meta:
+        verbose_name_plural = 'subcategories'
+        ordering = ['sort_order', 'name']
+        # Prevent duplicate subcategory names within the same category
+        unique_together = ('name', 'category')
+        indexes = [
+            models.Index(fields=['is_active', 'sort_order']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while Subcategory.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.category.name} → {self.name}"
+
+    def product_count(self):
+        """Return the number of in-stock products in this subcategory."""
+        return self.products.filter(is_out_of_stock=False).count()
+
+    def clean(self):
+        """Validate that subcategory name is unique within its category."""
+        from django.core.exceptions import ValidationError
+        qs = Subcategory.objects.filter(name=self.name, category=self.category)
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        if qs.exists():
+            raise ValidationError(
+                f'Subcategory "{self.name}" already exists under "{self.category.name}".'
+            )
+
+
 class Product(models.Model):
     title = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, blank=True)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     image = models.ImageField(upload_to='products/')
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
+    subcategory = models.ForeignKey(
+        Subcategory, on_delete=models.CASCADE, related_name='products',
+        null=True, blank=True
+    )
     weight = models.CharField(max_length=50, blank=True, help_text="e.g. 500g, 1kg")
     origin = models.CharField(max_length=100, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
@@ -158,6 +247,19 @@ class Product(models.Model):
     highlights = models.JSONField(default=list, blank=True, help_text="e.g. ['100% Fresh', 'Quality Guaranteed']")
     is_out_of_stock = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        """Auto-generate slug from title if not provided."""
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = slugify(self.title)
+            slug = base_slug
+            counter = 1
+            while Product.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
 
     def get_price(self):
         return self.discount_price or self.price

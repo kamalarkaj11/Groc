@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm, Password
 from django.contrib.auth.models import User
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from .models import Profile, UserProfile, IndianState, Order, OTP
+from .models import Profile, UserProfile, IndianState, Order, OTP, Category, Subcategory
 
 class CustomUserCreationForm(UserCreationForm):
     age = forms.IntegerField(required=False, min_value=13, label='Age')
@@ -196,6 +196,12 @@ class PhoneOTPForm(forms.Form):
         self.helper.form_method = 'POST'
         self.helper.add_input(Submit('submit', 'Verify OTP', css_class='btn btn-success btn-lg w-100 py-3 fs-5'))
 
+    def clean_otp(self):
+        otp = self.cleaned_data.get('otp', '').strip()
+        if not otp.isdigit():
+            raise forms.ValidationError('OTP must contain only numbers.')
+        return otp
+
 
 class OTPVerificationForm(forms.Form):
     otp = forms.CharField(
@@ -246,4 +252,34 @@ class OTPVerificationForm(forms.Form):
                 raise forms.ValidationError('This OTP is no longer valid. Please resend a new code.')
 
         return cleaned_data
+
+
+class ProductAdminForm(forms.ModelForm):
+    """Form for Product admin that filters subcategories by selected category."""
+
+    class Meta:
+        from .models import Product
+        model = Product
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # If editing an existing product with a category, limit subcategory choices
+        if self.instance and self.instance.pk and self.instance.category:
+            self.fields['subcategory'].queryset = Subcategory.objects.filter(
+                category=self.instance.category
+            )
+        else:
+            # New product: start with empty queryset until category is chosen via JS
+            self.fields['subcategory'].queryset = Subcategory.objects.none()
+
+        # When category is submitted, filter subcategory accordingly
+        if 'category' in self.data:
+            try:
+                category_id = int(self.data.get('category'))
+                self.fields['subcategory'].queryset = Subcategory.objects.filter(
+                    category_id=category_id
+                )
+            except (ValueError, TypeError):
+                pass
 
