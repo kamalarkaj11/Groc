@@ -414,14 +414,13 @@
   /* ── Quick Nav Strip (Blinkit-style circular icons) ── */
   .cat-quick-strip {
     display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    padding: 24px 0 8px;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 22px 0 0;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
   }
-  .cat-quick-strip::-webkit-scrollbar { display: none; }
 
   .cat-quick-item {
     display: flex;
@@ -430,22 +429,25 @@
     gap: 8px;
     text-decoration: none;
     flex-shrink: 0;
-    min-width: 88px;
-    transition: transform 0.2s ease;
+    min-width: 84px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    transition: transform 0.2s ease, background 0.2s ease;
   }
 
   .cat-quick-item:hover {
     transform: translateY(-4px);
+    background: rgba(255,255,255,0.7);
   }
 
   .cat-quick-circle {
-    width: 72px;
-    height: 72px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     overflow: hidden;
     border: 3px solid #fff;
     box-shadow: 0 6px 20px rgba(24, 37, 31, 0.12);
-    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
     background: linear-gradient(135deg, #f0faf4, #e6f5ec);
     display: grid;
     place-items: center;
@@ -458,14 +460,14 @@
   }
 
   .cat-quick-circle i {
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     color: var(--gh-green);
   }
 
   .cat-quick-item:hover .cat-quick-circle {
     border-color: var(--gh-mint);
-    box-shadow: 0 8px 28px rgba(25, 135, 84, 0.25);
-    transform: scale(1.08);
+    box-shadow: 0 10px 28px rgba(25, 135, 84, 0.25);
+    transform: scale(1.1);
   }
 
   .cat-quick-label {
@@ -483,37 +485,41 @@
     color: var(--gh-green);
   }
 
-  /* ── Category Mega Cards ── */
+  /* ── Category Mega Cards Grid ── */
   .cat-mega-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 22px;
-    margin-top: 32px;
+    margin-top: 36px;
   }
 
   .cat-mega-card {
     --card-accent: var(--gh-green);
     position: relative;
-    border-radius: 20px;
+    border-radius: 18px;
     overflow: hidden;
     background: #fff;
     border: 1px solid var(--gh-line);
     box-shadow: 0 8px 24px rgba(24, 37, 31, 0.07);
     transition: transform 0.35s cubic-bezier(.4,0,.2,1), box-shadow 0.35s ease, border-color 0.35s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
 
   .cat-mega-card:hover {
-    transform: translateY(-10px) scale(1.01);
+    transform: translateY(-8px) scale(1.005);
     border-color: var(--card-accent);
-    box-shadow: 0 24px 56px rgba(24, 37, 31, 0.16);
+    box-shadow: 0 20px 50px rgba(24, 37, 31, 0.15);
   }
 
   /* Card image area */
   .cat-mega-img {
     position: relative;
-    height: 200px;
+    height: 180px;
     overflow: hidden;
     background: linear-gradient(135deg, #f0faf4, #e6f5ec);
+    flex-shrink: 0;
   }
 
   .cat-mega-img img {
@@ -532,25 +538,25 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.55) 100%);
+    background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.55) 100%);
     pointer-events: none;
   }
 
   /* Floating badge on image */
   .cat-mega-badge {
     position: absolute;
-    top: 14px;
-    right: 14px;
+    top: 12px;
+    right: 12px;
     z-index: 2;
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 6px 14px;
+    padding: 5px 12px;
     border-radius: 999px;
     background: rgba(255,255,255,0.92);
     backdrop-filter: blur(8px);
     color: var(--gh-ink);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 800;
     box-shadow: 0 4px 14px rgba(0,0,0,0.1);
   }
@@ -566,85 +572,95 @@
     left: 0;
     right: 0;
     z-index: 2;
-    padding: 16px 20px;
+    padding: 14px 18px;
     color: #fff;
   }
 
   .cat-mega-overlay h3 {
     margin: 0;
-    font-size: 1.45rem;
+    font-size: 1.3rem;
     font-weight: 950;
     text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    line-height: 1.1;
   }
 
   .cat-mega-overlay span {
-    font-size: 0.85rem;
-    font-weight: 700;
-    opacity: 0.88;
+    font-size: 0.8rem;
+    font-weight: 650;
+    opacity: 0.9;
+    display: block;
+    margin-top: 3px;
   }
 
   /* Card body with subcategories */
   .cat-mega-body {
-    padding: 18px 20px 20px;
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
 
   .cat-mega-body-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
+    gap: 10px;
   }
 
   .cat-mega-view-all {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 6px 16px;
+    gap: 4px;
+    padding: 6px 14px;
     border-radius: 999px;
     background: rgba(25, 135, 84, 0.08);
     color: var(--card-accent);
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 800;
     text-decoration: none;
+    flex-shrink: 0;
     transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   }
 
   .cat-mega-view-all:hover {
     background: var(--card-accent);
     color: #fff;
-    transform: translateX(4px);
+    transform: translateX(3px);
   }
 
   /* Subcategory chips inside card */
   .cat-mega-subs {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 7px;
+    align-content: flex-start;
+    flex: 1;
   }
 
   .cat-sub-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: 10px;
+    gap: 5px;
+    padding: 7px 12px;
+    border-radius: 9px;
     background: #f7fbf8;
     border: 1px solid var(--gh-line);
     color: var(--gh-ink);
-    font-weight: 750;
-    font-size: 0.82rem;
+    font-weight: 700;
+    font-size: 0.78rem;
     text-decoration: none;
     transition: all 0.2s ease;
   }
 
   .cat-sub-chip i {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: var(--card-accent);
   }
 
   .cat-sub-chip .chip-count {
-    font-size: 0.68rem;
-    padding: 1px 7px;
+    font-size: 0.65rem;
+    padding: 1px 6px;
     border-radius: 999px;
     background: rgba(25, 135, 84, 0.08);
     color: var(--gh-muted);
@@ -656,17 +672,11 @@
     border-color: var(--card-accent);
     color: #fff;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(24, 37, 31, 0.12);
+    box-shadow: 0 4px 14px rgba(24, 37, 31, 0.12);
   }
 
-  .cat-sub-chip:hover i {
-    color: #fff;
-  }
-
-  .cat-sub-chip:hover .chip-count {
-    background: rgba(255,255,255,0.25);
-    color: #fff;
-  }
+  .cat-sub-chip:hover i { color: #fff; }
+  .cat-sub-chip:hover .chip-count { background: rgba(255,255,255,0.25); color: #fff; }
 
   /* Accent colors per card */
   .cat-mega-card[data-accent="green"]  { --card-accent: #198754; }
@@ -951,7 +961,7 @@
 
       <div class="features-grid">
         <article class="feature-card">
-          <span class="feature-icon"><i class="bi bi-leaf"></i></span>
+          <span class="feature-icon"><i class="fa-solid fa-leaf"></i></span>
           <h3>100% Fresh</h3>
           <p>Picked daily and packed carefully so your order reaches you in great shape.</p>
         </article>

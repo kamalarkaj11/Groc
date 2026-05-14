@@ -11,18 +11,33 @@
     --header-line: rgba(25, 135, 84, 0.16);
     --header-soft: #f5fbf7;
     --header-shadow: 0 18px 48px rgba(15, 81, 50, 0.16);
+    --mega-bg: #ffffff;
+    --mega-sidebar-bg: #f8faf9;
+    --mega-hover: rgba(22, 131, 76, 0.08);
+    --mega-active: rgba(22, 131, 76, 0.12);
+    --mega-accent-gradient: linear-gradient(135deg, var(--header-green), var(--header-mint));
+    --mega-card-gradient: linear-gradient(135deg, rgba(247, 252, 249, 0.6), rgba(255, 255, 255, 0.9));
+    --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   }
+
+  /* ============================
+     SITE HEADER
+     ============================ */
 
   .site-header {
     position: sticky;
     top: 12px;
     z-index: 1100;
-    width: min(1200px, calc(100% - 24px));
+    width: min(1200px, calc(100% - 32px));
     margin: 12px auto 0;
     color: var(--header-ink);
     font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
     animation: headerDropIn 0.55s ease both;
-    transition: top 0.25s ease, transform 0.25s ease;
+    transition: top 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .site-header.is-scrolled {
+    top: 6px;
   }
 
   .header-shell {
@@ -30,28 +45,26 @@
     align-items: center;
     gap: 20px;
     min-height: 78px;
-    padding: 12px 14px;
+    padding: 12px 16px;
     border: 1px solid var(--header-line);
-    border-radius: 8px;
+    border-radius: 16px;
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(247, 252, 249, 0.94)),
+      linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(247, 252, 249, 0.95)),
       radial-gradient(circle at 5% 50%, rgba(247, 201, 72, 0.16), transparent 18rem);
     box-shadow: var(--header-shadow);
     backdrop-filter: blur(18px);
-    transition: min-height 0.25s ease, padding 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-  }
-
-  .site-header.is-scrolled {
-    top: 6px;
+    overflow: visible;
+    transition: min-height 0.25s ease, padding 0.25s ease, box-shadow 0.25s ease;
   }
 
   .site-header.is-scrolled .header-shell {
-    min-height: 68px;
-    padding-top: 9px;
-    padding-bottom: 9px;
-    box-shadow: 0 14px 36px rgba(15, 81, 50, 0.2);
+    min-height: 66px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    box-shadow: 0 14px 36px rgba(15, 81, 50, 0.24);
   }
 
+  /* Brand */
   .brand-link {
     display: inline-flex;
     align-items: center;
@@ -71,8 +84,7 @@
     justify-content: center;
     border-radius: 8px;
     color: #fff;
-    background:
-      linear-gradient(135deg, var(--header-green-deep), var(--header-green) 58%, var(--header-mint));
+    background: linear-gradient(135deg, var(--header-green-deep), var(--header-green) 58%, var(--header-mint));
     box-shadow: 0 14px 28px rgba(22, 131, 76, 0.28);
     font-size: 1.55rem;
     transition: transform 0.24s ease, box-shadow 0.24s ease;
@@ -83,35 +95,14 @@
     transform: rotate(-5deg) scale(1.05);
   }
 
-  .brand-name,
-  .brand-tagline {
-    transition: color 0.2s ease, transform 0.2s ease;
-  }
+  .brand-text { display: grid; line-height: 1.05; }
+  .brand-name { font-size: 1.5rem; font-weight: 950; letter-spacing: 0; }
+  .brand-tagline { color: var(--header-muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
 
-  .brand-link:hover .brand-name {
-    color: var(--header-green-deep);
-    transform: translateX(2px);
-  }
+  .brand-link:hover .brand-name { color: var(--header-green-deep); transform: translateX(2px); }
+  .brand-name, .brand-tagline { transition: color 0.2s ease, transform 0.2s ease; }
 
-  .brand-text {
-    display: grid;
-    line-height: 1.05;
-  }
-
-  .brand-name {
-    font-size: 1.5rem;
-    font-weight: 950;
-    letter-spacing: 0;
-  }
-
-  .brand-tagline {
-    color: var(--header-muted);
-    font-size: 0.72rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
+  /* Nav wrap */
   .nav-wrap {
     display: flex;
     align-items: center;
@@ -135,13 +126,14 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    min-height: 44px;
-    padding: 10px 13px;
+    min-height: 42px;
+    padding: 8px 16px;
     border: 0;
     border-radius: 999px;
     color: #435047;
     background: transparent;
-    font-weight: 800;
+    font-weight: 750;
+    font-size: 0.88rem;
     text-decoration: none;
     white-space: nowrap;
     position: relative;
@@ -153,15 +145,15 @@
   .account-trigger::after {
     content: "";
     position: absolute;
-    left: 14px;
-    right: 14px;
-    bottom: 7px;
-    height: 2px;
+    left: 50%;
+    bottom: 6px;
+    width: 20px;
+    height: 3px;
     border-radius: 999px;
+    margin-left: -10px;
     background: linear-gradient(90deg, var(--header-green), var(--header-mint));
     opacity: 0;
     transform: scaleX(0);
-    transform-origin: center;
     transition: opacity 0.22s ease, transform 0.22s ease;
   }
 
@@ -169,7 +161,7 @@
   .account-trigger:hover {
     color: var(--header-green-deep);
     background: rgba(25, 135, 84, 0.1);
-    box-shadow: 0 10px 18px rgba(22, 131, 76, 0.08);
+    box-shadow: 0 6px 16px rgba(22, 131, 76, 0.1);
     transform: translateY(-1px);
   }
 
@@ -179,11 +171,9 @@
     transform: scaleX(1);
   }
 
-  .nav-link-custom i,
-  .account-trigger i {
-    color: var(--header-green);
-  }
+  .nav-link-custom i, .account-trigger i { color: var(--header-green); }
 
+  /* Header actions (search, cart, account) */
   .header-actions {
     display: flex;
     align-items: center;
@@ -192,11 +182,7 @@
     min-width: 0;
   }
 
-  .header-search {
-    position: relative;
-    width: clamp(205px, 23vw, 310px);
-  }
-
+  .header-search { position: relative; width: clamp(205px, 23vw, 310px); }
   .header-search input {
     width: 100%;
     min-height: 44px;
@@ -208,21 +194,13 @@
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   }
-
   .header-search input:focus {
     border-color: rgba(25, 135, 84, 0.5);
     background: #fff;
     box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.1);
   }
 
-  .search-icon {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    color: var(--header-muted);
-    transform: translateY(-50%);
-  }
-
+  .search-icon { position: absolute; left: 16px; top: 50%; color: var(--header-muted); transform: translateY(-50%); }
   .search-submit {
     position: absolute;
     right: 5px;
@@ -239,11 +217,7 @@
     transform: translateY(-50%);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-
-  .search-submit:hover {
-    box-shadow: 0 10px 20px rgba(22, 131, 76, 0.22);
-    transform: translateY(-50%) scale(1.04);
-  }
+  .search-submit:hover { box-shadow: 0 10px 20px rgba(22, 131, 76, 0.22); transform: translateY(-50%) scale(1.04); }
 
   .cart-action {
     position: relative;
@@ -260,17 +234,13 @@
     font-size: 1.25rem;
     transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
   }
-
   .cart-action:hover {
     color: var(--header-green-deep);
     background: rgba(25, 135, 84, 0.16);
     box-shadow: 0 12px 22px rgba(22, 131, 76, 0.14);
     transform: translateY(-2px);
   }
-
-  .cart-action:hover i {
-    animation: navIconPop 0.38s ease;
-  }
+  .cart-action:hover i { animation: navIconPop 0.38s ease; }
 
   .cart-count {
     position: absolute;
@@ -290,20 +260,10 @@
     font-weight: 900;
   }
 
-  .account-menu {
-    position: relative;
-  }
-
-  .account-trigger {
-    background: rgba(248, 252, 250, 0.92);
-    border: 1px solid var(--header-line);
-  }
-
-  .account-name {
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  /* Account menu */
+  .account-menu { position: relative; }
+  .account-trigger { background: rgba(248, 252, 250, 0.92); border: 1px solid var(--header-line); }
+  .account-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
 
   .account-dropdown {
     position: absolute;
@@ -315,8 +275,7 @@
     list-style: none;
     border: 1px solid var(--header-line);
     border-radius: 8px;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 252, 249, 0.98)),
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 252, 249, 0.98)),
       radial-gradient(circle at top right, rgba(34, 199, 169, 0.12), transparent 12rem);
     box-shadow: var(--header-shadow);
     opacity: 0;
@@ -325,7 +284,6 @@
     transform-origin: top right;
     transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
   }
-
   .account-dropdown::before {
     content: "";
     position: absolute;
@@ -338,7 +296,6 @@
     background: rgba(255, 255, 255, 0.99);
     transform: rotate(45deg);
   }
-
   .account-menu.open .account-dropdown {
     opacity: 1;
     visibility: visible;
@@ -360,23 +317,10 @@
     transform: translateY(6px);
     transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
   }
-
-  .account-menu.open .dropdown-link-custom {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .account-menu.open .account-dropdown li:nth-child(1) .dropdown-link-custom {
-    transition-delay: 0.04s;
-  }
-
-  .account-menu.open .account-dropdown li:nth-child(2) .dropdown-link-custom {
-    transition-delay: 0.08s;
-  }
-
-  .account-menu.open .account-dropdown li:nth-child(3) .dropdown-link-custom {
-    transition-delay: 0.12s;
-  }
+  .account-menu.open .dropdown-link-custom { opacity: 1; transform: translateY(0); }
+  .account-menu.open .account-dropdown li:nth-child(1) .dropdown-link-custom { transition-delay: 0.04s; }
+  .account-menu.open .account-dropdown li:nth-child(2) .dropdown-link-custom { transition-delay: 0.08s; }
+  .account-menu.open .account-dropdown li:nth-child(3) .dropdown-link-custom { transition-delay: 0.12s; }
 
   .dropdown-link-custom i {
     width: 32px;
@@ -390,19 +334,10 @@
     background: rgba(25, 135, 84, 0.1);
     transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
   }
+  .dropdown-link-custom:hover { color: var(--header-green-deep); background: rgba(25, 135, 84, 0.09); transform: translateX(2px); }
+  .dropdown-link-custom:hover i { color: #fff; background: var(--mega-accent-gradient); transform: rotate(-5deg) scale(1.05); }
 
-  .dropdown-link-custom:hover {
-    color: var(--header-green-deep);
-    background: rgba(25, 135, 84, 0.09);
-    transform: translateX(2px);
-  }
-
-  .dropdown-link-custom:hover i {
-    color: #fff;
-    background: linear-gradient(135deg, var(--header-green), var(--header-mint));
-    transform: rotate(-5deg) scale(1.05);
-  }
-
+  /* Menu toggle & mobile cart */
   .menu-toggle {
     display: none;
     width: 48px;
@@ -417,46 +352,34 @@
     font-size: 1.45rem;
     transition: transform 0.2s ease, background 0.2s ease;
   }
+  .menu-toggle:hover { background: rgba(25, 135, 84, 0.1); transform: translateY(-1px); }
+  .mobile-cart { display: none; }
 
-  .menu-toggle:hover {
-    background: rgba(25, 135, 84, 0.1);
-    transform: translateY(-1px);
-  }
+  /* ============================
+     MEGA DROPDOWN — PREMIUM
+     ============================ */
 
-  .mobile-cart {
-    display: none;
-  }
+  .cat-dropdown { position: relative; }
 
-  /* ============================================
-     CATEGORY MEGA DROPDOWN — REWRITTEN
-     ============================================ */
-
-  .cat-dropdown {
-    position: relative;
-  }
-
-  /* Main dropdown container */
   .cat-dropdown-menu {
     position: absolute;
-    top: calc(100% + 10px);
+    top: calc(100% + 14px);
     left: 50%;
-    transform: translateX(-50%) translateY(-6px);
-    min-width: 700px;
-    max-height: 460px;
-    height: 460px;
+    transform: translateX(-50%) translateY(-8px);
+    width: 900px;
+    max-width: calc(100vw - 32px);
     padding: 0;
     border: 1px solid var(--header-line);
-    border-radius: 10px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,252,249,0.98));
-    box-shadow: var(--header-shadow);
+    border-radius: 16px;
+    background: var(--mega-bg);
+    box-shadow: 0 24px 64px rgba(15, 81, 50, 0.18), 0 4px 16px rgba(0, 0, 0, 0.06);
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
+    transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
     z-index: 1300;
     overflow: hidden;
   }
 
-  /* Show on hover or JS-triggered active state */
   .cat-dropdown.menu-open .cat-dropdown-menu {
     opacity: 1;
     visibility: visible;
@@ -472,253 +395,319 @@
     height: 14px;
     border-left: 1px solid var(--header-line);
     border-top: 1px solid var(--header-line);
-    background: rgba(255,255,255,0.99);
+    background: var(--mega-bg);
     transform: translateX(-50%) rotate(45deg);
     z-index: 1;
   }
 
-  /* Two-panel layout: sidebar + flyout panels */
-  .cat-menu-layout {
+  /* ---- Layout ---- */
+  .mega-layout {
     display: flex;
-    height: 100%;
-    position: relative;
+    min-height: 420px;
   }
 
-  /* Left sidebar — category list */
-  .cat-sidebar {
-    width: 230px;
+  /* ---- Sidebar — Category List ---- */
+  .mega-sidebar {
+    width: 260px;
     flex-shrink: 0;
+    background: var(--mega-sidebar-bg);
     border-right: 1px solid var(--header-line);
+    padding: 12px 0;
     overflow-y: auto;
-    padding: 10px 0;
     position: relative;
     z-index: 2;
   }
+  .mega-sidebar::-webkit-scrollbar { width: 5px; }
+  .mega-sidebar::-webkit-scrollbar-track { background: transparent; }
+  .mega-sidebar::-webkit-scrollbar-thumb { background: rgba(25, 135, 84, 0.2); border-radius: 999px; }
 
-  .cat-sidebar::-webkit-scrollbar {
-    width: 5px;
-  }
-  .cat-sidebar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .cat-sidebar::-webkit-scrollbar-thumb {
-    background: rgba(25, 135, 84, 0.2);
-    border-radius: 999px;
-  }
-
-  .cat-sidebar-item {
-    position: relative;
-  }
-
-  /* Invisible bridge that extends from sidebar item to the panel area.
-     This prevents the panel from disappearing when the mouse moves
-     diagonally from the sidebar link toward the panel content. */
-  .cat-sidebar-item::after {
+  .mega-sidebar-item { position: relative; }
+  .mega-sidebar-item::after {
     content: "";
     position: absolute;
     top: 0;
-    right: -20px;
-    width: 20px;
+    right: -12px;
+    width: 12px;
     height: 100%;
     z-index: 3;
   }
 
-  .cat-sidebar-link {
+  .mega-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 16px;
+    margin: 2px 8px;
+    color: var(--header-ink);
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+    cursor: pointer;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s var(--transition-smooth);
+  }
+
+  .mega-sidebar-link::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--mega-accent-gradient);
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    border-radius: 10px;
+  }
+
+  .mega-sidebar-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: var(--mega-accent-gradient);
+    border-radius: 999px;
+    transition: height 0.25s var(--transition-smooth);
+  }
+
+  .mega-sidebar-link > * { position: relative; z-index: 1; }
+
+  .mega-sidebar-link .mega-icon-wrap {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(25, 135, 84, 0.08);
+    color: var(--header-green);
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: all 0.25s var(--transition-smooth);
+  }
+
+  .mega-sidebar-link .mega-icon-wrap img {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    object-fit: cover;
+  }
+
+  .mega-sidebar-link .mega-text { flex: 1; min-width: 0; }
+  .mega-sidebar-link .mega-text .cat-name { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mega-sidebar-link .mega-text .cat-count { display: block; font-size: 0.72rem; color: var(--header-muted); font-weight: 600; }
+
+  .mega-sidebar-link .mega-chevron {
+    margin-left: auto;
+    font-size: 0.6rem;
+    color: var(--header-muted);
+    transition: transform 0.25s ease, color 0.25s ease;
+  }
+
+  /* Sidebar hover / active */
+  .mega-sidebar-item:hover .mega-sidebar-link,
+  .mega-sidebar-item.active .mega-sidebar-link {
+    background: var(--mega-active);
+    color: var(--header-green-deep);
+  }
+
+  .mega-sidebar-item:hover .mega-sidebar-link::after,
+  .mega-sidebar-item.active .mega-sidebar-link::after { height: 60%; }
+
+  .mega-sidebar-item:hover .mega-sidebar-link .mega-icon-wrap,
+  .mega-sidebar-item.active .mega-sidebar-link .mega-icon-wrap {
+    color: #fff;
+    background: var(--mega-accent-gradient);
+    transform: scale(1.08) rotate(-4deg);
+    box-shadow: 0 4px 12px rgba(22, 131, 76, 0.3);
+  }
+
+  .mega-sidebar-item:hover .mega-sidebar-link .mega-chevron,
+  .mega-sidebar-item.active .mega-sidebar-link .mega-chevron {
+    color: var(--header-green);
+    transform: translateX(3px);
+  }
+
+  /* ---- Content Area ---- */
+  .mega-content {
+    flex: 1;
+    padding: 20px 24px;
+    overflow-y: auto;
+    min-width: 0;
+  }
+  .mega-content::-webkit-scrollbar { width: 6px; }
+  .mega-content::-webkit-scrollbar-track { background: transparent; }
+  .mega-content::-webkit-scrollbar-thumb { background: rgba(25, 135, 84, 0.2); border-radius: 999px; }
+
+  /* ---- Search inside mega ---- */
+  .mega-search {
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .mega-search input {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--header-line);
+    border-radius: 10px;
+    padding: 10px 42px 10px 38px;
+    font-size: 0.88rem;
+    color: var(--header-ink);
+    background: var(--mega-sidebar-bg);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .mega-search input:focus {
+    border-color: var(--header-green);
+    box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
+  }
+  .mega-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--header-muted);
+    font-size: 0.9rem;
+  }
+
+  /* ---- Panels ---- */
+  .mega-panel {
+    display: none;
+    animation: megaPanelIn 0.2s ease both;
+  }
+  .mega-panel.active { display: block; }
+
+  @keyframes megaPanelIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .mega-panel-header {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 11px 16px;
-    color: var(--header-ink);
-    font-weight: 800;
-    font-size: 0.9rem;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease;
-    border-left: 3px solid transparent;
-  }
-
-  .cat-sidebar-link i,
-  .cat-sidebar-link img {
-    flex-shrink: 0;
-  }
-
-  .cat-sidebar-link .chevron {
-    margin-left: auto;
-    font-size: 0.65rem;
-    color: var(--header-muted);
-    transition: transform 0.15s ease, color 0.15s ease;
-  }
-
-  /* Hover and active states for sidebar items */
-  .cat-sidebar-item:hover .cat-sidebar-link,
-  .cat-sidebar-item.active .cat-sidebar-link {
-    background: rgba(25,135,84,0.08);
-    color: var(--header-green-deep);
-    border-left-color: var(--header-green);
-  }
-
-  .cat-sidebar-item:hover .cat-sidebar-link .chevron,
-  .cat-sidebar-item.active .cat-sidebar-link .chevron {
-    color: var(--header-green);
-    transform: translateX(2px);
-  }
-
-  /* Right-side flyout panel for subcategories */
-  .cat-panel {
-    position: absolute;
-    left: 230px;
-    top: 0;
-    bottom: 0;
-    width: calc(100% - 230px);
-    padding: 18px 22px;
-    overflow-y: auto;
-    background: linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,252,249,0.98));
-    /* Use opacity/visibility instead of display:none for smooth transitions */
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(8px);
-    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
-    z-index: 1;
-  }
-
-  .cat-panel::-webkit-scrollbar {
-    width: 6px;
-  }
-  .cat-panel::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .cat-panel::-webkit-scrollbar-thumb {
-    background: rgba(25, 135, 84, 0.25);
-    border-radius: 999px;
-  }
-
-  /* Show panel when parent sidebar item is active (JS-managed) or hovered */
-  .cat-sidebar-item.active .cat-panel {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(0);
-  }
-
-  /* Also show on pure CSS hover as a fallback / enhancement */
-  .cat-sidebar-item:hover .cat-panel {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(0);
-  }
-
-  .cat-panel-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
     margin-bottom: 14px;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--header-line);
   }
-
-  .cat-panel-header a {
-    color: var(--header-green-deep);
-    font-weight: 900;
-    font-size: 1rem;
-    text-decoration: none;
-    transition: color 0.15s ease;
-  }
-
-  .cat-panel-header a:hover {
+  .mega-panel-header .panel-icon {
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: rgba(25, 135, 84, 0.1);
     color: var(--header-green);
-    text-decoration: underline;
+    font-size: 0.85rem;
+  }
+  .mega-panel-header h3 {
+    flex: 1;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--header-green-deep);
+  }
+  .mega-panel-header .shop-now-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--mega-accent-gradient);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .mega-panel-header .shop-now-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(22, 131, 76, 0.3);
   }
 
-  .cat-panel-grid {
+  /* Subcategory grid */
+  .mega-sub-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
+    gap: 8px;
   }
 
-  .cat-panel-grid a {
+  .mega-sub-card {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 9px 12px;
-    border-radius: 8px;
-    color: var(--header-muted);
-    font-weight: 750;
-    font-size: 0.86rem;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    color: var(--header-ink);
+    font-weight: 700;
+    font-size: 0.85rem;
     text-decoration: none;
-    transition: color 0.15s ease, background 0.15s ease, padding-left 0.15s ease;
+    background: var(--mega-card-gradient);
+    border: 1px solid transparent;
+    transition: all 0.2s var(--transition-smooth);
   }
 
-  .cat-panel-grid a::before {
-    content: "";
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--header-green);
-    opacity: 0;
+  .mega-sub-card .sub-icon {
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(25, 135, 84, 0.08);
+    color: var(--header-green);
+    font-size: 0.85rem;
     flex-shrink: 0;
-    transition: opacity 0.15s ease;
+    transition: all 0.2s var(--transition-smooth);
   }
 
-  .cat-panel-grid a:hover {
-    color: var(--header-green-deep);
-    background: rgba(25,135,84,0.06);
-    padding-left: 16px;
-  }
-
-  .cat-panel-grid a:hover::before {
-    opacity: 1;
-  }
-
-  .cat-panel-grid a .panel-count {
-    margin-left: auto;
-    font-size: 0.72rem;
+  .mega-sub-card .sub-text { flex: 1; }
+  .mega-sub-card .sub-count {
+    font-size: 0.7rem;
     color: var(--header-muted);
-    background: rgba(25,135,84,0.08);
-    padding: 1px 7px;
+    font-weight: 600;
+    background: rgba(25, 135, 84, 0.06);
+    padding: 2px 8px;
     border-radius: 999px;
-    font-weight: 800;
+    flex-shrink: 0;
   }
 
-  /* ---------- Responsive: Tablet & Mobile ---------- */
+  .mega-sub-card:hover {
+    border-color: var(--header-green);
+    background: var(--mega-active);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(22, 131, 76, 0.1);
+  }
 
+  .mega-sub-card:hover .sub-icon {
+    background: var(--mega-accent-gradient);
+    color: #fff;
+    transform: scale(1.1) rotate(-5deg);
+    box-shadow: 0 4px 10px rgba(22, 131, 76, 0.25);
+  }
+
+  /* ---- Responsive: Tablet ---- */
   @media (max-width: 1080px) {
-    .header-shell {
-      gap: 12px;
-    }
-
-    .brand-tagline {
-      display: none;
-    }
-
-    .nav-link-custom,
-    .account-trigger {
-      padding-left: 11px;
-      padding-right: 11px;
-    }
+    .header-shell { gap: 12px; }
+    .brand-tagline { display: none; }
+    .nav-link-custom, .account-trigger { padding-left: 11px; padding-right: 11px; }
+    .cat-dropdown-menu { width: 750px; }
+    .mega-sidebar { width: 220px; }
+    .mega-panel { padding: 0; }
+    .mega-content { padding: 16px; }
   }
 
+  /* ---- Responsive: Mobile ---- */
   @media (max-width: 900px) {
-    .site-header {
-      top: 8px;
-      width: min(100% - 16px, 1180px);
-      margin-top: 8px;
-    }
-
-    .header-shell {
-      min-height: 68px;
-    }
-
-    .menu-toggle {
-      display: inline-flex;
-    }
-
-    .mobile-cart {
-      display: inline-flex;
-      margin-left: auto;
-    }
-
-    .desktop-cart {
-      display: none;
-    }
+    .site-header { top: 8px; width: min(100% - 16px, 1180px); margin-top: 8px; }
+    .header-shell { min-height: 68px; }
+    .menu-toggle { display: inline-flex; }
+    .mobile-cart { display: inline-flex; margin-left: auto; }
+    .desktop-cart { display: none; }
 
     .nav-wrap {
       position: fixed;
@@ -733,8 +722,7 @@
       padding: 16px;
       border: 1px solid var(--header-line);
       border-radius: 8px;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 252, 249, 0.99)),
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 252, 249, 0.99)),
         radial-gradient(circle at top left, rgba(247, 201, 72, 0.12), transparent 16rem);
       box-shadow: var(--header-shadow);
       transform-origin: top center;
@@ -746,52 +734,8 @@
       animation: mobileNavIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     }
 
-    .nav-wrap.open .primary-nav li,
-    .site-header.menu-open .primary-nav li,
-    .nav-wrap.open .header-actions > *,
-    .site-header.menu-open .header-actions > * {
-      animation: mobileMenuItemIn 0.3s ease both;
-    }
-
-    .nav-wrap.open .primary-nav li:nth-child(1),
-    .site-header.menu-open .primary-nav li:nth-child(1) {
-      animation-delay: 0.04s;
-    }
-
-    .nav-wrap.open .primary-nav li:nth-child(2),
-    .site-header.menu-open .primary-nav li:nth-child(2) {
-      animation-delay: 0.08s;
-    }
-
-    .nav-wrap.open .primary-nav li:nth-child(3),
-    .site-header.menu-open .primary-nav li:nth-child(3) {
-      animation-delay: 0.12s;
-    }
-
-    .nav-wrap.open .primary-nav li:nth-child(4),
-    .site-header.menu-open .primary-nav li:nth-child(4) {
-      animation-delay: 0.16s;
-    }
-
-    .nav-wrap.open .header-actions > *:nth-child(1),
-    .site-header.menu-open .header-actions > *:nth-child(1) {
-      animation-delay: 0.2s;
-    }
-
-    .nav-wrap.open .header-actions > *:nth-child(2),
-    .site-header.menu-open .header-actions > *:nth-child(2) {
-      animation-delay: 0.24s;
-    }
-
-    .primary-nav,
-    .header-actions {
-      width: 100%;
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .nav-link-custom,
-    .account-trigger {
+    .primary-nav, .header-actions { width: 100%; flex-direction: column; align-items: stretch; }
+    .nav-link-custom, .account-trigger {
       width: 100%;
       justify-content: flex-start;
       border-radius: 8px;
@@ -800,9 +744,44 @@
       box-shadow: 0 8px 18px rgba(15, 81, 50, 0.05);
     }
 
-    .header-search {
-      width: 100%;
+    .header-search { width: 100%; }
+
+    /* Mobile mega dropdown */
+    .cat-dropdown-menu {
+      position: static;
+      width: auto;
+      max-width: none;
+      transform: none;
+      opacity: 1;
+      visibility: visible;
+      box-shadow: none;
+      padding: 0;
+      display: none;
+      overflow: visible;
+      border: none;
+      border-radius: 0;
     }
+    .cat-dropdown.open .cat-dropdown-menu { display: block; }
+    .cat-dropdown-menu::before { display: none; }
+
+    .mega-layout { flex-direction: column; min-height: auto; }
+    .mega-sidebar {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid var(--header-line);
+      padding: 8px 0;
+      max-height: 240px;
+    }
+    .mega-sidebar-item::after { display: none; }
+    .mega-sidebar-link { border-radius: 8px; padding: 10px 14px; margin: 2px 8px; }
+    .mega-sidebar-link::after { display: none; }
+
+    .mega-content { padding: 12px 8px; }
+    .mega-panel { position: static; opacity: 1; transform: none; }
+    .mega-sub-grid { grid-template-columns: 1fr; }
+
+    .mega-sidebar-link .mega-chevron { transition: transform 0.25s ease; }
+    .mega-sidebar-item.active .mega-sidebar-link .mega-chevron { transform: rotate(90deg); }
 
     .account-dropdown {
       position: static;
@@ -814,183 +793,42 @@
       transform: none;
       background: rgba(255, 255, 255, 0.78);
     }
-
-    .account-dropdown::before {
-      display: none;
-    }
-
-    .account-menu.open .account-dropdown {
-      display: block;
-      animation: mobileAccountDrop 0.22s ease both;
-    }
-
-    /* Mobile category dropdown */
-    .cat-dropdown-menu {
-      position: static;
-      min-width: auto;
-      max-height: none;
-      height: auto;
-      transform: none;
-      opacity: 1;
-      visibility: visible;
-      box-shadow: none;
-      padding: 0;
-      display: none;
-      overflow: visible;
-    }
-
-    .cat-dropdown.open .cat-dropdown-menu {
-      display: block;
-    }
-
-    .cat-dropdown-menu::before {
-      display: none;
-    }
-
-    .cat-menu-layout {
-      flex-direction: column;
-      height: auto;
-    }
-
-    .cat-sidebar {
-      width: 100%;
-      border-right: none;
-      border-bottom: 1px solid var(--header-line);
-      padding: 8px 0;
-      max-height: 220px;
-    }
-
-    .cat-sidebar-item::after {
-      display: none;
-    }
-
-    .cat-sidebar-link {
-      border-left: none;
-      padding: 10px 14px;
-    }
-
-    /* Mobile: subcategory panels stack below each category */
-    .cat-panel {
-      position: static !important;
-      width: 100% !important;
-      left: auto !important;
-      opacity: 1;
-      visibility: visible;
-      transform: none;
-      padding: 8px 12px 12px;
-      /* Hidden by default on mobile — JS toggles via .active */
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease, padding 0.3s ease;
-    }
-
-    .cat-sidebar-item.active .cat-panel {
-      max-height: 600px;
-      padding: 8px 12px 12px;
-    }
-
-    .cat-panel-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .cat-sidebar-link .chevron {
-      transition: transform 0.25s ease;
-    }
-
-    .cat-sidebar-item.active .cat-sidebar-link .chevron {
-      transform: rotate(90deg);
-    }
+    .account-dropdown::before { display: none; }
+    .account-menu.open .account-dropdown { display: block; animation: mobileAccountDrop 0.22s ease both; }
   }
 
   @media (max-width: 480px) {
-    .brand-icon {
-      width: 42px;
-      height: 42px;
-      font-size: 1.35rem;
-    }
-
-    .brand-name {
-      font-size: 1.2rem;
-    }
-
-    .header-shell {
-      padding: 10px 12px;
-    }
-
-    .mobile-cart,
-    .menu-toggle {
-      width: 42px;
-      height: 42px;
-    }
-
-    .cat-dropdown-menu {
-      min-width: auto;
-    }
+    .brand-icon { width: 42px; height: 42px; font-size: 1.35rem; }
+    .brand-name { font-size: 1.2rem; }
+    .header-shell { padding: 10px 12px; }
+    .mobile-cart, .menu-toggle { width: 42px; height: 42px; }
   }
 
+  /* Keyframes */
   @keyframes headerDropIn {
-    from {
-      opacity: 0;
-      transform: translateY(-14px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-14px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-
   @keyframes mobileNavIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px) scale(0.97);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
+    from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
-
   @keyframes mobileMenuItemIn {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-
   @keyframes mobileAccountDrop {
-    from {
-      opacity: 0;
-      transform: translateY(-5px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-
   @keyframes navIconPop {
-    0% {
-      transform: scale(1);
-    }
-    45% {
-      transform: scale(1.18) rotate(-6deg);
-    }
-    100% {
-      transform: scale(1);
-    }
+    0% { transform: scale(1); }
+    45% { transform: scale(1.18) rotate(-6deg); }
+    100% { transform: scale(1); }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .site-header,
-    .site-header *,
-    .nav-wrap.open {
-      animation: none !important;
-      transition-duration: 0.01ms !important;
-    }
+    .site-header, .site-header *, .nav-wrap.open { animation: none !important; transition-duration: 0.01ms !important; }
   }
 </style>
 
@@ -1022,41 +860,86 @@
             <i class="bi bi-chevron-down" style="font-size:0.6rem;margin-left:2px;"></i>
           </a>
           <div class="cat-dropdown-menu">
-            <div class="cat-menu-layout">
-              <div class="cat-sidebar" id="catSidebar">
+            <div class="mega-layout">
+              <!-- Sidebar: Categories -->
+              <div class="mega-sidebar" id="catSidebar">
                 {% for category in global_categories %}
-                <div class="cat-sidebar-item" data-cat-index="{{ forloop.counter0 }}">
-                  <a href="{% url 'store:category_products' category.slug %}" class="cat-sidebar-link">
-                    {% if category.image %}
-                      <img src="{{ category.image.url }}" alt="" width="20" height="20" style="border-radius:4px;object-fit:cover;">
-                    {% else %}
-                      <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}" style="color:var(--header-green);"></i>
-                    {% endif %}
-                    {{ category.name }}
-                    <i class="bi bi-chevron-right chevron"></i>
-                  </a>
-                  <div class="cat-panel">
-                    <div class="cat-panel-header">
-                      <a href="{% url 'store:category_products' category.slug %}">
-                        <i class="bi bi-grid" style="color:var(--header-green);"></i> All {{ category.name }}
-                      </a>
-                    </div>
-                    <div class="cat-panel-grid">
-                      {% for sub in category.subcategories.all %}
-                      {% if sub.is_active %}
-                      <a href="{% url 'store:subcategory_products' category.slug sub.slug %}">
-                        <i class="bi {% if sub.icon %}{{ sub.icon }}{% else %}bi-tag{% endif %}" style="color:var(--header-green);font-size:0.75rem;"></i>
-                        {{ sub.name }}
-                        <span class="panel-count">{{ global_subcategory_counts|get_item:sub.id|default:0 }}</span>
-                      </a>
+                <div class="mega-sidebar-item" data-cat-index="{{ forloop.counter0 }}">
+                  <a href="{% url 'store:category_products' category.slug %}" class="mega-sidebar-link">
+                    <span class="mega-icon-wrap">
+                      {% if category.image %}
+                        <img src="{{ category.image.url }}" alt="">
+                      {% else %}
+                        <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i>
                       {% endif %}
-                      {% endfor %}
+                    </span>
+                    <span class="mega-text">
+                      <span class="cat-name">{{ category.name }}</span>
+                      <span class="cat-count">{{ category.active_product_count|default:0 }} items</span>
+                    </span>
+                    <i class="bi bi-chevron-right mega-chevron"></i>
+                  </a>
+                </div>
+                {% empty %}
+                <div class="mega-sidebar-item">
+                  <span class="mega-sidebar-link text-muted">No categories yet</span>
+                </div>
+                {% endfor %}
+              </div>
+
+              <!-- Content: Subcategory panels -->
+              <div class="mega-content" id="megaContent">
+                <!-- Search -->
+                <div class="mega-search">
+                  <i class="bi bi-search mega-search-icon"></i>
+                  <input type="text" id="megaSearchInput" placeholder="Search within categories..." aria-label="Search categories">
+                </div>
+
+                {% for category in global_categories %}
+                <div class="mega-panel" data-panel-index="{{ forloop.counter0 }}" data-category-name="{{ category.name|lower }}">
+                  <div class="mega-panel-header">
+                    <span class="panel-icon">
+                      {% if category.image %}
+                        <img src="{{ category.image.url }}" alt="" width="18" height="18" style="border-radius:3px;object-fit:cover;">
+                      {% else %}
+                        <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i>
+                      {% endif %}
+                    </span>
+                    <h3>{{ category.name }}</h3>
+                    <a href="{% url 'store:category_products' category.slug %}" class="shop-now-btn">
+                      Shop Now <i class="bi bi-arrow-right"></i>
+                    </a>
+                  </div>
+                  <div class="mega-sub-grid">
+                    {% for sub in category.subcategories.all %}
+                    {% if sub.is_active %}
+                    <a href="{% url 'store:subcategory_products' category.slug sub.slug %}" class="mega-sub-card">
+                      <span class="sub-icon">
+                        {% if sub.image %}
+                          <img src="{{ sub.image.url }}" alt="" width="18" height="18" style="border-radius:3px;object-fit:cover;">
+                        {% else %}
+                          <i class="bi {% if sub.icon %}{{ sub.icon }}{% else %}bi-tag{% endif %}"></i>
+                        {% endif %}
+                      </span>
+                      <span class="sub-text">{{ sub.name }}</span>
+                      <span class="sub-count">{{ global_subcategory_counts|get_item:sub.id|default:0 }}</span>
+                    </a>
+                    {% endif %}
+                    {% empty %}
+                    <div style="grid-column: 1/-1; padding: 16px; color: var(--header-muted); font-size: 0.85rem; text-align: center;">
+                      <i class="bi bi-inbox" style="font-size:1.5rem;display:block;margin-bottom:6px;"></i>
+                      No subcategories yet
                     </div>
+                    {% endfor %}
                   </div>
                 </div>
                 {% empty %}
-                <div class="cat-sidebar-item">
-                  <span class="cat-sidebar-link text-muted">No categories yet</span>
+                <div class="mega-panel active" data-panel-index="0">
+                  <div style="padding:40px 20px;text-align:center;color:var(--header-muted);">
+                    <i class="bi bi-box-seam" style="font-size:2.5rem;display:block;margin-bottom:12px;color:var(--header-green);"></i>
+                    <p style="font-weight:700;margin:0;">Categories will appear here</p>
+                    <p style="font-size:0.8rem;margin:4px 0 0;">Add categories from the Django admin panel.</p>
+                  </div>
                 </div>
                 {% endfor %}
               </div>
@@ -1120,16 +1003,19 @@ document.addEventListener('DOMContentLoaded', function () {
   const catDropdown = document.getElementById('catDropdown');
   const catDropdownTrigger = document.getElementById('catDropdownTrigger');
   const catSidebar = document.getElementById('catSidebar');
-  const catItems = catSidebar?.querySelectorAll('.cat-sidebar-item') || [];
+  const megaContent = document.getElementById('megaContent');
+  const megaSearchInput = document.getElementById('megaSearchInput');
+  const sidebarItems = catSidebar?.querySelectorAll('.mega-sidebar-item') || [];
+  const panels = megaContent?.querySelectorAll('.mega-panel') || [];
 
   const isMobile = () => window.innerWidth <= 900;
 
-  // ── Header scroll effect ──
+  // ── Header scroll ──
   function updateHeaderScrollState() {
     siteHeader?.classList.toggle('is-scrolled', window.scrollY > 24);
   }
 
-  // ── Mobile menu toggle ──
+  // ── Mobile menu ──
   function closeMenu() {
     siteHeader?.classList.remove('menu-open');
     navWrap?.classList.remove('open');
@@ -1155,132 +1041,130 @@ document.addEventListener('DOMContentLoaded', function () {
     accountTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   });
 
-  // ── CATEGORY MEGA DROPDOWN — Desktop hover logic ──
-
+  // ── Mega dropdown logic ──
   let catHoverTimeout = null;
   let catCloseTimeout = null;
-  const HOVER_DELAY = 80;   // ms before showing
-  const CLOSE_DELAY = 200;  // ms before hiding (prevents flicker)
+  const HOVER_DELAY = 80;
+  const CLOSE_DELAY = 200;
 
-  // Activate first category panel by default
-  function activateFirstItem() {
-    catItems.forEach(item => item.classList.remove('active'));
-    if (catItems.length > 0) {
-      catItems[0].classList.add('active');
+  function activateFirstPanel() {
+    sidebarItems.forEach(item => item.classList.remove('active'));
+    panels.forEach(panel => panel.classList.remove('active'));
+    if (sidebarItems.length > 0 && panels.length > 0) {
+      sidebarItems[0].classList.add('active');
+      panels[0].classList.add('active');
     }
   }
 
-  // Open the category dropdown
+  function setActivePanel(targetItem) {
+    const index = targetItem.dataset.catIndex;
+    sidebarItems.forEach(item => item.classList.remove('active'));
+    panels.forEach(panel => panel.classList.remove('active'));
+    targetItem.classList.add('active');
+    const targetPanel = megaContent.querySelector(`.mega-panel[data-panel-index="${index}"]`);
+    if (targetPanel) targetPanel.classList.add('active');
+  }
+
   function openCatDropdown() {
     clearTimeout(catCloseTimeout);
     catHoverTimeout = setTimeout(() => {
       catDropdown?.classList.add('menu-open');
-      // If no item is active yet, activate the first
-      if (!catSidebar.querySelector('.cat-sidebar-item.active')) {
-        activateFirstItem();
+      if (!catSidebar.querySelector('.mega-sidebar-item.active')) {
+        activateFirstPanel();
       }
     }, HOVER_DELAY);
   }
 
-  // Close the category dropdown
   function closeCatDropdown() {
     clearTimeout(catHoverTimeout);
     catCloseTimeout = setTimeout(() => {
       catDropdown?.classList.remove('menu-open');
-      // Reset: activate first item for next open
-      activateFirstItem();
+      activateFirstPanel();
     }, CLOSE_DELAY);
   }
 
-  // Set active sidebar item (shows corresponding panel)
-  function setActiveItem(targetItem) {
-    catItems.forEach(item => item.classList.remove('active'));
-    targetItem.classList.add('active');
-  }
-
-  // Desktop: hover on "Categories" nav link opens the dropdown
+  // Desktop: hover on trigger
   if (catDropdown && catDropdownTrigger) {
     catDropdownTrigger.addEventListener('mouseenter', function () {
       if (!isMobile()) openCatDropdown();
     });
 
-    // Desktop: hovering over the entire dropdown area keeps it open
     catDropdown.addEventListener('mouseenter', function () {
-      if (!isMobile()) {
-        clearTimeout(catCloseTimeout);
-        clearTimeout(catHoverTimeout);
-      }
+      if (!isMobile()) { clearTimeout(catCloseTimeout); clearTimeout(catHoverTimeout); }
     });
 
-    // Desktop: leaving the dropdown area closes it
     catDropdown.addEventListener('mouseleave', function () {
       if (!isMobile()) closeCatDropdown();
     });
   }
 
-  // Desktop: hovering over a sidebar item activates its panel
-  catItems.forEach(function (item) {
+  // Desktop: hover sidebar item
+  sidebarItems.forEach(function (item) {
     item.addEventListener('mouseenter', function () {
-      if (!isMobile()) {
-        setActiveItem(item);
-      }
+      if (!isMobile()) setActivePanel(item);
     });
 
-    // On click (works for both desktop and mobile)
-    const link = item.querySelector('.cat-sidebar-link');
+    const link = item.querySelector('.mega-sidebar-link');
     if (link) {
       link.addEventListener('click', function (event) {
         if (isMobile()) {
-          // Mobile: toggle accordion for this category
           event.preventDefault();
           event.stopPropagation();
           const wasActive = item.classList.contains('active');
-          catItems.forEach(i => i.classList.remove('active'));
+          sidebarItems.forEach(i => i.classList.remove('active'));
+          panels.forEach(p => p.classList.remove('active'));
           if (!wasActive) {
             item.classList.add('active');
+            const index = item.dataset.catIndex;
+            const targetPanel = megaContent.querySelector(`.mega-panel[data-panel-index="${index}"]`);
+            if (targetPanel) targetPanel.classList.add('active');
           }
         }
-        // Desktop: let the link navigate normally
       });
     }
   });
 
-  // Mobile: clicking the "Categories" nav link toggles the dropdown
+  // Mobile: click trigger toggles dropdown
   if (catDropdownTrigger) {
     catDropdownTrigger.addEventListener('click', function (event) {
       if (isMobile()) {
         event.preventDefault();
         event.stopPropagation();
         catDropdown.classList.toggle('open');
-        // Activate first item on open
-        if (catDropdown.classList.contains('open')) {
-          activateFirstItem();
-        }
+        if (catDropdown.classList.contains('open')) activateFirstPanel();
       }
     });
   }
 
-  // ── Global click handlers ──
+  // ── Mega search filter ──
+  if (megaSearchInput) {
+    megaSearchInput.addEventListener('input', function () {
+      const query = this.value.toLowerCase().trim();
+      // Filter subcategory cards within the active panel
+      const activePanel = megaContent.querySelector('.mega-panel.active');
+      if (!activePanel) return;
+      const cards = activePanel.querySelectorAll('.mega-sub-card');
+      cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(query) ? '' : 'none';
+      });
+    });
+  }
+
+  // ── Global clicks ──
   document.addEventListener('click', function (event) {
-    // Close account menu if clicking outside
     if (accountMenu && !accountMenu.contains(event.target)) {
       accountMenu.classList.remove('open');
       accountTrigger?.setAttribute('aria-expanded', 'false');
     }
-
-    // Close mobile menu if clicking outside header
-    if (siteHeader && !siteHeader.contains(event.target)) {
-      closeMenu();
-    }
-
-    // Desktop: close category dropdown if clicking outside
+    if (siteHeader && !siteHeader.contains(event.target)) closeMenu();
     if (!isMobile() && catDropdown && !catDropdown.contains(event.target)) {
       catDropdown.classList.remove('menu-open');
-      activateFirstItem();
+      activateFirstPanel();
     }
   });
 
-  // ── Keyboard: Escape closes everything ──
+  // ── Escape key ──
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') {
       closeMenu();
@@ -1288,7 +1172,7 @@ document.addEventListener('DOMContentLoaded', function () {
       accountTrigger?.setAttribute('aria-expanded', 'false');
       if (!isMobile() && catDropdown) {
         catDropdown.classList.remove('menu-open');
-        activateFirstItem();
+        activateFirstPanel();
       }
     }
   });
@@ -1296,9 +1180,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // ── Nav links close mobile menu ──
   navWrap?.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', function () {
-      // Don't close if clicking a category sidebar link on mobile
-      // (it toggles the accordion, not navigation)
-      if (isMobile() && link.closest('.cat-sidebar-link')) return;
+      if (isMobile() && link.closest('.mega-sidebar-link')) return;
       closeMenu();
     });
   });
@@ -1307,7 +1189,6 @@ document.addEventListener('DOMContentLoaded', function () {
   updateHeaderScrollState();
   window.addEventListener('scroll', updateHeaderScrollState, { passive: true });
 
-  // On resize: clean up mobile states if switching to desktop
   window.addEventListener('resize', function () {
     if (!isMobile()) {
       catDropdown?.classList.remove('open');
