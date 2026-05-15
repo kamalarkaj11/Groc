@@ -473,15 +473,71 @@
     .cp-layout { grid-template-columns: 1fr; }
     .cp-sidebar { position: static; }
     .sub-cards-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+    .cp-hero { padding: 44px 32px; }
+  }
+
+  @media (max-width: 768px) {
+    .cp-container { width: min(100% - 24px, 1140px); }
+    .cp-hero { padding: 36px 24px; min-height: auto; border-radius: 14px; }
+    .cp-hero h1 { font-size: clamp(1.6rem, 5vw, 2.4rem); }
+    .cp-hero p { font-size: 0.95rem; }
+    .cp-hero-meta { gap: 10px; }
+    .cp-hero-meta span { padding: 6px 12px; font-size: 0.75rem; }
+    .sub-cards-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+    .sub-card { padding: 18px 12px; }
+    .sub-card-circle { width: 58px; height: 58px; }
+    .sub-card-name { font-size: 0.9rem; }
+    .product-media { height: 180px; }
+    .product-body { min-height: auto; padding: 14px; }
+    .product-title { font-size: 0.95rem; }
+    .price { font-size: 1.15rem; }
+    .card-actions { grid-template-columns: 1fr; gap: 8px; }
+    .view-btn, .add-btn { min-height: 38px; padding: 8px 12px; font-size: 0.85rem; }
+    .cp-breadcrumb ol { font-size: 0.82rem; }
+    .sub-section-title { font-size: 1.1rem; }
   }
 
   @media (max-width: 575px) {
-    .cp-container { width: min(100% - 24px, 1140px); }
-    .cp-hero { padding: 36px 24px; min-height: auto; border-radius: 14px; }
-    .sub-cards-grid { grid-template-columns: repeat(2, 1fr); }
-    .card-actions { grid-template-columns: 1fr; }
-    .sub-card { padding: 18px 12px; }
-    .sub-card-circle { width: 60px; height: 60px; }
+    .cp-container { width: min(100% - 16px, 1140px); }
+    .cp-hero { padding: 28px 16px; border-radius: 12px; margin-bottom: 28px; }
+    .cp-hero h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    .cp-hero p { font-size: 0.88rem; margin-bottom: 14px; }
+    .cp-hero-meta { flex-direction: column; gap: 8px; }
+    .cp-hero-meta span { width: fit-content; }
+    .sub-cards-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .sub-card { padding: 14px 8px; gap: 8px; }
+    .sub-card-circle { width: 50px; height: 50px; border-width: 2px; }
+    .sub-card-circle i { font-size: 1.3rem; }
+    .sub-card-name { font-size: 0.82rem; }
+    .sub-card-count { padding: 3px 10px; font-size: 0.7rem; }
+    .sub-section-title { font-size: 1rem; margin-bottom: 12px; }
+    .sub-section-title i { font-size: 0.9rem; }
+    .product-media { height: 160px; }
+    .product-placeholder { font-size: 2.2rem; }
+    .deal-badge, .stock-badge { padding: 5px 8px; font-size: 0.68rem; }
+    .product-body { padding: 12px; }
+    .product-title { font-size: 0.88rem; }
+    .product-sub { font-size: 0.75rem; }
+    .price { font-size: 1.05rem; }
+    .old-price { font-size: 0.82rem; }
+    .view-btn, .add-btn { min-height: 36px; padding: 8px 10px; font-size: 0.8rem; }
+    .cp-sidebar { padding: 14px; border-radius: 12px; }
+    .cp-sidebar h4 { font-size: 0.9rem; }
+    .sidebar-item { padding: 8px 10px; font-size: 0.85rem; }
+    .empty-state { padding: 36px 16px; }
+    .empty-state i { font-size: 3rem; }
+    .empty-state h3 { font-size: 1.1rem; }
+    .pagination .page-link { padding: 6px 12px; font-size: 0.82rem; }
+  }
+
+  @media (max-width: 400px) {
+    .sub-cards-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .sub-card { padding: 12px 6px; }
+    .sub-card-circle { width: 44px; height: 44px; }
+    .sub-card-name { font-size: 0.76rem; }
+    .cp-hero { padding: 22px 12px; }
+    .cp-hero h1 { font-size: 1.3rem; }
+    .product-media { height: 140px; }
   }
 </style>
 

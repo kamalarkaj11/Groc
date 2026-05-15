@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.utils.html import format_html
 from .models import (
     Profile, PhoneOTP, Review, UserProfile, Category,
-    Subcategory, Product, CartItem, Order, OrderItem, OTP
+    Subcategory, SubSubCategory, Product, CartItem, Order, OrderItem, OTP
 )
 
 
@@ -40,6 +40,15 @@ class CategoryAdmin(admin.ModelAdmin):
 
 # ---------- Subcategory Admin ----------
 
+class SubSubCategoryInline(admin.TabularInline):
+    """Show sub-subcategories inline within Subcategory admin."""
+    model = SubSubCategory
+    extra = 1
+    prepopulated_fields = {'slug': ('name',)}
+    fields = ('name', 'slug', 'image', 'icon', 'description', 'is_active', 'sort_order')
+    show_change_link = True
+
+
 @admin.register(Subcategory)
 class SubcategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'category', 'slug', 'image_preview', 'product_count', 'is_active', 'sort_order']
@@ -49,6 +58,30 @@ class SubcategoryAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ['name', 'category__name', 'description']
     autocomplete_fields = ['category']
+    inlines = [SubSubCategoryInline]
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" width="50" height="50" style="object-fit:cover;border-radius:6px;" />', obj.image.url)
+        return '-'
+    image_preview.short_description = 'Image'
+
+    def product_count(self, obj):
+        return obj.products.filter(is_out_of_stock=False).count()
+    product_count.short_description = 'Products'
+
+
+# ---------- Sub-Subcategory Admin ----------
+
+@admin.register(SubSubCategory)
+class SubSubCategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'subcategory', 'slug', 'image_preview', 'product_count', 'is_active', 'sort_order']
+    list_filter = ['subcategory__category', 'subcategory', 'is_active']
+    list_select_related = ['subcategory__category']
+    list_editable = ['is_active', 'sort_order']
+    prepopulated_fields = {'slug': ('name',)}
+    search_fields = ['name', 'subcategory__name', 'subcategory__category__name', 'description']
+    autocomplete_fields = ['subcategory']
 
     def image_preview(self, obj):
         if obj.image:
@@ -65,12 +98,12 @@ class SubcategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['title', 'category', 'subcategory', 'price', 'discount_price', 'discount_percentage', 'is_out_of_stock', 'image_preview']
-    list_filter = ['category', 'subcategory', 'is_out_of_stock']
+    list_display = ['title', 'category', 'subcategory', 'subsubcategory', 'price', 'discount_price', 'discount_percentage', 'is_out_of_stock', 'image_preview']
+    list_filter = ['category', 'subcategory', 'subsubcategory', 'is_out_of_stock']
     list_select_related = ['category', 'subcategory']
     prepopulated_fields = {'slug': ('title',)}
     search_fields = ['title', 'description']
-    autocomplete_fields = ['category', 'subcategory']
+    autocomplete_fields = ['category', 'subcategory', 'subsubcategory']
     readonly_fields = ['discount_percentage']
 
     def image_preview(self, obj):
@@ -80,11 +113,16 @@ class ProductAdmin(admin.ModelAdmin):
     image_preview.short_description = 'Image'
 
     def get_form(self, request, obj=None, **kwargs):
-        """Limit subcategory choices to those belonging to the selected category."""
+        """Limit subcategory and subsubcategory choices based on selected category."""
         form = super().get_form(request, obj, **kwargs)
         if obj and obj.category:
             form.base_fields['subcategory'].queryset = Subcategory.objects.filter(
                 category=obj.category
+            )
+        if obj and obj.subcategory:
+            from .models import SubSubCategory
+            form.base_fields['subsubcategory'].queryset = SubSubCategory.objects.filter(
+                subcategory=obj.subcategory
             )
         return form
 

@@ -328,19 +328,224 @@
     .toolbar {
       display: block;
     }
-  }
 
-  @media (max-width: 575px) {
-    .pl-container {
-      width: min(100% - 24px, 1140px);
+    .toolbar h2 {
+      margin-bottom: 8px;
     }
 
-    .products-hero {
-      padding-top: 34px;
+    .product-media {
+      height: 200px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero-panel {
+      padding: clamp(20px, 4vw, 32px);
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 6vw, 3.5rem);
+    }
+
+    .hero-copy {
+      font-size: 1rem;
+    }
+
+    .filter-card {
+      padding: 14px;
+    }
+
+    .filter-card select {
+      min-height: 42px;
+      font-size: 0.85rem;
+    }
+
+    .product-media {
+      height: 180px;
+    }
+
+    .product-body {
+      min-height: auto;
+      padding: 14px;
+    }
+
+    .product-title {
+      font-size: 0.95rem;
+    }
+
+    .product-copy {
+      font-size: 0.88rem;
+    }
+
+    .price {
+      font-size: 1.2rem;
+    }
+
+    .old-price {
+      font-size: 0.9rem;
     }
 
     .card-actions {
       grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .view-btn, .add-btn {
+      min-height: 38px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    .toolbar h2 {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+    }
+  }
+
+  @media (max-width: 575px) {
+    .pl-container {
+      width: min(100% - 16px, 1140px);
+    }
+
+    .products-hero {
+      padding-top: 24px;
+    }
+
+    .hero-panel {
+      padding: 20px 16px;
+      border-radius: 12px;
+    }
+
+    .eyebrow {
+      padding: 6px 12px;
+      font-size: 0.72rem;
+    }
+
+    .hero-title {
+      font-size: clamp(1.6rem, 7vw, 2.5rem);
+    }
+
+    .hero-copy {
+      font-size: 0.92rem;
+      margin-top: 12px;
+    }
+
+    .filter-card {
+      padding: 12px;
+      border-radius: 10px;
+    }
+
+    .filter-card label {
+      font-size: 0.82rem;
+      margin-bottom: 6px;
+    }
+
+    .filter-card select {
+      min-height: 40px;
+      font-size: 0.82rem;
+    }
+
+    .toolbar {
+      padding: 20px 0 16px;
+    }
+
+    .toolbar-note {
+      font-size: 0.82rem;
+    }
+
+    .browse-btn {
+      min-height: 40px;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      display: inline-flex;
+    }
+
+    .product-media {
+      height: 160px;
+    }
+
+    .product-placeholder {
+      font-size: 2.2rem;
+    }
+
+    .deal-badge, .stock-badge {
+      padding: 5px 8px;
+      font-size: 0.68rem;
+    }
+
+    .product-body {
+      padding: 12px;
+      min-height: auto;
+    }
+
+    .product-title {
+      font-size: 0.88rem;
+    }
+
+    .product-copy {
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .price {
+      font-size: 1.05rem;
+    }
+
+    .old-price {
+      font-size: 0.82rem;
+    }
+
+    .view-btn, .add-btn, .out-label {
+      min-height: 36px;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+    }
+
+    .empty-state {
+      padding: 36px 16px;
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+    }
+
+    .pagination .page-link {
+      padding: 6px 12px;
+      font-size: 0.82rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .pl-container {
+      width: min(100% - 12px, 1140px);
+    }
+
+    .hero-panel {
+      padding: 16px 12px;
+    }
+
+    .hero-title {
+      font-size: 1.4rem;
+    }
+
+    .hero-copy {
+      font-size: 0.85rem;
+    }
+
+    .product-media {
+      height: 140px;
+    }
+
+    .product-body {
+      padding: 10px;
+    }
+
+    .product-title {
+      font-size: 0.82rem;
+    }
+
+    .product-copy {
+      font-size: 0.78rem;
     }
   }
 </style>

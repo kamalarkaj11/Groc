@@ -1350,6 +1350,49 @@ def subcategory_products(request, category_slug, subcategory_slug):
     return render(request, 'products/subcategory_products.html', context)
 
 
+def subsubcategory_products(request, category_slug, subcategory_slug, subsubcategory_slug):
+    """Display all products under a specific sub-subcategory. URL: /category/fruits/fresh-fruits/apple/"""
+    from .models import SubSubCategory
+    category = get_object_or_404(Category, slug=category_slug, is_active=True)
+    subcategory = get_object_or_404(
+        Subcategory.objects.select_related('category'),
+        slug=subcategory_slug, category=category, is_active=True
+    )
+    subsubcategory = get_object_or_404(
+        SubSubCategory.objects.select_related('subcategory__category'),
+        slug=subsubcategory_slug, subcategory=subcategory, is_active=True
+    )
+    products = Product.objects.filter(
+        subsubcategory=subsubcategory, is_out_of_stock=False
+    ).select_related('category', 'subcategory', 'subsubcategory')
+
+    paginator = Paginator(products, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # Annotate sibling sub-subcategories with active product counts
+    subsubcategories = SubSubCategory.objects.filter(subcategory=subcategory, is_active=True).annotate(
+        active_product_count=Count('products', filter=Q(products__is_out_of_stock=False))
+    ).order_by('sort_order', 'name')
+
+    context = {
+        'category': category,
+        'subcategory': subcategory,
+        'subsubcategory': subsubcategory,
+        'subsubcategories': subsubcategories,
+        'products': page_obj,
+        'page_obj': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'breadcrumbs': [
+            {'label': 'Home', 'url': '/'},
+            {'label': category.name, 'url': f'/category/{category.slug}/'},
+            {'label': subcategory.name, 'url': f'/category/{category.slug}/{subcategory.slug}/'},
+            {'label': subsubcategory.name, 'url': None},
+        ],
+    }
+    return render(request, 'products/subsubcategory_products.html', context)
+
+
 def load_subcategories(request):
     """AJAX endpoint: return subcategories for a given category_id.
     Used in Django admin and product filtering."""

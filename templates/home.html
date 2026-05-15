@@ -404,11 +404,46 @@
   }
 
   /* ============================================
-     SHOP BY CATEGORY — REDESIGNED
+     SHOP BY CATEGORY — REDESIGNED (ENHANCED)
      ============================================ */
 
   .categories-section {
     background: linear-gradient(180deg, #eef8f1 0%, #e2f3e8 50%, #eef8f1 100%);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Decorative floating blobs */
+  .categories-section::before {
+    content: "";
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    top: -150px;
+    left: -200px;
+    background: radial-gradient(circle, rgba(25, 135, 84, 0.08), transparent 70%);
+    border-radius: 50%;
+    animation: blobFloat 12s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  .categories-section::after {
+    content: "";
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    bottom: -100px;
+    right: -150px;
+    background: radial-gradient(circle, rgba(255, 200, 87, 0.08), transparent 70%);
+    border-radius: 50%;
+    animation: blobFloat 15s ease-in-out infinite reverse;
+    pointer-events: none;
+  }
+
+  @keyframes blobFloat {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -20px) scale(1.05); }
+    66% { transform: translate(-20px, 15px) scale(0.95); }
   }
 
   /* ── Quick Nav Strip (Blinkit-style circular icons) ── */
@@ -420,6 +455,8 @@
     padding: 22px 0 0;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
+    position: relative;
+    z-index: 1;
   }
 
   .cat-quick-item {
@@ -432,12 +469,13 @@
     min-width: 84px;
     padding: 8px 10px;
     border-radius: 14px;
-    transition: transform 0.2s ease, background 0.2s ease;
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1), background 0.2s ease, box-shadow 0.3s ease;
   }
 
   .cat-quick-item:hover {
-    transform: translateY(-4px);
-    background: rgba(255,255,255,0.7);
+    transform: translateY(-6px);
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 8px 24px rgba(24, 37, 31, 0.1);
   }
 
   .cat-quick-circle {
@@ -447,27 +485,61 @@
     overflow: hidden;
     border: 3px solid #fff;
     box-shadow: 0 6px 20px rgba(24, 37, 31, 0.12);
-    transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
     background: linear-gradient(135deg, #f0faf4, #e6f5ec);
     display: grid;
     place-items: center;
+    position: relative;
+  }
+
+  /* Gradient ring on hover */
+  .cat-quick-circle::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--gh-green), var(--gh-mint), var(--gh-yellow), var(--gh-green));
+    opacity: 0;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+    animation: spin 3s linear infinite;
+    filter: blur(3px);
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .cat-quick-item:hover .cat-quick-circle::before {
+    opacity: 0.6;
   }
 
   .cat-quick-circle img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .cat-quick-item:hover .cat-quick-circle img {
+    transform: scale(1.1);
   }
 
   .cat-quick-circle i {
     font-size: 1.5rem;
     color: var(--gh-green);
+    transition: transform 0.3s ease, color 0.3s ease;
+  }
+
+  .cat-quick-item:hover .cat-quick-circle i {
+    transform: scale(1.15) rotate(-5deg);
+    color: var(--gh-green);
   }
 
   .cat-quick-item:hover .cat-quick-circle {
     border-color: var(--gh-mint);
-    box-shadow: 0 10px 28px rgba(25, 135, 84, 0.25);
-    transform: scale(1.1);
+    box-shadow: 0 12px 32px rgba(25, 135, 84, 0.28);
+    transform: scale(1.08);
   }
 
   .cat-quick-label {
@@ -479,10 +551,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    transition: color 0.2s ease, transform 0.2s ease;
   }
 
   .cat-quick-item:hover .cat-quick-label {
     color: var(--gh-green);
+    transform: translateY(1px);
   }
 
   /* ── Category Mega Cards Grid ── */
@@ -491,26 +565,55 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 22px;
     margin-top: 36px;
+    position: relative;
+    z-index: 1;
   }
 
   .cat-mega-card {
     --card-accent: var(--gh-green);
     position: relative;
-    border-radius: 18px;
+    border-radius: 20px;
     overflow: hidden;
     background: #fff;
     border: 1px solid var(--gh-line);
     box-shadow: 0 8px 24px rgba(24, 37, 31, 0.07);
-    transition: transform 0.35s cubic-bezier(.4,0,.2,1), box-shadow 0.35s ease, border-color 0.35s ease;
+    transition: transform 0.4s cubic-bezier(.4,0,.2,1), box-shadow 0.4s ease, border-color 0.4s ease;
     display: flex;
     flex-direction: column;
     height: 100%;
   }
 
+  /* Animated gradient border */
+  .cat-mega-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    padding: 2px;
+    background: linear-gradient(135deg, transparent 0%, var(--card-accent) 50%, transparent 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  .cat-mega-card:hover::before {
+    opacity: 1;
+    animation: borderShimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes borderShimmer {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+  }
+
   .cat-mega-card:hover {
-    transform: translateY(-8px) scale(1.005);
+    transform: translateY(-10px) scale(1.01);
     border-color: var(--card-accent);
-    box-shadow: 0 20px 50px rgba(24, 37, 31, 0.15);
+    box-shadow: 0 24px 60px rgba(24, 37, 31, 0.18), 0 8px 20px rgba(24, 37, 31, 0.08);
   }
 
   /* Card image area */
@@ -526,11 +629,11 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s cubic-bezier(.4,0,.2,1);
+    transition: transform 0.6s cubic-bezier(.4,0,.2,1), filter 0.4s ease;
   }
 
   .cat-mega-card:hover .cat-mega-img img {
-    transform: scale(1.1);
+    transform: scale(1.12);
   }
 
   /* Gradient overlay on image */
@@ -538,8 +641,13 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.55) 100%);
+    background: linear-gradient(180deg, transparent 20%, rgba(0,0,0,0.6) 100%);
     pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+
+  .cat-mega-card:hover .cat-mega-img::after {
+    opacity: 1.1;
   }
 
   /* Floating badge on image */
@@ -553,12 +661,25 @@
     gap: 5px;
     padding: 5px 12px;
     border-radius: 999px;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(8px);
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
     color: var(--gh-ink);
     font-size: 0.72rem;
     font-weight: 800;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    animation: badgeFloat 3s ease-in-out infinite;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  @keyframes badgeFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  .cat-mega-card:hover .cat-mega-badge {
+    animation: none;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
   }
 
   .cat-mega-badge i {
@@ -572,16 +693,26 @@
     left: 0;
     right: 0;
     z-index: 2;
-    padding: 14px 18px;
+    padding: 16px 20px;
     color: #fff;
+    transition: padding 0.3s ease;
+  }
+
+  .cat-mega-card:hover .cat-mega-overlay {
+    padding-bottom: 20px;
   }
 
   .cat-mega-overlay h3 {
     margin: 0;
-    font-size: 1.3rem;
+    font-size: 1.35rem;
     font-weight: 950;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.35);
     line-height: 1.1;
+    transition: transform 0.3s ease;
+  }
+
+  .cat-mega-card:hover .cat-mega-overlay h3 {
+    transform: translateX(3px);
   }
 
   .cat-mega-overlay span {
@@ -589,22 +720,41 @@
     font-weight: 650;
     opacity: 0.9;
     display: block;
-    margin-top: 3px;
+    margin-top: 4px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .cat-mega-card:hover .cat-mega-overlay span {
+    opacity: 1;
+    transform: translateY(2px);
   }
 
   /* Card body with subcategories */
   .cat-mega-body {
-    padding: 16px 18px 18px;
+    padding: 18px 20px 20px;
     display: flex;
     flex-direction: column;
     flex: 1;
+    background: linear-gradient(180deg, rgba(255,255,255,1) 0%, #fafcfb 100%);
+    position: relative;
+  }
+
+  /* Decorative separator line */
+  .cat-mega-body::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gh-line), transparent);
   }
 
   .cat-mega-body-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     gap: 10px;
   }
 
@@ -612,7 +762,7 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 6px 14px;
+    padding: 7px 16px;
     border-radius: 999px;
     background: rgba(25, 135, 84, 0.08);
     color: var(--card-accent);
@@ -620,20 +770,47 @@
     font-weight: 800;
     text-decoration: none;
     flex-shrink: 0;
-    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Ripple effect */
+  .cat-mega-view-all::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--card-accent), var(--gh-mint));
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    border-radius: 999px;
+  }
+
+  .cat-mega-view-all:hover::before {
+    opacity: 1;
   }
 
   .cat-mega-view-all:hover {
-    background: var(--card-accent);
     color: #fff;
-    transform: translateX(3px);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.25);
+  }
+
+  .cat-mega-view-all i {
+    position: relative;
+    z-index: 1;
+    transition: transform 0.2s ease;
+  }
+
+  .cat-mega-view-all:hover i {
+    transform: translateX(2px);
   }
 
   /* Subcategory chips inside card */
   .cat-mega-subs {
     display: flex;
     flex-wrap: wrap;
-    gap: 7px;
+    gap: 8px;
     align-content: flex-start;
     flex: 1;
   }
@@ -642,20 +819,46 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 7px 12px;
-    border-radius: 9px;
-    background: #f7fbf8;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #f7fbf8, #fff);
     border: 1px solid var(--gh-line);
     color: var(--gh-ink);
     font-weight: 700;
     font-size: 0.78rem;
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Left accent bar */
+  .cat-sub-chip::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--card-accent), var(--gh-mint));
+    transform: scaleY(0);
+    transition: transform 0.25s ease;
+    border-radius: 999px;
+  }
+
+  .cat-sub-chip:hover::before {
+    transform: scaleY(1);
   }
 
   .cat-sub-chip i {
     font-size: 0.65rem;
     color: var(--card-accent);
+    transition: transform 0.25s ease, color 0.25s ease;
+  }
+
+  .cat-sub-chip:hover i {
+    transform: rotate(-10deg) scale(1.2);
   }
 
   .cat-sub-chip .chip-count {
@@ -665,18 +868,91 @@
     background: rgba(25, 135, 84, 0.08);
     color: var(--gh-muted);
     font-weight: 800;
+    transition: all 0.25s ease;
   }
 
   .cat-sub-chip:hover {
     background: var(--card-accent);
     border-color: var(--card-accent);
     color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 14px rgba(24, 37, 31, 0.12);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(24, 37, 31, 0.15);
+    padding-left: 17px;
   }
 
   .cat-sub-chip:hover i { color: #fff; }
   .cat-sub-chip:hover .chip-count { background: rgba(255,255,255,0.25); color: #fff; }
+
+  /* Subcategory dropdown on hover */
+  .cat-sub-wrap {
+    position: relative;
+    display: inline-flex;
+  }
+
+  .cat-sub-drop {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-4px);
+    min-width: 180px;
+    padding: 8px;
+    border: 1px solid var(--gh-line);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(24, 37, 31, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .cat-sub-drop::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    border-left: 1px solid var(--gh-line);
+    border-top: 1px solid var(--gh-line);
+    background: #fff;
+    transform: translateX(-50%) rotate(45deg);
+    z-index: 1;
+  }
+
+  .cat-sub-wrap:hover .cat-sub-drop {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+
+  .cat-sub-drop-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    color: var(--gh-ink);
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  }
+
+  .cat-sub-drop-item:hover {
+    background: rgba(25, 135, 84, 0.08);
+    color: var(--gh-green);
+    transform: translateX(3px);
+  }
+
+  .cat-sub-drop-item i {
+    font-size: 0.65rem;
+    color: var(--gh-green);
+  }
+
+  /* ── Scroll reveal animation ── */
 
   /* Accent colors per card */
   .cat-mega-card[data-accent="green"]  { --card-accent: #198754; }
@@ -710,6 +986,18 @@
   .cat-mega-card[data-accent="teal"] .cat-mega-view-all:hover { background: #17a2b8; color: #fff; }
   .cat-mega-card[data-accent="teal"] .cat-sub-chip i { color: #17a2b8; }
   .cat-mega-card[data-accent="teal"] .cat-sub-chip:hover { background: #17a2b8; border-color: #17a2b8; }
+
+  /* ── Scroll reveal animation ── */
+  .cat-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s cubic-bezier(.4,0,.2,1), transform 0.6s cubic-bezier(.4,0,.2,1);
+  }
+
+  .cat-reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 
   /* ── Newsletter Section ── */
   .deal-band {
@@ -820,7 +1108,12 @@
     }
 
     .cat-mega-grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .cat-mega-img {
+      height: 150px;
     }
   }
 
@@ -861,6 +1154,11 @@
       min-width: 74px;
     }
 
+    .cat-mega-grid {
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
     .cat-mega-img {
       height: 160px;
     }
@@ -869,9 +1167,18 @@
       font-size: 1.15rem;
     }
 
+    .cat-mega-card {
+      border-radius: 16px;
+    }
+
     .cat-sub-chip {
       padding: 6px 11px;
       font-size: 0.76rem;
+    }
+
+    .categories-section::before,
+    .categories-section::after {
+      display: none;
     }
   }
 
@@ -1055,7 +1362,7 @@
       {% if categories %}
       <div class="cat-quick-strip">
         {% for category in categories %}
-        <a href="{% url 'store:category_products' category.slug %}" class="cat-quick-item">
+        <a href="{% url 'store:category_products' category.slug %}" class="cat-quick-item cat-reveal">
           <span class="cat-quick-circle">
             {% if category.image %}
               <img src="{{ category.image.url }}" alt="{{ category.name }}">
@@ -1074,7 +1381,7 @@
       <!-- Category Mega Cards -->
       <div class="cat-mega-grid">
         {% for category in categories %}
-        <div class="cat-mega-card" data-accent="{% cycle 'green' 'orange' 'blue' 'purple' 'red' 'teal' %}">
+        <div class="cat-mega-card cat-reveal" data-accent="{% cycle 'green' 'orange' 'blue' 'purple' 'red' 'teal' %}">
           <!-- Image area with overlay -->
           <div class="cat-mega-img">
             {% if category.image %}
@@ -1105,11 +1412,18 @@
             <div class="cat-mega-subs">
               {% for sub in category.subcategories.all %}
               {% if sub.is_active %}
-              <a href="{% url 'store:subcategory_products' category.slug sub.slug %}" class="cat-sub-chip">
-                <i class="bi {% if sub.icon %}{{ sub.icon }}{% else %}bi-tag{% endif %}"></i>
-                {{ sub.name }}
-                <span class="chip-count">{{ global_subcategory_counts|get_item:sub.id|default:0 }}</span>
-              </a>
+              <div class="cat-sub-wrap">
+                <a href="{% url 'store:subcategory_products' category.slug sub.slug %}" class="cat-sub-chip">
+                  <i class="bi {% if sub.icon %}{{ sub.icon }}{% else %}bi-tag{% endif %}"></i>
+                  {{ sub.name }}
+                  <span class="chip-count">{{ global_subcategory_counts|get_item:sub.id|default:0 }}</span>
+                </a>
+                <div class="cat-sub-drop">
+                  <a href="{% url 'store:subcategory_products' category.slug sub.slug %}" class="cat-sub-drop-item">
+                    <i class="bi bi-arrow-right"></i> View {{ sub.name }}
+                  </a>
+                </div>
+              </div>
               {% endif %}
               {% endfor %}
             </div>
@@ -1184,6 +1498,22 @@
   document.querySelectorAll('.fade-up').forEach(el => {
     el.style.animationPlayState = 'paused';
     fadeObserver.observe(el);
+  });
+
+  // Scroll reveal for category cards
+  const catRevealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry, index) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, index * 80);
+        catRevealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.cat-reveal').forEach(el => {
+    catRevealObserver.observe(el);
   });
 </script>
 {% endblock %}

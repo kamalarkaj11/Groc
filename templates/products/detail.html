@@ -587,36 +587,19 @@
     .mini-benefits {
       grid-template-columns: 1fr;
     }
-  }
 
-  @media (max-width: 575px) {
-    .pd-container {
-      width: min(100% - 24px, 1140px);
+    .share-links {
+      grid-template-columns: repeat(2, 1fr);
     }
 
-    .pd-hero {
-      padding-top: 34px;
-    }
-
-    .cart-controls {
+    .delivery-grid {
       grid-template-columns: 1fr;
-    }
-
-    .product-media,
-    .product-media img,
-    .product-placeholder {
-      min-height: 320px;
-      height: 320px;
-    }
-
-    .related-head {
-      display: block;
     }
   }
 
   @media (max-width: 768px) {
     .pd-hero {
-      padding: 40px 0 30px;
+      padding: 32px 0 24px;
     }
 
     .product-grid {
@@ -626,8 +609,8 @@
     .product-media,
     .product-media img,
     .product-placeholder {
-      min-height: 360px;
-      height: 360px;
+      min-height: 340px;
+      height: 340px;
     }
 
     .product-title {
@@ -644,6 +627,237 @@
 
     .mini-benefits {
       grid-template-columns: 1fr;
+    }
+
+    .meta-row {
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      font-size: 0.75rem;
+    }
+
+    .stock-pill {
+      margin-left: 0;
+    }
+
+    .price-card {
+      padding: 14px;
+      gap: 10px;
+    }
+
+    .cart-controls {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .breadcrumb-row {
+      font-size: 0.82rem;
+      flex-wrap: wrap;
+    }
+
+    .section-heading {
+      font-size: 1.15rem;
+    }
+
+    .related-head {
+      display: block;
+      gap: 12px;
+    }
+
+    .related-title {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+    }
+
+    .review-btn,
+    .back-btn,
+    .related-btn {
+      min-height: 42px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 575px) {
+    .pd-container {
+      width: min(100% - 16px, 1140px);
+    }
+
+    .pd-hero {
+      padding-top: 24px;
+    }
+
+    .product-media,
+    .product-media img,
+    .product-placeholder {
+      min-height: 280px;
+      height: 280px;
+    }
+
+    .media-panel {
+      padding: 12px;
+    }
+
+    .summary-panel {
+      padding: 18px 14px;
+    }
+
+    .product-title {
+      font-size: clamp(1.5rem, 6vw, 2rem);
+    }
+
+    .current-price {
+      font-size: clamp(1.3rem, 5vw, 2rem);
+    }
+
+    .old-price {
+      font-size: 1rem;
+    }
+
+    .discount-badge {
+      padding: 6px 10px;
+      font-size: 0.75rem;
+    }
+
+    .meta-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .highlight-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .highlight-item,
+    .spec-item,
+    .delivery-item {
+      padding: 12px;
+    }
+
+    .spec-item span {
+      font-size: 0.75rem;
+    }
+
+    .info-card {
+      padding: 18px 14px;
+    }
+
+    .description-copy {
+      font-size: 0.95rem;
+    }
+
+    .review-item {
+      padding: 14px;
+    }
+
+    .review-form {
+      margin-top: 16px;
+      padding-top: 16px;
+    }
+
+    .section-pad {
+      padding: 24px 0;
+    }
+
+    .related-section {
+      padding: 32px 0 50px;
+    }
+
+    .related-media {
+      height: 160px;
+    }
+
+    .related-body {
+      padding: 14px;
+    }
+
+    .back-row {
+      padding-bottom: 40px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .pd-container {
+      width: min(100% - 12px, 1140px);
+    }
+
+    .product-media,
+    .product-media img,
+    .product-placeholder {
+      min-height: 240px;
+      height: 240px;
+    }
+
+    .media-badge {
+      padding: 6px 10px;
+      font-size: 0.7rem;
+      top: 12px;
+      left: 12px;
+    }
+
+    .summary-panel {
+      padding: 14px 12px;
+    }
+
+    .product-title {
+      font-size: 1.3rem;
+    }
+
+    .current-price {
+      font-size: 1.2rem;
+    }
+
+    .rating-row {
+      font-size: 0.82rem;
+    }
+
+    .stars i {
+      font-size: 0.85rem;
+    }
+
+    .price-card {
+      padding: 12px;
+    }
+
+    .quantity-box label {
+      font-size: 0.82rem;
+    }
+
+    .qty-control {
+      height: 42px;
+    }
+
+    .add-cart-btn {
+      min-height: 48px;
+      font-size: 0.9rem;
+    }
+
+    .mini-benefit {
+      padding: 12px;
+    }
+
+    .mini-benefit i {
+      font-size: 1.1rem;
+    }
+
+    .mini-benefit strong {
+      font-size: 0.82rem;
+    }
+
+    .section-heading {
+      font-size: 1.05rem;
+      gap: 8px;
+    }
+
+    .section-heading i {
+      font-size: 1rem;
+    }
+
+    .nutrition-table th,
+    .nutrition-table td {
+      font-size: 0.82rem;
+      padding: 8px;
     }
   }
 </style>

@@ -14,6 +14,7 @@ urlpatterns = [
     # Category & Subcategory pages
     path('category/<slug:category_slug>/', views.category_products, name='category_products'),
     path('category/<slug:category_slug>/<slug:subcategory_slug>/', views.subcategory_products, name='subcategory_products'),
+    path('category/<slug:category_slug>/<slug:subcategory_slug>/<slug:subsubcategory_slug>/', views.subsubcategory_products, name='subsubcategory_products'),
 
     # AJAX: load subcategories for a category
     path('ajax/load-subcategories/', views.load_subcategories, name='load_subcategories'),

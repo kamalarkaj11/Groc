@@ -228,6 +228,61 @@ class Subcategory(models.Model):
             )
 
 
+class SubSubCategory(models.Model):
+    """Sub-subcategory under a Subcategory. E.g., Fruits > Fresh Fruits > Apple, Mango."""
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True, blank=True)
+    subcategory = models.ForeignKey(
+        Subcategory, on_delete=models.CASCADE, related_name='subsubcategories'
+    )
+    image = models.ImageField(upload_to='subsubcategories/', blank=True, null=True)
+    description = models.TextField(blank=True, help_text="Brief description for SEO and display.")
+    icon = models.CharField(
+        max_length=50, blank=True,
+        help_text='Bootstrap Icons class, e.g. "bi-apple" or "bi-cup-straw".'
+    )
+    is_active = models.BooleanField(default=True, help_text="Inactive sub-subcategories are hidden from the storefront.")
+    sort_order = models.PositiveIntegerField(default=0, help_text="Lower numbers appear first.")
+
+    class Meta:
+        verbose_name_plural = 'sub-subcategories'
+        ordering = ['sort_order', 'name']
+        unique_together = ('name', 'subcategory')
+        indexes = [
+            models.Index(fields=['is_active', 'sort_order']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while SubSubCategory.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.subcategory.category.name} → {self.subcategory.name} → {self.name}"
+
+    def product_count(self):
+        """Return the number of in-stock products in this sub-subcategory."""
+        return self.products.filter(is_out_of_stock=False).count()
+
+    def clean(self):
+        """Validate that sub-subcategory name is unique within its subcategory."""
+        from django.core.exceptions import ValidationError
+        qs = SubSubCategory.objects.filter(name=self.name, subcategory=self.subcategory)
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        if qs.exists():
+            raise ValidationError(
+                f'Sub-subcategory "{self.name}" already exists under "{self.subcategory.name}".'
+            )
+
+
 class Product(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, blank=True)
@@ -238,6 +293,10 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     subcategory = models.ForeignKey(
         Subcategory, on_delete=models.CASCADE, related_name='products',
+        null=True, blank=True
+    )
+    subsubcategory = models.ForeignKey(
+        'SubSubCategory', on_delete=models.SET_NULL, related_name='products',
         null=True, blank=True
     )
     weight = models.CharField(max_length=50, blank=True, help_text="e.g. 500g, 1kg")
