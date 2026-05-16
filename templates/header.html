@@ -669,9 +669,8 @@
     top: calc(100% + 16px);
     left: 50%;
     transform: translateX(-50%) translateY(-10px);
-    width: 960px;
+    width: 1100px;
     max-width: calc(100vw - 32px);
-    max-height: 70vh;
     padding: 0;
     border: 1px solid rgba(22, 131, 76, 0.12);
     border-radius: 18px;
@@ -687,21 +686,36 @@
     visibility: hidden;
     transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
     z-index: 1300;
-    overflow-y: auto;
+    overflow: hidden;
   }
 
-  .cat-dropdown-menu::-webkit-scrollbar { width: 6px; }
-  .cat-dropdown-menu::-webkit-scrollbar-track { background: transparent; }
-  .cat-dropdown-menu::-webkit-scrollbar-thumb { 
-    background: linear-gradient(180deg, var(--header-green), var(--header-mint)); 
-    border-radius: 999px;
-    box-shadow: 0 2px 6px rgba(22, 131, 76, 0.3);
+  /* Firefox — no scrollbar on outer dropdown */
+  .cat-dropdown-menu {
+    scrollbar-width: none;
   }
 
   .cat-dropdown.menu-open .cat-dropdown-menu {
     opacity: 1;
     visibility: visible;
     transform: translateX(-50%) translateY(0);
+    animation: dropdownFadeIn 0.24s ease forwards;
+  }
+
+  .cat-dropdown.menu-open > .nav-link-custom {
+    color: var(--header-green-deep);
+    background: rgba(22, 131, 76, 0.12);
+    box-shadow: 0 14px 30px rgba(22, 131, 76, 0.14);
+  }
+
+  @keyframes dropdownFadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
   }
 
   .cat-dropdown-menu::before {
@@ -753,29 +767,49 @@
   /* ---- Layout ---- */
   .mega-layout {
     display: flex;
-    min-height: 420px;
+    min-height: 540px;
+    max-height: 560px;
   }
 
   /* ---- Sidebar — Category List — Premium ---- */
   .mega-sidebar {
-    width: 270px;
+    width: 290px;
     flex-shrink: 0;
     background: linear-gradient(180deg, 
       rgba(248, 252, 250, 0.95), 
       rgba(240, 250, 245, 0.9));
     border-right: 1px solid rgba(22, 131, 76, 0.1);
     padding: 14px 0;
-    overflow-y: auto;
     position: relative;
     z-index: 2;
     box-shadow: inset -2px 0 8px rgba(0, 0, 0, 0.02);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
   }
+
+  /* Chrome, Edge, Safari — Sidebar scrollbar */
   .mega-sidebar::-webkit-scrollbar { width: 5px; }
-  .mega-sidebar::-webkit-scrollbar-track { background: transparent; }
-  .mega-sidebar::-webkit-scrollbar-thumb { 
-    background: linear-gradient(180deg, var(--header-green), var(--header-mint)); 
-    border-radius: 999px; 
+  .mega-sidebar::-webkit-scrollbar-track {
+    background: rgba(22, 131, 76, 0.04);
+    border-radius: 999px;
+    margin: 4px 0;
+  }
+  .mega-sidebar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--header-green), var(--header-mint));
+    border-radius: 999px;
     box-shadow: 0 2px 6px rgba(22, 131, 76, 0.3);
+    transition: background 0.2s ease;
+  }
+  .mega-sidebar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--header-green-deep), var(--header-green));
+    box-shadow: 0 3px 10px rgba(22, 131, 76, 0.45);
+  }
+
+  /* Firefox — Sidebar scrollbar */
+  .mega-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--header-green) rgba(22, 131, 76, 0.04);
   }
 
   .mega-sidebar-item { position: relative; }
@@ -971,31 +1005,27 @@
   .mega-content {
     flex: 1;
     padding: 22px 26px;
-    overflow-y: auto;
     min-width: 0;
     background: linear-gradient(180deg, 
       rgba(255, 255, 255, 0.98), 
       rgba(247, 252, 249, 0.95));
-  }
-  .mega-content::-webkit-scrollbar { width: 6px; }
-  .mega-content::-webkit-scrollbar-track { background: transparent; }
-  .mega-content::-webkit-scrollbar-thumb { 
-    background: linear-gradient(180deg, var(--header-green), var(--header-mint)); 
-    border-radius: 999px;
-    box-shadow: 0 2px 6px rgba(22, 131, 76, 0.3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
 
   /* ---- Search inside mega — Premium ---- */
   .mega-search {
     position: relative;
     margin-bottom: 20px;
+    padding: 0 2px;
   }
   .mega-search input {
     width: 100%;
-    min-height: 44px;
-    border: 1px solid rgba(22, 131, 76, 0.12);
-    border-radius: 12px;
-    padding: 10px 44px 10px 40px;
+    min-height: 46px;
+    border: 1.5px solid rgba(22, 131, 76, 0.12);
+    border-radius: 14px;
+    padding: 11px 46px 11px 42px;
     font-size: 0.9rem;
     color: var(--header-ink);
     background: linear-gradient(135deg, 
@@ -1011,12 +1041,17 @@
     border-color: var(--header-green);
     box-shadow: 
       0 0 0 4px rgba(25, 135, 84, 0.1),
-      0 4px 12px rgba(22, 131, 76, 0.1);
+      0 4px 16px rgba(22, 131, 76, 0.12);
     background: #fff;
   }
   .mega-search input::placeholder {
     color: var(--header-muted);
     font-weight: 500;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  .mega-search input:focus::placeholder {
+    opacity: 0.6;
+    transform: translateX(3px);
   }
   .mega-search-icon {
     position: absolute;
@@ -1036,8 +1071,11 @@
   .mega-panel {
     display: none;
     animation: megaPanelIn 0.25s ease both;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
   }
-  .mega-panel.active { display: block; }
+  .mega-panel.active { display: flex; }
 
   @keyframes megaPanelIn {
     from { opacity: 0; transform: translateY(8px); }
@@ -1128,10 +1166,43 @@
     transform: translateX(3px);
   }
 
+  /* ---- Subcategory Scroll Container — ONLY scrollable area ---- */
+  .mega-sub-scroll {
+    max-height: 480px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    scroll-behavior: smooth;
+  }
+
+  /* Chrome, Edge, Safari — Subcategory scrollbar */
+  .mega-sub-scroll::-webkit-scrollbar { width: 6px; }
+  .mega-sub-scroll::-webkit-scrollbar-track {
+    background: rgba(22, 131, 76, 0.04);
+    border-radius: 999px;
+    margin: 4px 0;
+  }
+  .mega-sub-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--header-green), var(--header-mint));
+    border-radius: 999px;
+    box-shadow: 0 2px 6px rgba(22, 131, 76, 0.3);
+    transition: background 0.2s ease;
+  }
+  .mega-sub-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--header-green-deep), var(--header-green));
+    box-shadow: 0 3px 10px rgba(22, 131, 76, 0.45);
+  }
+
+  /* Firefox — Subcategory scrollbar */
+  .mega-sub-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: var(--header-green) rgba(22, 131, 76, 0.04);
+  }
+
   /* Subcategory grid - Premium */
   .mega-sub-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
   }
 
@@ -1357,26 +1428,18 @@
   .mega-sub-section-content {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease;
+    border-top: 1px solid transparent;
+    transition: max-height 0.35s var(--transition-smooth), border-color 0.3s ease;
   }
 
   .mega-sub-section.expanded .mega-sub-section-content {
-    max-height: 400px;
-    overflow-y: auto;
-    border-top: 1px solid rgba(22, 131, 76, 0.06);
-  }
-
-  .mega-sub-section-content::-webkit-scrollbar { width: 4px; }
-  .mega-sub-section-content::-webkit-scrollbar-track { background: transparent; }
-  .mega-sub-section-content::-webkit-scrollbar-thumb { 
-    background: linear-gradient(180deg, var(--header-green), var(--header-mint)); 
-    border-radius: 999px; 
+    border-top-color: rgba(22, 131, 76, 0.06);
   }
 
   .mega-subsub-list {
     padding: 8px 12px;
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 6px;
   }
 
@@ -1444,8 +1507,10 @@
     .header-shell { gap: 12px; }
     .brand-tagline { display: none; }
     .nav-link-custom, .account-trigger { padding-left: 11px; padding-right: 11px; }
-    .cat-dropdown-menu { width: 750px; }
-    .mega-sidebar { width: 220px; }
+    .cat-dropdown-menu { width: 850px; }
+    .mega-sidebar { width: 240px; }
+    .mega-sub-grid { grid-template-columns: repeat(2, 1fr); }
+    .mega-subsub-list { grid-template-columns: repeat(2, 1fr); }
     .mega-panel { padding: 0; }
     .mega-content { padding: 16px; }
   }
@@ -1525,8 +1590,9 @@
     .mega-sidebar-link { border-radius: 8px; padding: 10px 14px; margin: 2px 8px; }
     .mega-sidebar-link::after { display: none; }
 
-    .mega-content { padding: 12px 8px; }
+    .mega-content { padding: 12px 8px; overflow: visible; }
     .mega-panel { position: static; opacity: 1; transform: none; }
+    .mega-sub-scroll { max-height: none; overflow-y: visible; padding-right: 0; }
     .mega-sub-grid { grid-template-columns: 1fr; }
 
     .mega-sidebar-link .mega-chevron { transition: transform 0.25s ease; }
@@ -1630,7 +1696,7 @@
       <ul class="primary-nav">
         <li><a href="{% url 'store:home' %}" class="nav-link-custom"><i class="bi bi-house"></i> Home</a></li>
         <li class="cat-dropdown" id="catDropdown">
-          <a href="{% url 'store:product_list' %}" class="nav-link-custom" id="catDropdownTrigger">
+          <a href="#" role="button" aria-haspopup="true" aria-expanded="false" class="nav-link-custom" id="catDropdownTrigger">
             <i class="bi bi-grid"></i> Categories
             <i class="bi bi-chevron-down" style="font-size:0.6rem;margin-left:2px;"></i>
           </a>
@@ -1685,6 +1751,7 @@
                       Shop Now <i class="bi bi-arrow-right"></i>
                     </a>
                   </div>
+                  <div class="mega-sub-scroll">
                   <div class="mega-sub-grid">
                     {% for sub in category.subcategories.all %}
                     {% if sub.is_active %}
@@ -1741,9 +1808,10 @@
                     </div>
                     {% endfor %}
                   </div>
+                  </div>
                 </div>
                 {% empty %}
-                <div class="mega-panel active" data-panel-index="0">
+                <div class="mega-panel active" data-panel-index="0" style="display:flex;align-items:center;justify-content:center;">
                   <div style="padding:40px 20px;text-align:center;color:var(--header-muted);">
                     <i class="bi bi-box-seam" style="font-size:2.5rem;display:block;margin-bottom:12px;color:var(--header-green);"></i>
                     <p style="font-weight:700;margin:0;">Categories will appear here</p>
@@ -1894,7 +1962,12 @@ document.addEventListener('DOMContentLoaded', function () {
     panels.forEach(panel => panel.classList.remove('active'));
     targetItem.classList.add('active');
     const targetPanel = megaContent.querySelector(`.mega-panel[data-panel-index="${index}"]`);
-    if (targetPanel) targetPanel.classList.add('active');
+    if (targetPanel) {
+      targetPanel.classList.add('active');
+      // Reset scroll position when switching categories
+      const scrollContainer = targetPanel.querySelector('.mega-sub-scroll');
+      if (scrollContainer) scrollContainer.scrollTop = 0;
+    }
   }
 
   function openCatDropdown() {
@@ -1956,14 +2029,29 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Mobile: click trigger toggles dropdown
+  // Click trigger toggles dropdown on mobile and desktop
   if (catDropdownTrigger) {
     catDropdownTrigger.addEventListener('click', function (event) {
+      const currentlyOpen = catDropdown.classList.contains('menu-open') || catDropdown.classList.contains('open');
+      event.preventDefault();
+      event.stopPropagation();
       if (isMobile()) {
-        event.preventDefault();
-        event.stopPropagation();
         catDropdown.classList.toggle('open');
-        if (catDropdown.classList.contains('open')) activateFirstPanel();
+      } else {
+        catDropdown.classList.toggle('menu-open');
+      }
+      const isOpen = catDropdown.classList.contains('menu-open') || catDropdown.classList.contains('open');
+      catDropdownTrigger.setAttribute('aria-expanded', String(isOpen));
+      if (isOpen) activateFirstPanel();
+      if (!isMobile() && currentlyOpen && !catDropdown.classList.contains('menu-open')) {
+        activateFirstPanel();
+      }
+    });
+
+    catDropdownTrigger.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        catDropdownTrigger.click();
       }
     });
   }
@@ -1974,6 +2062,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const query = this.value.toLowerCase().trim();
       const activePanel = megaContent.querySelector('.mega-panel.active');
       if (!activePanel) return;
+      const scrollContainer = activePanel.querySelector('.mega-sub-scroll');
       const sections = activePanel.querySelectorAll('.mega-sub-section');
       sections.forEach(section => {
         const text = section.textContent.toLowerCase();
@@ -1986,20 +2075,65 @@ document.addEventListener('DOMContentLoaded', function () {
           section.style.display = 'none';
         }
       });
+      // Reset scroll position when searching
+      if (scrollContainer && query) {
+        scrollContainer.scrollTop = 0;
+      }
     });
   }
 
-  // ── Sub-subcategory expand/collapse ──
-  // Only toggle when clicking the chevron or empty space, not the link text/icon
+  // ── Sub-subcategory expand/collapse with smooth animation ──
   megaContent?.addEventListener('click', function (event) {
     const expandIcon = event.target.closest('.expand-icon');
-    if (expandIcon) {
+    const toggleBtn = event.target.closest('.expand-toggle-btn');
+    const target = expandIcon || toggleBtn;
+    if (target) {
       event.preventDefault();
       event.stopPropagation();
-      const section = expandIcon.closest('.mega-sub-section');
-      if (section) section.classList.toggle('expanded');
+      const section = target.closest('.mega-sub-section');
+      if (!section) return;
+
+      const content = section.querySelector('.mega-sub-section-content');
+      if (!content) return;
+
+      const isExpanding = !section.classList.contains('expanded');
+
+      if (isExpanding) {
+        section.classList.add('expanded');
+        // Animate open
+        const targetHeight = content.scrollHeight;
+        content.style.maxHeight = '0';
+        content.style.overflowY = 'hidden';
+        // Force reflow
+        content.offsetHeight;
+        content.style.maxHeight = targetHeight + 'px';
+        content.style.overflowY = 'auto';
+
+        const onTransitionEnd = () => {
+          if (section.classList.contains('expanded')) {
+            content.style.maxHeight = 'none';
+            content.style.overflowY = 'auto';
+          }
+          content.removeEventListener('transitionend', onTransitionEnd);
+        };
+        content.addEventListener('transitionend', onTransitionEnd);
+      } else {
+        // Animate close
+        content.style.maxHeight = content.scrollHeight + 'px';
+        // Force reflow
+        content.offsetHeight;
+        content.style.maxHeight = '0';
+        content.style.overflowY = 'hidden';
+        section.classList.remove('expanded');
+      }
       return;
     }
+  });
+
+  // Initialize already-expanded sections with proper height
+  document.querySelectorAll('.mega-sub-section.expanded .mega-sub-section-content').forEach(content => {
+    content.style.maxHeight = 'none';
+    content.style.overflowY = 'auto';
   });
 
   // ── Global clicks ──
