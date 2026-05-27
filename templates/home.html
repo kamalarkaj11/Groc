@@ -79,9 +79,26 @@
     align-items: center;
     padding: 92px 0 82px;
     color: #fff;
+    overflow: hidden;
+    background: #133b28;
+  }
+
+  .hero-bg-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
     background:
-      linear-gradient(rgba(18, 72, 45, 0.58), rgba(18, 72, 45, 0.5)),
-      url("https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1800&q=85") center/cover;
+      linear-gradient(rgba(18, 72, 45, 0.62), rgba(18, 72, 45, 0.54));
+    z-index: 0;
+    pointer-events: none;
   }
 
   .hero::after {
@@ -1190,6 +1207,10 @@
 
 <div class="grocery-home">
   <section id="hero" class="hero">
+    <video class="hero-bg-video" autoplay muted loop playsinline preload="metadata">
+      <source src="{% static 'videos/4122971-uhd_3840_2160_25fps.mp4' %}" type="video/mp4">
+    </video>
+    <div class="hero-overlay" aria-hidden="true"></div>
     <div class="gh-container hero-grid">
       <div>
         <span class="eyebrow" id="eyebrow1"><i class="bi bi-basket2-fill"></i> GrocHub Fresh Market</span>

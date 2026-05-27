@@ -31,7 +31,12 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
+CSRF_TRUSTED_ORIGINS = [
+    "https://groc-production-6c7e.up.railway.app",
+]
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.railway.app",
+]
 
 # Application definition
 
