@@ -98,17 +98,19 @@ class SubSubCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['title', 'category', 'subcategory', 'subsubcategory', 'price', 'discount_price', 'discount_percentage', 'is_out_of_stock', 'image_preview']
-    list_filter = ['category', 'subcategory', 'subsubcategory', 'is_out_of_stock']
+    list_display = ['title', 'category', 'subcategory', 'subsubcategory', 'price', 'discount_price', 'discount_percentage', 'api_source', 'is_out_of_stock', 'image_preview']
+    list_filter = ['category', 'subcategory', 'subsubcategory', 'api_source', 'is_out_of_stock']
     list_select_related = ['category', 'subcategory']
     prepopulated_fields = {'slug': ('title',)}
-    search_fields = ['title', 'description']
+    search_fields = ['title', 'description', 'api_product_id']
     autocomplete_fields = ['category', 'subcategory', 'subsubcategory']
     readonly_fields = ['discount_percentage']
 
     def image_preview(self, obj):
         if obj.image:
             return format_html('<img src="{}" width="60" height="60" style="object-fit:cover;border-radius:6px;" />', obj.image.url)
+        if obj.external_image_url:
+            return format_html('<img src="{}" width="60" height="60" style="object-fit:cover;border-radius:6px;" />', obj.external_image_url)
         return '-'
     image_preview.short_description = 'Image'
 

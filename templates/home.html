@@ -1330,6 +1330,8 @@
             <div class="product-media">
               {% if product.image %}
               <img src="{{ product.image.url }}" alt="{{ product.title }}">
+              {% elif product.external_image_url %}
+              <img src="{{ product.external_image_url }}" alt="{{ product.title }}">
               {% else %}
               <div class="product-placeholder">
                 <i class="bi bi-basket2-fill"></i>
@@ -1338,6 +1340,11 @@
             </div>
             <div class="product-body">
               <h3 class="product-title">{{ product.title }}</h3>
+              {% if product.api_rating %}
+              <div class="small text-warning fw-bold mb-2">
+                <i class="bi bi-star-fill"></i> {{ product.api_rating }} <span class="text-muted">({{ product.api_review_count }} reviews)</span>
+              </div>
+              {% endif %}
               <p class="small flex-grow-1">{{ product.description|truncatewords:12 }}</p>
               <div class="d-flex justify-content-between align-items-center gap-3 mt-auto">
                 <span class="price">Rs. {{ product.get_price }}</span>

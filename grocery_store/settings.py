@@ -134,6 +134,13 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'grocery-api-cache',
+    }
+}
+
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -152,6 +159,12 @@ STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 STRIPE_CURRENCY = os.getenv('STRIPE_CURRENCY', 'inr')
+
+# RapidAPI Grocery API
+RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY', '')
+RAPIDAPI_HOST = os.getenv('RAPIDAPI_HOST', 'grocery-api2.p.rapidapi.com')
+GROCERY_API_COUNTRY = os.getenv('GROCERY_API_COUNTRY', 'us')
+GROCERY_API_CACHE_SECONDS = int(os.getenv('GROCERY_API_CACHE_SECONDS', '1800'))
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

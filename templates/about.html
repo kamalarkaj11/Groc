@@ -151,9 +151,11 @@
     backdrop-filter: blur(12px);
   }
 
-  .hero-card img {
+  .hero-card img,
+  .hero-card video {
     width: 100%;
     height: 270px;
+    display: block;
     object-fit: cover;
     border-radius: 8px;
     margin-bottom: 16px;
@@ -484,8 +486,9 @@
         </div>
 
         <aside class="hero-card">
-          <img src="https://static.vecteezy.com/system/resources/thumbnails/034/078/501/small/shopping-cart-full-of-product-in-grocery-store-generative-ai-photo.jpg"
-            alt="Fresh grocery produce">
+          <video class="hero-bg-video" autoplay muted loop playsinline preload="metadata">
+            <source src="{% static 'videos/about.mp4' %}" type="video/mp4">
+          </video>
           <strong>Quality checked before every delivery</strong>
           <span>Freshness, careful packing, and quick support are part of every order.</span>
         </aside>

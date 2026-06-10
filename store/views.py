@@ -30,6 +30,7 @@ from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, Chec
 from .models import (Category, Subcategory, Order, OrderItem, Product, Review, UserProfile, CartItem,
                      Profile, PhoneOTP, OTP)
 from .signals import generate_and_send_otp
+from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_products
 
 logger = logging.getLogger(__name__)
 PHONE_OTP_RESEND_COOLDOWN_SECONDS = 30
@@ -445,6 +446,7 @@ def dashboard(request):
 
 
 def home(request):
+    warm_home_products()
     featured_products = Product.objects.filter(is_out_of_stock=False).select_related('category', 'subcategory').order_by('-created_at')[:12]
     categories = Category.objects.prefetch_related('subcategories').annotate(
         active_product_count=Count('products', filter=Q(products__is_out_of_stock=False))
@@ -457,10 +459,18 @@ def home(request):
     return render(request, 'home.html', context)
 
 def product_list(request):
-    products = Product.objects.filter(is_out_of_stock=False).select_related('category', 'subcategory').order_by('-created_at', '-id')
     query = request.GET.get('q')
     category_slug = request.GET.get('category')
     subcategory_slug = request.GET.get('subcategory')
+
+    if query:
+        sync_products_for_query(query, page=request.GET.get('page', 1), limit=24)
+    elif category_slug:
+        sync_products_for_query(CATEGORY_QUERIES.get(category_slug, category_slug), page=request.GET.get('page', 1), limit=24)
+    else:
+        warm_home_products()
+
+    products = Product.objects.filter(is_out_of_stock=False).select_related('category', 'subcategory').order_by('-created_at', '-id')
 
     if query:
         products = products.filter(Q(title__icontains=query) | Q(description__icontains=query))
@@ -497,6 +507,9 @@ def product_detail(request, slug):
     if avg_rating:
         avg_rating = round(float(avg_rating), 1)
         review_count = reviews.count()
+    elif product.api_rating:
+        avg_rating = float(product.api_rating)
+        review_count = product.api_review_count
     else:
         avg_rating = 0
         review_count = 0
@@ -541,6 +554,9 @@ def product_detail(request, slug):
     if avg_rating:
         avg_rating = round(float(avg_rating), 1)
         review_count = reviews.count()
+    elif product.api_rating:
+        avg_rating = float(product.api_rating)
+        review_count = product.api_review_count
     else:
         avg_rating = 0
         review_count = 0
@@ -593,17 +609,154 @@ def update_cart_batch(request):
 def add_to_cart(request):
     if request.method == 'POST':
         product_id = request.POST.get('product_id')
+        try:
+            quantity = max(int(request.POST.get('qty', 1)), 1)
+        except (TypeError, ValueError):
+            quantity = 1
         product = get_object_or_404(Product, id=product_id)
         cart_item, created = CartItem.objects.get_or_create(
             user=request.user,
             product=product,
-            defaults={'quantity': 1}
+            defaults={'quantity': quantity}
         )
         if not created:
-            cart_item.quantity += 1
+            cart_item.quantity += quantity
             cart_item.save()
         messages.success(request, f'{product.title} added to cart!')
     return redirect('store:cart')
+
+
+def _product_image_url(product):
+    if product.external_image_url:
+        return product.external_image_url
+    if product.image:
+        return product.image.url
+    return ""
+
+
+def _serialize_product(product):
+    rating = product.api_rating
+    review_count = product.api_review_count
+    local_rating = product.reviews.aggregate(Avg('rating'))['rating__avg']
+    if local_rating:
+        rating = round(Decimal(str(local_rating)), 1)
+        review_count = product.reviews.count()
+    return {
+        'id': product.id,
+        'title': product.title,
+        'slug': product.slug,
+        'description': product.description,
+        'price': str(product.get_price()),
+        'original_price': str(product.price),
+        'image': _product_image_url(product),
+        'rating': str(rating or ''),
+        'reviews': review_count or 0,
+        'availability': product.availability or ('Out of Stock' if product.is_out_of_stock else 'In Stock'),
+        'category': product.category.name,
+        'detail_url': request_path_for_product(product),
+    }
+
+
+def request_path_for_product(product):
+    return f"/products/{product.slug}/"
+
+
+def api_products(request):
+    query = request.GET.get('q') or request.GET.get('query') or ''
+    page = request.GET.get('page', 1)
+    if query:
+        sync_products_for_query(query, page=page, limit=24)
+    products = Product.objects.filter(is_out_of_stock=False).select_related('category').order_by('-created_at', '-id')
+    if query:
+        products = products.filter(Q(title__icontains=query) | Q(description__icontains=query))
+    return JsonResponse({
+        'products': [_serialize_product(product) for product in products[:24]],
+    })
+
+
+def api_product_search(request):
+    query = (request.GET.get('q') or request.GET.get('query') or '').strip()
+    if len(query) >= 2:
+        sync_products_for_query(query, limit=10)
+    products = Product.objects.filter(
+        Q(title__icontains=query) | Q(description__icontains=query),
+        is_out_of_stock=False,
+    ).select_related('category').order_by('-created_at', '-id')[:8] if query else []
+    return JsonResponse({
+        'results': [
+            {
+                'id': product.id,
+                'title': product.title,
+                'price': str(product.get_price()),
+                'image': _product_image_url(product),
+                'url': request_path_for_product(product),
+                'category': product.category.name,
+            }
+            for product in products
+        ]
+    })
+
+
+@login_required
+def api_cart(request):
+    cart_items = CartItem.objects.filter(user=request.user).select_related('product', 'product__category')
+    return JsonResponse({
+        'items': [
+            {
+                'id': item.id,
+                'quantity': item.quantity,
+                'total': str(item.total_price()),
+                'product': _serialize_product(item.product),
+            }
+            for item in cart_items
+        ],
+        'total': str(sum(item.total_price() for item in cart_items)),
+    })
+
+
+@login_required
+@require_POST
+def api_cart_add(request):
+    product_id = request.POST.get('product_id')
+    try:
+        payload = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except ValueError:
+        payload = {}
+    product_id = product_id or payload.get('product_id')
+    quantity = payload.get('quantity') or request.POST.get('quantity') or request.POST.get('qty') or 1
+    try:
+        quantity = max(int(quantity), 1)
+    except (TypeError, ValueError):
+        quantity = 1
+    product = get_object_or_404(Product, id=product_id, is_out_of_stock=False)
+    cart_item, created = CartItem.objects.get_or_create(
+        user=request.user,
+        product=product,
+        defaults={'quantity': quantity},
+    )
+    if not created:
+        cart_item.quantity += quantity
+        cart_item.save()
+    return JsonResponse({'success': True, 'item_count': CartItem.objects.filter(user=request.user).count()})
+
+
+@login_required
+@require_POST
+def api_order_create(request):
+    cart_items = CartItem.objects.filter(user=request.user).select_related('product')
+    if not cart_items:
+        return JsonResponse({'success': False, 'error': 'Cart is empty.'}, status=400)
+    total = sum(item.total_price() for item in cart_items)
+    order = Order.objects.create(user=request.user, total_amount=total, status='pending')
+    for item in cart_items:
+        OrderItem.objects.create(
+            order=order,
+            product=item.product,
+            quantity=item.quantity,
+            price=item.product.get_price(),
+        )
+    cart_items.delete()
+    return JsonResponse({'success': True, 'order_id': order.id, 'total': str(total)})
 
 @login_required
 def update_cart(request):
@@ -1278,6 +1431,7 @@ def contact(request):
 
 def category_products(request, category_slug):
     """Display all products under a specific category. URL: /category/fruits/"""
+    sync_products_for_query(CATEGORY_QUERIES.get(category_slug, category_slug), page=request.GET.get('page', 1), limit=24)
     category = get_object_or_404(Category, slug=category_slug, is_active=True)
     products = Product.objects.filter(
         category=category, is_out_of_stock=False

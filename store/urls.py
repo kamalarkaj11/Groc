@@ -18,6 +18,13 @@ urlpatterns = [
 
     # AJAX: load subcategories for a category
     path('ajax/load-subcategories/', views.load_subcategories, name='load_subcategories'),
+
+    # JSON APIs
+    path('api/products/', views.api_products, name='api_products'),
+    path('api/products/search/', views.api_product_search, name='api_product_search'),
+    path('api/cart/', views.api_cart, name='api_cart'),
+    path('api/cart/add/', views.api_cart_add, name='api_cart_add'),
+    path('api/order/create/', views.api_order_create, name='api_order_create'),
     
     # Cart
     path('cart/', views.cart_view, name='cart'),

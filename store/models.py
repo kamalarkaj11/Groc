@@ -290,6 +290,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     image = models.ImageField(upload_to='products/')
+    external_image_url = models.URLField(blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     subcategory = models.ForeignKey(
         Subcategory, on_delete=models.CASCADE, related_name='products',
@@ -305,7 +306,18 @@ class Product(models.Model):
     nutrition_info = models.JSONField(default=dict, blank=True, help_text="e.g. {'calories': 85, 'protein': 2.5}")
     highlights = models.JSONField(default=list, blank=True, help_text="e.g. ['100% Fresh', 'Quality Guaranteed']")
     is_out_of_stock = models.BooleanField(default=False)
+    availability = models.CharField(max_length=120, blank=True)
+    api_source = models.CharField(max_length=50, blank=True)
+    api_product_id = models.CharField(max_length=255, blank=True, db_index=True)
+    api_rating = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    api_review_count = models.PositiveIntegerField(default=0)
+    api_payload = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['api_source', 'api_product_id']),
+        ]
 
     def save(self, *args, **kwargs):
         """Auto-generate slug from title if not provided."""

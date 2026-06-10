@@ -246,6 +246,8 @@
             {% if product.is_out_of_stock %}<span class="stock-badge">Out</span>{% endif %}
             {% if product.image %}
             <img src="{{ product.image.url }}" alt="{{ product.title }}">
+            {% elif product.external_image_url %}
+            <img src="{{ product.external_image_url }}" alt="{{ product.title }}">
             {% else %}
             <div class="product-placeholder"><i class="bi bi-basket2-fill"></i></div>
             {% endif %}

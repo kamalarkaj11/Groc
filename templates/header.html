@@ -498,6 +498,84 @@
   }
   .search-submit:hover { box-shadow: 0 10px 20px rgba(22, 131, 76, 0.22); transform: translateY(-50%) scale(1.04); }
 
+  .search-suggestions {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    right: 0;
+    z-index: 1400;
+    display: none;
+    overflow: hidden;
+    border: 1px solid var(--header-line);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: var(--header-shadow);
+  }
+
+  .search-suggestions.open {
+    display: block;
+  }
+
+  .suggestion-link {
+    display: grid;
+    grid-template-columns: 42px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    color: var(--header-ink);
+    text-decoration: none;
+  }
+
+  .suggestion-link + .suggestion-link {
+    border-top: 1px solid rgba(25, 135, 84, 0.08);
+  }
+
+  .suggestion-link:hover,
+  .suggestion-link:focus-visible {
+    color: var(--header-green-deep);
+    background: rgba(25, 135, 84, 0.08);
+    outline: none;
+  }
+
+  .suggestion-thumb {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 8px;
+    color: var(--header-green);
+    background: var(--header-soft);
+  }
+
+  .suggestion-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .suggestion-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.86rem;
+    font-weight: 850;
+  }
+
+  .suggestion-meta {
+    color: var(--header-muted);
+    font-size: 0.74rem;
+    font-weight: 750;
+  }
+
+  .suggestion-price {
+    color: var(--header-green);
+    font-size: 0.8rem;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
   .cart-action {
     position: relative;
     width: 48px;
@@ -1831,10 +1909,11 @@
       <div class="header-actions">
         <form action="{% url 'store:product_list' %}" method="get" class="header-search">
           <i class="bi bi-search search-icon"></i>
-          <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products">
+          <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products" autocomplete="off" id="globalProductSearch">
           <button type="submit" class="search-submit" aria-label="Search">
             <i class="bi bi-arrow-right-short"></i>
           </button>
+          <div class="search-suggestions" id="globalSearchSuggestions" role="listbox" aria-label="Search suggestions"></div>
         </form>
 
         <a href="{% url 'store:cart' %}" class="cart-action desktop-cart" aria-label="Cart">
@@ -1882,6 +1961,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const catSidebar = document.getElementById('catSidebar');
   const megaContent = document.getElementById('megaContent');
   const megaSearchInput = document.getElementById('megaSearchInput');
+  const globalProductSearch = document.getElementById('globalProductSearch');
+  const globalSearchSuggestions = document.getElementById('globalSearchSuggestions');
   const sidebarItems = catSidebar?.querySelectorAll('.mega-sidebar-item') || [];
   const panels = megaContent?.querySelectorAll('.mega-panel') || [];
 
@@ -1908,6 +1989,68 @@ document.addEventListener('DOMContentLoaded', function () {
 
   document.querySelectorAll('.nav-link-custom, .account-trigger').forEach(el => {
     el.addEventListener('click', (e) => createRipple(e, el));
+  });
+
+  // AJAX product search suggestions
+  let productSearchTimer = null;
+  function closeSearchSuggestions() {
+    if (globalSearchSuggestions) {
+      globalSearchSuggestions.classList.remove('open');
+      globalSearchSuggestions.innerHTML = '';
+    }
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[char]));
+  }
+
+  function renderSearchSuggestions(results) {
+    if (!globalSearchSuggestions) return;
+    if (!results.length) {
+      closeSearchSuggestions();
+      return;
+    }
+    globalSearchSuggestions.innerHTML = results.map(item => {
+      const title = escapeHtml(item.title);
+      const category = escapeHtml(item.category || 'Grocery');
+      const price = escapeHtml(item.price);
+      const url = encodeURI(item.url || '#');
+      const image = item.image
+        ? `<img src="${escapeHtml(item.image)}" alt="">`
+        : '<i class="bi bi-basket2"></i>';
+      return `
+        <a class="suggestion-link" href="${url}" role="option">
+          <span class="suggestion-thumb">${image}</span>
+          <span>
+            <span class="suggestion-title">${title}</span>
+            <span class="suggestion-meta">${category}</span>
+          </span>
+          <span class="suggestion-price">Rs. ${price}</span>
+        </a>
+      `;
+    }).join('');
+    globalSearchSuggestions.classList.add('open');
+  }
+
+  globalProductSearch?.addEventListener('input', function () {
+    clearTimeout(productSearchTimer);
+    const query = this.value.trim();
+    if (query.length < 2) {
+      closeSearchSuggestions();
+      return;
+    }
+    productSearchTimer = setTimeout(() => {
+      fetch(`/api/products/search/?q=${encodeURIComponent(query)}`)
+        .then(response => response.ok ? response.json() : { results: [] })
+        .then(data => renderSearchSuggestions(data.results || []))
+        .catch(closeSearchSuggestions);
+    }, 280);
   });
 
   // ── Header scroll ──
@@ -2138,6 +2281,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Global clicks ──
   document.addEventListener('click', function (event) {
+    if (globalSearchSuggestions && !event.target.closest('.header-search')) {
+      closeSearchSuggestions();
+    }
     if (accountMenu && !accountMenu.contains(event.target)) {
       accountMenu.classList.remove('open');
       accountTrigger?.setAttribute('aria-expanded', 'false');

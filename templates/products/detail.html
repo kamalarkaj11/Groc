@@ -885,6 +885,8 @@
             {% endif %}
             {% if product.image %}
             <img src="{{ product.image.url }}" alt="{{ product.title }}">
+            {% elif product.external_image_url %}
+            <img src="{{ product.external_image_url }}" alt="{{ product.title }}">
             {% else %}
             <div class="product-placeholder">
               <i class="bi bi-basket2-fill"></i>
@@ -900,6 +902,9 @@
             <a href="{% url 'store:subcategory_products' product.category.slug product.subcategory.slug %}" class="pill"><i class="bi bi-tag"></i> {{ product.subcategory }}</a>
             {% endif %}
             <span class="pill"><i class="bi bi-patch-check"></i> Quality checked</span>
+            {% if product.availability %}
+            <span class="pill"><i class="bi bi-box"></i> {{ product.availability }}</span>
+            {% endif %}
             <span class="pill stock-pill {% if product.is_out_of_stock %}out{% endif %}">
               {% if product.is_out_of_stock %}
               <i class="bi bi-x-circle"></i> Out of Stock
@@ -1139,6 +1144,8 @@
             <div class="related-media">
               {% if product.image %}
               <img src="{{ product.image.url }}" alt="{{ product.title }}">
+              {% elif product.external_image_url %}
+              <img src="{{ product.external_image_url }}" alt="{{ product.title }}">
               {% else %}
               <div class="related-placeholder">
                 <i class="bi bi-basket2-fill"></i>
