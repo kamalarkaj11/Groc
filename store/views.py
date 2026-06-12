@@ -2,7 +2,7 @@ from datetime import timedelta
 import json
 import logging
 import random
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import urllib.request as urllib_request
 
 import phonenumbers
@@ -27,7 +27,7 @@ from twilio.rest import Client
 
 
 from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm
-from .models import (Category, Subcategory, Order, OrderItem, Product, Review, UserProfile, CartItem,
+from .models import (Category, Subcategory, Order, OrderAddress, OrderItem, Product, Review, UserProfile, CartItem,
                      Profile, PhoneOTP, OTP)
 from .signals import generate_and_send_otp
 from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_products
@@ -35,6 +35,14 @@ from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_p
 logger = logging.getLogger(__name__)
 PHONE_OTP_RESEND_COOLDOWN_SECONDS = 30
 PHONE_OTP_MAX_ATTEMPTS = 3
+
+
+def get_stripe_minimum_amount():
+    try:
+        minimum = Decimal(str(getattr(settings, 'STRIPE_MINIMUM_PAYMENT_AMOUNT', '50.00')))
+    except (InvalidOperation, TypeError, ValueError):
+        minimum = Decimal('50.00')
+    return minimum.quantize(Decimal('0.01'))
 
 
 def normalize_phone_number(phone_text):
@@ -1159,7 +1167,14 @@ def checkout(request):
         return redirect('store:cart')
 
     total = sum(item.total_price() for item in cart_items)
-    initial_data = dict(request.session.get('checkout_location', {}))
+    initial_data = dict(request.session.get('checkout_shipping', {}))
+
+    if not initial_data.get('full_name'):
+        initial_data['full_name'] = request.user.get_full_name() or request.user.username
+    if not initial_data.get('email'):
+        initial_data['email'] = request.user.email or ''
+    if not initial_data.get('country'):
+        initial_data['country'] = 'India'
 
     if not initial_data.get('phone'):
         profile_phone = None
@@ -1185,6 +1200,7 @@ def checkout(request):
             if isinstance(longitude, Decimal):
                 checkout_shipping['longitude'] = str(longitude)
 
+            checkout_shipping['country'] = checkout_shipping.get('country') or 'India'
             request.session['checkout_shipping'] = checkout_shipping
             request.session['checkout_total'] = str(total)
             request.session['checkout_items'] = [
@@ -1204,6 +1220,7 @@ def checkout(request):
     context = {
         'form': form,
         'total': total,
+        'stripe_minimum_amount': get_stripe_minimum_amount(),
         'cart_items': cart_items,
         'STRIPE_PUBLISHABLE_KEY': settings.STRIPE_PUBLISHABLE_KEY,
     }
@@ -1271,13 +1288,7 @@ def create_session(request):
     
     # Get from session
     shipping_data = request.session.get('checkout_shipping', {})
-    total_str = request.session.get('checkout_total', '0')
     items_data = request.session.get('checkout_items', [])
-    
-    try:
-        total = float(total_str)
-    except:
-        return JsonResponse({'error': 'Invalid total'}, status=400)
     
     if not items_data:
         return JsonResponse({'error': 'No cart items'}, status=400)
@@ -1286,6 +1297,16 @@ def create_session(request):
     cart_items = CartItem.objects.filter(user=request.user, product_id__in=[item['product'] for item in items_data])
     if len(cart_items) != len(items_data):
         return JsonResponse({'error': 'Cart mismatch'}, status=400)
+
+    total = sum((item.total_price() for item in cart_items), Decimal('0.00')).quantize(Decimal('0.01'))
+    stripe_minimum_amount = get_stripe_minimum_amount()
+    if total < stripe_minimum_amount:
+        return JsonResponse({
+            'error': (
+                f'Online payments require a minimum order total of Rs {stripe_minimum_amount}. '
+                f'Your current total is Rs {total}. Please add more items to continue.'
+            )
+        }, status=400)
     
     # Stripe setup
     stripe_secret_key = getattr(settings, 'STRIPE_SECRET_KEY', None)
@@ -1323,6 +1344,22 @@ def create_session(request):
             pincode=shipping_data.get('pincode', ''),
             phone=shipping_data.get('phone', ''),
         )
+
+        OrderAddress.objects.create(
+            order=order,
+            full_name=shipping_data.get('full_name', request.user.get_full_name() or request.user.username),
+            email=shipping_data.get('email', request.user.email or ''),
+            phone=shipping_data.get('phone', ''),
+            address_line1=shipping_data.get('address_line1', ''),
+            address_line2=shipping_data.get('address_line2', ''),
+            city=shipping_data.get('city', ''),
+            state=shipping_data.get('state', ''),
+            postal_code=shipping_data.get('pincode', ''),
+            country=shipping_data.get('country', 'India'),
+            delivery_instructions=shipping_data.get('delivery_instructions', ''),
+            latitude=latitude,
+            longitude=longitude,
+        )
         
         # Create order items
         for item_data in items_data:
@@ -1336,8 +1373,6 @@ def create_session(request):
                 price=cart_item.product.get_price(),
             )
         
-        cart_items.delete()  # Clear cart
-        
         # Stripe session
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
@@ -1349,6 +1384,7 @@ def create_session(request):
                             'name': f'Order #{order.id} - GroceryHub',
                         },
                         'unit_amount': int(total * 100),
+
                     },
                     'quantity': 1,
                 }
@@ -1367,6 +1403,17 @@ def create_session(request):
         
         logger.info(f"Stripe session created for order {order.id}")
         
+    except stripe.error.InvalidRequestError as e:
+        # Handle Stripe errors such as amounts that are too small after conversion
+        logger.error(f"Checkout error (Stripe InvalidRequest): {str(e)}")
+        if 'order' in locals():
+            order.delete()
+        msg = str(e)
+        if 'must convert to at least' in msg or 'total amount' in msg:
+            return JsonResponse({
+                'error': 'Order total is too small for Stripe payments. Please increase the order amount.'
+            }, status=400)
+        return JsonResponse({'error': 'Payment provider rejected the request.'}, status=400)
     except Exception as e:
         logger.error(f"Checkout error: {str(e)}")
         if 'order' in locals():
@@ -1379,7 +1426,21 @@ def checkout_success(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     if order.status != 'paid':
         messages.warning(request, 'Order payment is still processing.')
-    context = {'order': order}
+    ordered_product_ids = order.items.values_list('product_id', flat=True)
+    recommended_products = Product.objects.filter(
+        is_out_of_stock=False
+    ).exclude(
+        id__in=ordered_product_ids
+    ).order_by('-created_at')[:8]
+    shipping_address = getattr(order, 'shipping_address', None)
+    order_items = order.items.select_related('product').all()
+    context = {
+        'order': order,
+        'order_items': order_items,
+        'shipping_address': shipping_address,
+        'payment': None,
+        'recommended_products': recommended_products,
+    }
     return render(request, 'payment/success.html', context)
 
 def checkout_cancel(request):
@@ -1411,6 +1472,10 @@ def stripe_webhook(request):
             order = Order.objects.get(stripe_session_id=session['id'])
             order.status = 'paid'
             order.save()
+            CartItem.objects.filter(
+                user=order.user,
+                product_id__in=order.items.values_list('product_id', flat=True)
+            ).delete()
             # TODO: Deduct stock, send email
             logger.info(f"Order {order.id} marked as paid")
         except Order.DoesNotExist:

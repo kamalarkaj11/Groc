@@ -404,6 +404,49 @@ class Order(models.Model):
     def __str__(self):
         return f"Order {self.id} - {self.user.username}"
 
+class OrderAddress(models.Model):
+    order = models.OneToOneField('Order', on_delete=models.CASCADE, related_name='shipping_address')
+    full_name = models.CharField(max_length=128)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=15, blank=True)
+    address_line1 = models.TextField(blank=True)
+    address_line2 = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=2, choices=IndianState.choices, blank=True)
+    postal_code = models.CharField(max_length=10, blank=True)
+    country = models.CharField(max_length=64, default='India', blank=True)
+    delivery_instructions = models.TextField(blank=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Order Address'
+        verbose_name_plural = 'Order Addresses'
+
+    def __str__(self):
+        return f"Delivery address for order {self.order.id}"
+
+    @property
+    def formatted(self):
+        lines = [self.full_name]
+        if self.address_line1:
+            lines.append(self.address_line1)
+        if self.address_line2:
+            lines.append(self.address_line2)
+        city_line = []
+        if self.city:
+            city_line.append(self.city)
+        if self.state:
+            city_line.append(self.get_state_display())
+        if city_line:
+            lines.append(', '.join(city_line))
+        if self.postal_code:
+            lines.append(self.postal_code)
+        if self.country:
+            lines.append(self.country)
+        return '\n'.join(lines)
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)

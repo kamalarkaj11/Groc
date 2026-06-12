@@ -81,6 +81,32 @@ class ChangePasswordForm(PasswordChangeForm):
         self.helper.add_input(Submit('submit', 'Change Password', css_class='btn btn-success btn-lg w-100'))
 
 class CheckoutShippingForm(forms.ModelForm):
+    full_name = forms.CharField(
+        required=True,
+        label='Full Name',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full name'})
+    )
+    email = forms.EmailField(
+        required=False,
+        label='Email',
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email address'})
+    )
+    address_line2 = forms.CharField(
+        required=False,
+        label='House / Flat / Landmark',
+        widget=forms.Textarea(attrs={'rows': 2, 'class': 'form-control', 'placeholder': 'Apt, suite, floor, landmark (optional)'}),
+    )
+    country = forms.CharField(
+        required=True,
+        label='Country',
+        initial='India',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country'})
+    )
+    delivery_instructions = forms.CharField(
+        required=False,
+        label='Delivery Instructions',
+        widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Leave delivery instructions for the courier'}),
+    )
     latitude = forms.DecimalField(required=False, max_digits=9, decimal_places=6, widget=forms.HiddenInput())
     longitude = forms.DecimalField(required=False, max_digits=9, decimal_places=6, widget=forms.HiddenInput())
 
@@ -95,10 +121,10 @@ class CheckoutShippingForm(forms.ModelForm):
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone number (up to 15 characters)', 'maxlength': '15'}),
         }
         labels = {
-            'address_line1': 'Address',
+            'address_line1': 'Street Address',
             'city': 'City',
             'state': 'State',
-            'pincode': 'PIN Code',
+            'pincode': 'Postal Code',
             'phone': 'Phone',
         }
 
@@ -106,6 +132,19 @@ class CheckoutShippingForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
+
+    def clean_state(self):
+        state = self.cleaned_data.get('state')
+        if state == 'undefined':
+            return ''
+        return state
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone', '')
+        digits = ''.join(filter(str.isdigit, phone))
+        if len(digits) > 15:
+            raise forms.ValidationError('Phone number must have no more than 15 digits in total.')
+        return phone
 
     def clean_state(self):
         state = self.cleaned_data.get('state')
