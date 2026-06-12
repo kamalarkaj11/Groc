@@ -117,7 +117,7 @@ def send_password_change_email(user, otp_code):
     send_mail(
         subject,
         message,
-        settings.EMAIL_HOST_USER,
+        settings.DEFAULT_FROM_EMAIL,
         [user.email],
         fail_silently=False,
     )
@@ -845,7 +845,15 @@ def signup(request):
             request.session['email_verified'] = False
             request.session['email_otp_resend_at'] = timezone.now().isoformat()
 
-            messages.success(request, 'Account created. Please verify your email address with the code we sent.')
+            if getattr(user, '_otp_email_sent', False):
+                messages.success(request, 'Account created. Please verify your email address with the code we sent.')
+            else:
+                logger.warning(
+                    'Signup email OTP was not delivered for %s: %s',
+                    user.email,
+                    getattr(user, '_otp_email_error', 'Unknown email error'),
+                )
+                messages.warning(request, 'Account created, but we could not send the email OTP right now. Please use resend OTP.')
             return redirect('store:verify_email_otp')
     else:
         form = CustomUserCreationForm()

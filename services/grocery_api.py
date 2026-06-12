@@ -1,19 +1,25 @@
 import hashlib
 import logging
 import re
+from datetime import timezone as datetime_timezone
 from decimal import Decimal, InvalidOperation
+from email.utils import parsedate_to_datetime
 
 import requests
 from django.conf import settings
 from django.core.cache import cache
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
 API_URL = "https://grocery-api2.p.rapidapi.com/amazon"
 SOURCE_NAME = "rapidapi_amazon_grocery"
+PAUSE_CACHE_PREFIX = "grocery_api_paused"
 
 
 def _api_headers():
+    if not getattr(settings, "GROCERY_API_ENABLED", True):
+        return None
     key = (getattr(settings, "RAPIDAPI_KEY", "") or "").strip()
     host = getattr(settings, "RAPIDAPI_HOST", "grocery-api2.p.rapidapi.com")
     if not key or key.lower().startswith(("your_", "replace_", "changeme")):
@@ -26,6 +32,52 @@ def _api_headers():
 
 def is_configured():
     return bool(_api_headers())
+
+
+def is_enabled():
+    return bool(getattr(settings, "GROCERY_API_ENABLED", True))
+
+
+def _pause_cache_key(country):
+    host = getattr(settings, "RAPIDAPI_HOST", "grocery-api2.p.rapidapi.com")
+    return f"{PAUSE_CACHE_PREFIX}:{host}:{country}"
+
+
+def _retry_after_seconds(response):
+    if response is None:
+        return None
+    retry_after = response.headers.get("Retry-After")
+    if not retry_after:
+        return None
+    try:
+        return max(int(retry_after), 1)
+    except ValueError:
+        pass
+    try:
+        retry_at = parsedate_to_datetime(retry_after)
+        if retry_at:
+            if timezone.is_naive(retry_at):
+                retry_at = timezone.make_aware(retry_at, timezone=datetime_timezone.utc)
+            return max(int((retry_at - timezone.now()).total_seconds()), 1)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return None
+
+
+def _pause_api(country, seconds, reason):
+    seconds = max(int(seconds or 0), 1)
+    cache.set(_pause_cache_key(country), reason, seconds)
+
+
+def _pause_seconds_for_status(status_code, response=None):
+    if status_code == 403:
+        return getattr(settings, "GROCERY_API_FORBIDDEN_PAUSE_SECONDS", 60 * 60)
+    if status_code == 429:
+        return (
+            _retry_after_seconds(response)
+            or getattr(settings, "GROCERY_API_RATE_LIMIT_PAUSE_SECONDS", 60 * 15)
+        )
+    return getattr(settings, "GROCERY_API_FAILURE_CACHE_SECONDS", 60 * 5)
 
 
 def _first_product_list(payload):
@@ -144,6 +196,15 @@ def search_products(query, page=1, country=None):
     if cached is not None:
         return cached
 
+    pause_reason = cache.get(_pause_cache_key(country))
+    if pause_reason:
+        logger.debug("Skipping RapidAPI Grocery API request for query=%s page=%s: %s", query, page, pause_reason)
+        return []
+
+    if not is_enabled():
+        logger.debug("RapidAPI Grocery API is disabled.")
+        return []
+
     headers = _api_headers()
     if not headers:
         logger.info("RapidAPI Grocery API credentials are not configured.")
@@ -154,13 +215,31 @@ def search_products(query, page=1, country=None):
         response = requests.get(API_URL, headers=headers, params=params, timeout=12)
         response.raise_for_status()
         payload = response.json()
+    except requests.HTTPError as exc:
+        response = exc.response
+        status_code = response.status_code if response is not None else None
+        if status_code in (403, 429):
+            seconds = _pause_seconds_for_status(status_code, response)
+            reason = f"RapidAPI returned HTTP {status_code}; paused requests for {seconds} seconds."
+            _pause_api(country, seconds, reason)
+            logger.warning(
+                "RapidAPI Grocery API paused after HTTP %s for query=%s page=%s; retry in %s seconds.",
+                status_code,
+                query,
+                page,
+                seconds,
+            )
+        else:
+            logger.warning("RapidAPI Grocery API request failed for query=%s page=%s: %s", query, page, exc)
+        cache.set(cache_key, [], _pause_seconds_for_status(status_code, response))
+        return []
     except requests.RequestException as exc:
         logger.warning("RapidAPI Grocery API request failed for query=%s page=%s: %s", query, page, exc)
-        cache.set(cache_key, [], 60 * 5)
+        cache.set(cache_key, [], getattr(settings, "GROCERY_API_FAILURE_CACHE_SECONDS", 60 * 5))
         return []
     except ValueError:
         logger.warning("RapidAPI Grocery API returned non-JSON data for query=%s page=%s", query, page)
-        cache.set(cache_key, [], 60 * 5)
+        cache.set(cache_key, [], getattr(settings, "GROCERY_API_FAILURE_CACHE_SECONDS", 60 * 5))
         return []
 
     products = [
