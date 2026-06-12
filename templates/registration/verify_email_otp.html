@@ -16,6 +16,15 @@
                     <p class="text-muted">Enter that code below to continue.</p>
                 </div>
 
+                {% if email_delivery_failed %}
+                <div class="alert alert-warning">
+                    We could not deliver the email OTP right now. Please try resend in a moment.
+                    {% if debug_email_otp %}
+                    <div class="mt-2 fw-bold">Testing OTP: {{ debug_email_otp }}</div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
                 <form method="post" id="email-otp-form">
                     {% csrf_token %}
                     {{ form|crispy }}

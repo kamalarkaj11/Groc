@@ -29,12 +29,33 @@ from twilio.rest import Client
 from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm
 from .models import (Category, Subcategory, Order, OrderAddress, OrderItem, Product, Review, UserProfile, CartItem,
                      Profile, PhoneOTP, OTP)
-from .signals import generate_and_send_otp
+from .signals import create_otp, generate_and_send_otp, send_otp_email
 from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_products
 
 logger = logging.getLogger(__name__)
 PHONE_OTP_RESEND_COOLDOWN_SECONDS = 30
 PHONE_OTP_MAX_ATTEMPTS = 3
+
+
+def deliver_email_otp(user, request=None, create_new=False):
+    otp = create_otp(user) if create_new else user.otps.filter(is_latest=True).first()
+    if not otp:
+        otp = create_otp(user)
+
+    if request:
+        request.session.pop('email_otp_delivery_failed', None)
+        request.session.pop('email_otp_debug_code', None)
+
+    try:
+        send_otp_email(user, otp)
+        return otp, True, ''
+    except Exception as exc:
+        logger.warning('Email OTP was not delivered for %s: %s', user.email, exc)
+        if request:
+            request.session['email_otp_delivery_failed'] = True
+            if getattr(settings, 'EMAIL_OTP_SHOW_ON_DELIVERY_FAILURE', False):
+                request.session['email_otp_debug_code'] = otp.otp
+        return otp, False, str(exc)
 
 
 def get_stripe_minimum_amount():
@@ -850,14 +871,10 @@ def signup(request):
             request.session['email_verified'] = False
             request.session['email_otp_resend_at'] = timezone.now().isoformat()
 
-            if getattr(user, '_otp_email_sent', False):
+            _, email_sent, _ = deliver_email_otp(user, request=request)
+            if email_sent:
                 messages.success(request, 'Account created. Please verify your email address with the code we sent.')
             else:
-                logger.warning(
-                    'Signup email OTP was not delivered for %s: %s',
-                    user.email,
-                    getattr(user, '_otp_email_error', 'Unknown email error'),
-                )
                 messages.warning(request, 'Account created, but we could not send the email OTP right now. Please use resend OTP.')
             return redirect('store:verify_email_otp')
     else:
@@ -898,6 +915,8 @@ def verify_email_otp_view(request):
     return render(request, 'registration/verify_email_otp.html', {
         'form': form,
         'user_email': user.email,
+        'email_delivery_failed': request.session.get('email_otp_delivery_failed', False),
+        'debug_email_otp': request.session.get('email_otp_debug_code') if getattr(settings, 'EMAIL_OTP_SHOW_ON_DELIVERY_FAILURE', False) else '',
     })
 
 
@@ -1047,8 +1066,10 @@ def resend_email_otp_view(request):
             return JsonResponse({'success': False, 'error': f'Please wait {remaining}s before resending.'}, status=429)
 
     try:
-        generate_and_send_otp(user)
+        _, email_sent, _ = deliver_email_otp(user, request=request, create_new=True)
         request.session['email_otp_resend_at'] = now.isoformat()
+        if not email_sent:
+            return JsonResponse({'success': False, 'error': 'Unable to resend OTP right now.'}, status=503)
         return JsonResponse({'success': True, 'message': 'Email OTP resent successfully.'})
     except Exception:
         logger.exception('Failed to resend email OTP for %s', user.email)

@@ -130,13 +130,8 @@ def save_user_profile(sender, instance, **kwargs):
 def generate_initial_otp(sender, instance, created, **kwargs):
     """Generate OTP for new users if not active."""
     if created and not instance.is_active:
-        from .signals import generate_and_send_otp  # Forward ref
-        try:
-            generate_and_send_otp(instance)
-            instance._otp_email_sent = True
-        except Exception as exc:
-            instance._otp_email_sent = False
-            instance._otp_email_error = str(exc)
+        from .signals import create_otp  # Forward ref
+        create_otp(instance)
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
