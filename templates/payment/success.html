@@ -3,594 +3,444 @@
 
 {% block title %}Order Confirmed - GrocHub{% endblock %}
 
-{% block content %}
+{% block extra_css %}
 <style>
-  main.container {
-    max-width: 100%;
-    padding: 0;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-  }
-
   :root {
-    --oc-primary: #22C55E;
-    --oc-secondary: #16A34A;
-    --oc-accent: #FACC15;
-    --oc-bg: #F8FAFC;
-    --oc-dark: #0F172A;
-    --oc-text: #122018;
-    --oc-muted: #64748B;
-    --oc-line: rgba(15, 23, 42, 0.09);
-    --oc-glass: rgba(255, 255, 255, 0.72);
-    --oc-glass-strong: rgba(255, 255, 255, 0.88);
-    --oc-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
-    --oc-green-shadow: 0 20px 55px rgba(34, 197, 94, 0.3);
+    --oc-green: #28a745;
+    --oc-green-deep: #198754;
+    --oc-green-mint: #20c997;
+    --oc-yellow: #ffc857;
+    --oc-ink: #17251d;
+    --oc-muted: #69756f;
+    --oc-line: rgba(25, 135, 84, 0.12);
+    --oc-soft: #f5fbf7;
+    --oc-white: #ffffff;
+    --oc-glass: rgba(255, 255, 255, 0.85);
+    --oc-glass-strong: rgba(255, 255, 255, 0.95);
+    --oc-shadow: 0 18px 50px rgba(15, 81, 50, 0.10);
+    --oc-green-shadow: 0 12px 35px rgba(40, 167, 69, 0.25);
+    --oc-radius: 16px;
+    --oc-radius-sm: 10px;
+    --oc-transition: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --oc-bg: #0F172A;
-      --oc-text: #E5F2EA;
-      --oc-muted: #9CAFC0;
-      --oc-line: rgba(255, 255, 255, 0.13);
-      --oc-glass: rgba(15, 23, 42, 0.72);
-      --oc-glass-strong: rgba(22, 34, 53, 0.88);
-      --oc-shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
-    }
-  }
-
-  .order-confirmation-page {
+  /* ── Hero Section ── */
+  .oc-hero {
     position: relative;
     overflow: hidden;
-    color: var(--oc-text);
+    padding: 32px 0 24px;
     background:
-      radial-gradient(circle at 18% 8%, rgba(34, 197, 94, 0.18), transparent 26%),
-      radial-gradient(circle at 88% 18%, rgba(250, 204, 21, 0.18), transparent 24%),
-      linear-gradient(180deg, var(--oc-bg) 0%, #ECFDF5 52%, #FFFFFF 100%);
-    transition: background 0.45s ease, color 0.45s ease;
+      radial-gradient(ellipse at 15% 20%, rgba(40, 167, 69, 0.10), transparent 40%),
+      radial-gradient(ellipse at 85% 15%, rgba(32, 201, 151, 0.08), transparent 35%),
+      radial-gradient(ellipse at 50% 80%, rgba(255, 200, 87, 0.06), transparent 45%),
+      linear-gradient(180deg, var(--oc-soft) 0%, var(--oc-white) 100%);
+    border-radius: var(--oc-radius);
+    margin-top: -8px;
+    animation: ocFadeIn 0.6s ease both;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .order-confirmation-page {
-      background:
-        radial-gradient(circle at 18% 8%, rgba(34, 197, 94, 0.18), transparent 28%),
-        radial-gradient(circle at 88% 18%, rgba(250, 204, 21, 0.12), transparent 25%),
-        linear-gradient(180deg, #0F172A 0%, #102116 58%, #0B1120 100%);
-    }
-  }
-
-  .oc-shell {
-    width: min(1180px, calc(100% - 32px));
-    margin: 0 auto;
-  }
-
-  .oc-hero {
-    min-height: calc(100vh - 96px);
+  .oc-hero-inner {
     display: grid;
-    align-items: center;
-    padding: 56px 0 36px;
-    position: relative;
-    isolation: isolate;
-  }
-
-  .oc-confetti-canvas {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 50;
-  }
-
-  .oc-hero-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
-    gap: 34px;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
     align-items: center;
   }
 
-  .oc-hero-copy {
-    position: relative;
-    z-index: 2;
-    animation: ocFadeUp 0.9s ease both 0.12s;
+  .oc-hero-content {
+    animation: ocSlideUp 0.7s ease both 0.1s;
   }
 
-  .oc-kicker {
+  .oc-badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
-    border: 1px solid rgba(34, 197, 94, 0.28);
+    padding: 6px 14px;
+    border: 1px solid var(--oc-line);
     border-radius: 999px;
-    background: rgba(34, 197, 94, 0.1);
-    color: var(--oc-secondary);
-    font-weight: 800;
+    background: rgba(40, 167, 69, 0.08);
+    color: var(--oc-green-deep);
     font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
   }
 
-  .oc-title {
-    margin: 18px 0 16px;
+  .oc-hero-title {
+    margin: 16px 0 10px;
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
     font-weight: 950;
-    letter-spacing: 0;
-    line-height: 1.02;
-    font-size: clamp(2.55rem, 6vw, 5.8rem);
+    line-height: 1.08;
+    color: var(--oc-ink);
   }
 
-  .oc-title span {
+  .oc-hero-title span {
     display: block;
-    color: var(--oc-primary);
+    color: var(--oc-green);
   }
 
-  .oc-subtitle {
-    max-width: 650px;
+  .oc-hero-sub {
+    max-width: 520px;
+    margin-bottom: 0;
     color: var(--oc-muted);
-    font-size: clamp(1rem, 2vw, 1.24rem);
+    font-size: 1.05rem;
     line-height: 1.7;
   }
 
-  .oc-hero-actions,
-  .oc-action-row {
+  .oc-hero-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
-    margin-top: 28px;
+    gap: 12px;
+    margin-top: 24px;
   }
 
-  .oc-btn {
-    position: relative;
-    overflow: hidden;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    min-height: 50px;
-    padding: 13px 20px;
-    border-radius: 8px;
-    border: 1px solid var(--oc-line);
-    font-weight: 850;
-    text-decoration: none;
-    color: var(--oc-text);
-    background: var(--oc-glass-strong);
-    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
-    transform: translateZ(0);
-    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  .oc-hero-actions .btn {
+    min-height: 48px;
+    padding: 10px 22px;
+    border-radius: var(--oc-radius-sm);
+    font-weight: 750;
+    font-size: 0.95rem;
   }
 
-  .oc-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.14);
-    color: var(--oc-text);
-  }
-
-  .oc-btn-primary {
-    border: 0;
-    color: #FFFFFF;
-    background: linear-gradient(135deg, var(--oc-primary), var(--oc-secondary));
-    box-shadow: var(--oc-green-shadow);
-  }
-
-  .oc-btn-primary:hover,
-  .oc-btn-pulse:hover {
-    color: #FFFFFF;
-  }
-
-  .oc-btn-pulse {
-    color: #FFFFFF;
-    border: 0;
-    background: linear-gradient(135deg, #0F172A, #16A34A);
-    animation: ocButtonPulse 2s ease-in-out infinite;
-  }
-
-  .oc-btn-invoice i {
-    animation: ocPdfNudge 1.8s ease-in-out infinite;
-  }
-
-  .oc-ripple {
-    position: absolute;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.45);
-    transform: scale(0);
-    animation: ocRipple 0.62s ease-out;
-    pointer-events: none;
-  }
-
+  /* ── Success Visual ── */
   .oc-success-stage {
     position: relative;
-    min-height: 480px;
-    perspective: 1000px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 380px;
   }
 
   .oc-success-card {
     position: relative;
-    z-index: 4;
-    min-height: 440px;
-    padding: 34px;
-    display: grid;
-    place-items: center;
+    z-index: 2;
+    width: 100%;
+    max-width: 400px;
+    padding: 40px 28px;
     text-align: center;
     border: 1px solid var(--oc-line);
-    border-radius: 18px;
+    border-radius: var(--oc-radius);
     background: var(--oc-glass);
+    backdrop-filter: blur(16px);
     box-shadow: var(--oc-shadow);
-    backdrop-filter: blur(24px);
-    transform-style: preserve-3d;
-    animation: ocScaleIn 0.9s cubic-bezier(.2,.8,.2,1) both 0.18s;
+    animation: ocScaleIn 0.7s cubic-bezier(.2,.8,.2,1) both 0.2s;
   }
 
-  .oc-success-ring {
-    width: 184px;
-    height: 184px;
+  .oc-check-ring {
+    width: 130px;
+    height: 130px;
+    margin: 0 auto;
     display: grid;
     place-items: center;
     border-radius: 50%;
-    background:
-      conic-gradient(var(--oc-primary) 0deg, var(--oc-primary) 360deg, rgba(34, 197, 94, 0.12) 360deg),
-      rgba(255, 255, 255, 0.72);
-    box-shadow: 0 24px 60px rgba(34, 197, 94, 0.28);
-    animation: ocRingFill 1.15s ease both;
+    background: conic-gradient(var(--oc-green) 360deg, rgba(40, 167, 69, 0.08) 360deg);
+    box-shadow: 0 16px 40px rgba(40, 167, 69, 0.20);
+    animation: ocRingFill 1s ease both;
   }
 
-  .oc-success-core {
-    width: 136px;
-    height: 136px;
+  .oc-check-core {
+    width: 96px;
+    height: 96px;
     display: grid;
     place-items: center;
     border-radius: 50%;
-    color: #FFFFFF;
-    background: linear-gradient(135deg, var(--oc-primary), var(--oc-secondary));
-    box-shadow: inset 0 1px 16px rgba(255, 255, 255, 0.22);
+    color: #fff;
+    background: linear-gradient(135deg, var(--oc-green), var(--oc-green-mint));
+    box-shadow: inset 0 1px 12px rgba(255, 255, 255, 0.3);
   }
 
-  .oc-success-core i {
-    font-size: 4.8rem;
-    animation: ocCheckPop 0.8s cubic-bezier(.34,1.56,.64,1) both 0.78s;
+  .oc-check-core i {
+    font-size: 3.2rem;
+    animation: ocCheckPop 0.7s cubic-bezier(.34,1.56,.64,1) both 0.6s;
   }
 
-  .oc-success-card h2 {
-    margin: 26px 0 10px;
-    font-size: clamp(1.7rem, 4vw, 3.1rem);
+  .oc-success-card h3 {
+    margin: 20px 0 8px;
+    font-size: 1.6rem;
     font-weight: 950;
+    color: var(--oc-ink);
   }
 
   .oc-success-card p {
-    max-width: 430px;
     margin: 0 auto;
+    max-width: 360px;
     color: var(--oc-muted);
-    line-height: 1.7;
+    line-height: 1.6;
+    font-size: 0.95rem;
   }
 
-  .oc-sparkle {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--oc-accent);
-    box-shadow: 0 0 16px rgba(250, 204, 21, 0.9);
-    animation: ocSpark 1.9s ease-in-out infinite;
-  }
-
-  .oc-sparkle:nth-child(1) { top: 18%; left: 23%; animation-delay: 0s; }
-  .oc-sparkle:nth-child(2) { top: 28%; right: 18%; animation-delay: 0.35s; }
-  .oc-sparkle:nth-child(3) { bottom: 22%; left: 18%; animation-delay: 0.72s; }
-  .oc-sparkle:nth-child(4) { bottom: 16%; right: 24%; animation-delay: 1s; }
-
+  /* Floating grocery icons */
   .oc-floating-icon {
     position: absolute;
-    z-index: 3;
-    width: 62px;
-    height: 62px;
+    z-index: 1;
+    width: 52px;
+    height: 52px;
     display: grid;
     place-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.56);
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.72);
-    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.16);
-    backdrop-filter: blur(18px);
-    font-size: 1.75rem;
-    transform-style: preserve-3d;
-    animation: ocFloat3d 5s ease-in-out infinite;
+    border: 1px solid var(--oc-line);
+    border-radius: 14px;
+    background: var(--oc-white);
+    box-shadow: 0 10px 28px rgba(15, 81, 50, 0.10);
+    font-size: 1.4rem;
+    animation: ocFloat 5s ease-in-out infinite;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .oc-floating-icon {
-      background: rgba(15, 23, 42, 0.72);
-    }
-  }
+  .oc-fi-1 { top: 5%; left: 2%; color: #dc3545; animation-delay: 0s; }
+  .oc-fi-2 { top: 2%; right: 8%; color: var(--oc-green); animation-delay: 0.5s; }
+  .oc-fi-3 { bottom: 18%; left: 0%; color: #0d6efd; animation-delay: 1s; }
+  .oc-fi-4 { bottom: 2%; right: 4%; color: #fd7e14; animation-delay: 1.5s; }
+  .oc-fi-5 { top: 38%; right: -4%; color: var(--oc-green-mint); animation-delay: 2s; }
 
-  .oc-fi-1 { top: 8%; left: 4%; color: #EF4444; animation-delay: 0s; }
-  .oc-fi-2 { top: 4%; right: 10%; color: #22C55E; animation-delay: 0.6s; }
-  .oc-fi-3 { bottom: 22%; left: 1%; color: #2563EB; animation-delay: 1.1s; }
-  .oc-fi-4 { bottom: 4%; right: 12%; color: #D97706; animation-delay: 1.6s; }
-  .oc-fi-5 { top: 42%; right: -2%; color: #16A34A; animation-delay: 2.1s; }
-
-  .oc-section {
-    padding: 26px 0;
-  }
-
+  /* ── Section Headers ── */
   .oc-section-head {
     display: flex;
-    align-items: end;
+    align-items: flex-end;
     justify-content: space-between;
-    gap: 18px;
-    margin-bottom: 18px;
+    gap: 16px;
+    margin-bottom: 20px;
   }
 
   .oc-section-head h2 {
     margin: 0;
-    font-size: clamp(1.45rem, 3vw, 2.2rem);
-    font-weight: 950;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--oc-ink);
   }
 
   .oc-section-head p {
-    margin: 5px 0 0;
+    margin: 4px 0 0;
     color: var(--oc-muted);
+    font-size: 0.9rem;
   }
 
-  .oc-grid-two {
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
-    gap: 20px;
-  }
-
-  .oc-glass-card {
-    position: relative;
-    overflow: hidden;
+  /* ── Glass Cards ── */
+  .oc-card {
     border: 1px solid var(--oc-line);
-    border-radius: 14px;
-    background: var(--oc-glass);
-    box-shadow: 0 18px 55px rgba(15, 23, 42, 0.09);
-    backdrop-filter: blur(20px);
-    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-    animation: ocFadeUp 0.78s ease both;
+    border-radius: var(--oc-radius);
+    background: var(--oc-white);
+    box-shadow: var(--oc-shadow);
+    transition: transform 0.25s var(--oc-transition), box-shadow 0.25s var(--oc-transition);
+    animation: ocSlideUp 0.6s ease both;
+    overflow: hidden;
   }
 
-  .oc-glass-card::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1px;
-    background: linear-gradient(120deg, rgba(34, 197, 94, 0.85), rgba(250, 204, 21, 0.55), transparent 55%);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    opacity: 0.45;
-    animation: ocGlowBorder 4s linear infinite;
-    pointer-events: none;
-  }
-
-  .oc-glass-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.14);
-    border-color: rgba(34, 197, 94, 0.28);
+  .oc-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 55px rgba(15, 81, 50, 0.12);
   }
 
   .oc-card-body {
-    position: relative;
-    z-index: 1;
     padding: 24px;
   }
 
-  .oc-info-list {
+  /* ── Order Info Grid ── */
+  .oc-info-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
 
   .oc-info-item {
     padding: 14px;
     border: 1px solid var(--oc-line);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.38);
+    border-radius: var(--oc-radius-sm);
+    background: var(--oc-soft);
+    transition: background 0.2s ease;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .oc-info-item {
-      background: rgba(255, 255, 255, 0.05);
-    }
+  .oc-info-item:hover {
+    background: rgba(40, 167, 69, 0.06);
   }
 
   .oc-info-item span {
     display: block;
     color: var(--oc-muted);
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 800;
     text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   .oc-info-item strong {
     display: block;
-    margin-top: 5px;
-    font-size: 1.02rem;
+    margin-top: 4px;
+    font-size: 1rem;
+    color: var(--oc-ink);
   }
 
   .oc-status-pill {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    color: #0F5132;
-    background: rgba(34, 197, 94, 0.16);
-    padding: 7px 10px;
+    gap: 6px;
+    padding: 4px 12px;
     border-radius: 999px;
+    background: rgba(40, 167, 69, 0.12);
+    color: var(--oc-green-deep);
+    font-weight: 800;
+    font-size: 0.85rem;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .oc-status-pill { color: #B7F7CF; }
-  }
-
+  /* ── Timeline ── */
   .oc-timeline {
+    display: flex;
+    gap: 0;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--oc-line);
     position: relative;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    margin-top: 28px;
-    padding-top: 22px;
   }
 
-  .oc-timeline::before,
+  .oc-timeline::before {
+    content: "";
+    position: absolute;
+    top: 28px;
+    left: 8%;
+    right: 8%;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(105, 117, 111, 0.15);
+  }
+
   .oc-timeline::after {
     content: "";
     position: absolute;
-    top: 7px;
+    top: 28px;
     left: 8%;
-    right: 8%;
-    height: 4px;
+    width: 60%;
+    height: 3px;
     border-radius: 999px;
-    background: rgba(148, 163, 184, 0.24);
-  }
-
-  .oc-timeline::after {
-    right: 32%;
-    background: linear-gradient(90deg, var(--oc-primary), var(--oc-accent));
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.35);
-    animation: ocLineGrow 1.3s ease both 0.45s;
+    background: linear-gradient(90deg, var(--oc-green), var(--oc-green-mint));
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.25);
+    animation: ocLineGrow 1s ease both 0.4s;
     transform-origin: left;
   }
 
   .oc-step {
-    position: relative;
+    flex: 1;
     text-align: center;
+    padding-top: 28px;
+    position: relative;
     color: var(--oc-muted);
-    font-weight: 850;
-    font-size: 0.86rem;
+    font-size: 0.8rem;
+    font-weight: 750;
   }
 
   .oc-step::before {
     content: "";
     position: absolute;
-    top: -22px;
+    top: 19px;
     left: 50%;
     width: 18px;
     height: 18px;
-    border: 3px solid rgba(148, 163, 184, 0.55);
+    border: 3px solid rgba(105, 117, 111, 0.25);
     border-radius: 50%;
-    background: var(--oc-glass-strong);
+    background: var(--oc-white);
     transform: translateX(-50%);
     z-index: 2;
   }
 
   .oc-step.done {
-    color: var(--oc-text);
+    color: var(--oc-ink);
   }
 
   .oc-step.done::before {
-    border-color: var(--oc-primary);
-    background: var(--oc-primary);
-    box-shadow: 0 0 0 7px rgba(34, 197, 94, 0.14);
+    border-color: var(--oc-green);
+    background: var(--oc-green);
+    box-shadow: 0 0 0 6px rgba(40, 167, 69, 0.12);
   }
 
-  .oc-tracker {
-    min-height: 100%;
+  /* ── Live Tracking ── */
+  .oc-track-card {
+    min-height: 200px;
   }
 
-  .oc-route {
+  .oc-route-visual {
     position: relative;
-    min-height: 250px;
-    margin-top: 10px;
-    border-radius: 12px;
-    overflow: hidden;
+    height: 120px;
+    border-radius: var(--oc-radius-sm);
     background:
-      linear-gradient(135deg, rgba(34, 197, 94, 0.16), rgba(250, 204, 21, 0.13)),
-      repeating-linear-gradient(45deg, transparent, transparent 16px, rgba(15, 23, 42, 0.04) 16px, rgba(15, 23, 42, 0.04) 18px);
+      linear-gradient(135deg, rgba(40, 167, 69, 0.08), rgba(32, 201, 151, 0.06));
+    overflow: hidden;
+    margin-bottom: 16px;
   }
 
   .oc-route-line {
     position: absolute;
-    top: 56%;
-    left: 8%;
-    width: 84%;
-    border-top: 5px dotted rgba(22, 163, 74, 0.6);
-    filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.5));
-    animation: ocRouteGlow 1.8s ease-in-out infinite;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    border-top: 3px dashed rgba(40, 167, 69, 0.35);
   }
 
-  .oc-truck {
+  .oc-truck-icon {
     position: absolute;
-    top: calc(56% - 34px);
-    left: 8%;
-    width: 72px;
-    height: 48px;
+    top: calc(50% - 22px);
+    left: 10%;
+    width: 44px;
+    height: 44px;
     display: grid;
     place-items: center;
     border-radius: 10px;
-    color: #FFFFFF;
-    font-size: 2.1rem;
-    background: linear-gradient(135deg, var(--oc-primary), var(--oc-secondary));
-    box-shadow: 0 14px 30px rgba(34, 197, 94, 0.28);
-    animation: ocTruckMove 5.5s ease-in-out infinite;
+    color: #fff;
+    font-size: 1.4rem;
+    background: linear-gradient(135deg, var(--oc-green), var(--oc-green-mint));
+    box-shadow: 0 8px 22px rgba(40, 167, 69, 0.25);
+    animation: ocTruckMove 4s ease-in-out infinite;
   }
 
-  .oc-pin {
+  .oc-pin-icon {
     position: absolute;
-    right: 8%;
-    top: calc(56% - 52px);
-    color: #EF4444;
-    font-size: 2.2rem;
+    right: 10%;
+    top: calc(50% - 24px);
+    color: #dc3545;
+    font-size: 1.8rem;
     animation: ocPinBounce 1.2s ease-in-out infinite;
-  }
-
-  .oc-pin::after {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 72%;
-    width: 42px;
-    height: 42px;
-    border: 2px solid rgba(239, 68, 68, 0.45);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    animation: ocGpsPulse 1.6s ease-out infinite;
   }
 
   .oc-countdown {
     display: inline-flex;
     align-items: baseline;
     gap: 8px;
-    margin-top: 16px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    color: #14532D;
-    background: rgba(34, 197, 94, 0.14);
-    font-weight: 900;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .oc-countdown { color: #CFFEDD; }
+    padding: 10px 16px;
+    border-radius: var(--oc-radius-sm);
+    background: rgba(40, 167, 69, 0.08);
+    color: var(--oc-green-deep);
+    font-weight: 800;
+    font-size: 0.9rem;
   }
 
   .oc-countdown strong {
-    font-size: 2.15rem;
+    font-size: 1.6rem;
     line-height: 1;
   }
 
+  /* ── Ordered Items ── */
   .oc-items-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 16px;
   }
 
   .oc-product-card {
     border: 1px solid var(--oc-line);
-    border-radius: 12px;
+    border-radius: var(--oc-radius-sm);
     overflow: hidden;
-    background: var(--oc-glass-strong);
-    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
-    transform: translateY(18px);
+    background: var(--oc-white);
+    box-shadow: 0 6px 20px rgba(15, 81, 50, 0.06);
+    transition: transform 0.25s var(--oc-transition), box-shadow 0.25s var(--oc-transition);
     opacity: 0;
-    animation: ocStaggerIn 0.7s ease both;
-    transition: transform 0.22s ease, box-shadow 0.22s ease;
+    transform: translateY(16px);
+    animation: ocStaggerIn 0.5s ease both;
   }
 
   .oc-product-card:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.13);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 16px 36px rgba(15, 81, 50, 0.10);
   }
 
   .oc-product-media {
     aspect-ratio: 1 / 0.75;
     display: grid;
     place-items: center;
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(250, 204, 21, 0.12));
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.08), rgba(255, 200, 87, 0.06));
     overflow: hidden;
   }
 
@@ -598,10 +448,10 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.28s ease;
+    transition: transform 0.3s ease;
   }
 
-  .oc-product-card:hover img {
+  .oc-product-card:hover .oc-product-media img {
     transform: scale(1.08);
   }
 
@@ -609,12 +459,16 @@
     padding: 14px;
   }
 
-  .oc-product-body h3 {
-    min-height: 42px;
-    margin: 0 0 8px;
-    font-size: 0.98rem;
-    font-weight: 900;
-    line-height: 1.35;
+  .oc-product-body h4 {
+    margin: 0 0 6px;
+    font-size: 0.92rem;
+    font-weight: 850;
+    color: var(--oc-ink);
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .oc-product-meta {
@@ -622,95 +476,94 @@
     justify-content: space-between;
     gap: 8px;
     color: var(--oc-muted);
+    font-size: 0.85rem;
     font-weight: 800;
   }
 
-  .oc-address-card {
+  .oc-product-meta strong {
+    color: var(--oc-green-deep);
+  }
+
+  /* ── Address Card ── */
+  .oc-address-grid {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 16px;
     align-items: start;
-    color: var(--oc-text);
   }
 
-  .oc-address-card h3,
-  .oc-address-card p,
-  .oc-address-card .text-muted,
-  .oc-address-card .fw-semibold {
-    color: var(--oc-text) !important;
-  }
-
-  .oc-address-card .bi-envelope,
-  .oc-address-card .bi-telephone {
-    color: var(--oc-secondary) !important;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .oc-address-card .bi-envelope,
-    .oc-address-card .bi-telephone {
-      color: #86EFAC !important;
-    }
-  }
-
-  .oc-map-pin {
-    width: 52px;
-    height: 52px;
+  .oc-map-icon {
+    width: 48px;
+    height: 48px;
     display: grid;
     place-items: center;
-    border-radius: 14px;
-    color: #FFFFFF;
-    font-size: 1.55rem;
-    background: linear-gradient(135deg, #EF4444, #FACC15);
-    box-shadow: 0 16px 34px rgba(239, 68, 68, 0.22);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1.3rem;
+    background: linear-gradient(135deg, #dc3545, #fd7e14);
+    box-shadow: 0 10px 24px rgba(220, 53, 69, 0.18);
     animation: ocPinBounce 1.4s ease-in-out infinite;
   }
 
+  /* ── Payment Summary ── */
   .oc-summary-row {
     display: flex;
     justify-content: space-between;
-    gap: 16px;
-    padding: 12px 0;
+    gap: 12px;
+    padding: 10px 0;
     border-bottom: 1px solid var(--oc-line);
     color: var(--oc-muted);
-    font-weight: 750;
+    font-weight: 650;
+    font-size: 0.92rem;
   }
 
   .oc-summary-row strong {
-    color: var(--oc-text);
+    color: var(--oc-ink);
   }
 
   .oc-summary-total {
     margin-top: 12px;
-    padding: 16px;
-    border-radius: 12px;
-    color: #FFFFFF;
-    background: linear-gradient(135deg, var(--oc-primary), var(--oc-secondary));
+    padding: 16px 20px;
+    border-radius: var(--oc-radius-sm);
+    color: #fff;
+    background: linear-gradient(135deg, var(--oc-green), var(--oc-green-mint));
     box-shadow: var(--oc-green-shadow);
   }
 
   .oc-summary-total span {
     display: block;
-    font-size: 0.82rem;
+    font-size: 0.8rem;
     font-weight: 800;
     opacity: 0.9;
   }
 
   .oc-summary-total strong {
     display: block;
-    font-size: 2.2rem;
+    font-size: 1.8rem;
     line-height: 1.1;
+    color: #fff;
   }
 
+  /* ── Special Instructions ── */
+  .oc-instructions {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: var(--oc-radius-sm);
+    background: rgba(40, 167, 69, 0.06);
+    border: 1px solid var(--oc-line);
+  }
+
+  /* ── Carousel ── */
   .oc-carousel {
     overflow: hidden;
-    padding: 4px 0 12px;
+    padding: 4px 0 8px;
   }
 
   .oc-carousel-track {
     display: flex;
     gap: 16px;
     width: max-content;
-    animation: ocCarousel 30s linear infinite;
+    animation: ocCarouselScroll 30s linear infinite;
   }
 
   .oc-carousel:hover .oc-carousel-track {
@@ -718,94 +571,74 @@
   }
 
   .oc-recommend-card {
-    width: 220px;
+    width: 210px;
+    flex-shrink: 0;
     border: 1px solid var(--oc-line);
-    border-radius: 12px;
+    border-radius: var(--oc-radius-sm);
     overflow: hidden;
-    background: var(--oc-glass-strong);
-    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.09);
-    transform-style: preserve-3d;
-    transition: transform 0.24s ease, box-shadow 0.24s ease;
+    background: var(--oc-white);
+    box-shadow: 0 8px 24px rgba(15, 81, 50, 0.06);
+    transition: transform 0.25s var(--oc-transition), box-shadow 0.25s var(--oc-transition);
   }
 
   .oc-recommend-card:hover {
-    transform: perspective(1000px) rotateX(4deg) rotateY(-5deg) translateY(-6px);
-    box-shadow: 0 26px 55px rgba(15, 23, 42, 0.15);
+    transform: translateY(-5px);
+    box-shadow: 0 18px 40px rgba(15, 81, 50, 0.12);
   }
 
   .oc-recommend-card .oc-product-media {
     aspect-ratio: 1 / 0.78;
   }
 
-  .oc-add-mini {
-    width: 100%;
-    min-height: 38px;
-    border: 0;
-    border-radius: 8px;
-    color: #FFFFFF;
-    font-weight: 900;
-    background: linear-gradient(135deg, var(--oc-primary), var(--oc-secondary));
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  .oc-recommend-card .oc-product-body {
+    padding: 12px;
   }
 
-  .oc-add-mini:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px rgba(34, 197, 94, 0.24);
+  .oc-recommend-card .oc-product-body h4 {
+    font-size: 0.85rem;
   }
 
+  .oc-recommend-card .oc-product-meta {
+    font-size: 0.78rem;
+    margin-bottom: 10px;
+  }
+
+  /* ── Empty State ── */
   .oc-empty {
-    padding: 24px;
+    padding: 40px 20px;
     text-align: center;
     color: var(--oc-muted);
   }
 
-  @keyframes ocFadeUp {
-    from { opacity: 0; transform: translateY(28px); }
+  /* ── Animations ── */
+  @keyframes ocFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes ocSlideUp {
+    from { opacity: 0; transform: translateY(24px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes ocScaleIn {
-    from { opacity: 0; transform: scale(0.92) rotateX(8deg); }
-    to { opacity: 1; transform: scale(1) rotateX(0); }
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: scale(1); }
   }
 
   @keyframes ocRingFill {
-    from { background: conic-gradient(var(--oc-primary) 0deg, rgba(34, 197, 94, 0.1) 0deg); }
-    to { background: conic-gradient(var(--oc-primary) 360deg, rgba(34, 197, 94, 0.1) 360deg); }
+    from { background: conic-gradient(var(--oc-green) 0deg, rgba(40, 167, 69, 0.08) 0deg); }
+    to { background: conic-gradient(var(--oc-green) 360deg, rgba(40, 167, 69, 0.08) 360deg); }
   }
 
   @keyframes ocCheckPop {
-    from { opacity: 0; transform: scale(0.2) rotate(-24deg); }
+    from { opacity: 0; transform: scale(0.2) rotate(-20deg); }
     to { opacity: 1; transform: scale(1) rotate(0); }
   }
 
-  @keyframes ocSpark {
-    0%, 100% { opacity: 0.35; transform: scale(0.8); }
-    50% { opacity: 1; transform: scale(1.7); }
-  }
-
-  @keyframes ocFloat3d {
-    0%, 100% { transform: translate3d(0, 0, 28px) rotateX(0) rotateY(0); }
-    50% { transform: translate3d(0, -22px, 64px) rotateX(10deg) rotateY(-12deg); }
-  }
-
-  @keyframes ocButtonPulse {
-    0%, 100% { box-shadow: 0 12px 28px rgba(34, 197, 94, 0.24); }
-    50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0.1), 0 20px 40px rgba(34, 197, 94, 0.28); }
-  }
-
-  @keyframes ocPdfNudge {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-3px); }
-  }
-
-  @keyframes ocRipple {
-    to { transform: scale(4); opacity: 0; }
-  }
-
-  @keyframes ocGlowBorder {
-    0%, 100% { opacity: 0.32; }
-    50% { opacity: 0.72; }
+  @keyframes ocFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-14px) rotate(6deg); }
   }
 
   @keyframes ocLineGrow {
@@ -813,14 +646,9 @@
     to { transform: scaleX(1); }
   }
 
-  @keyframes ocRouteGlow {
-    0%, 100% { opacity: 0.65; }
-    50% { opacity: 1; }
-  }
-
   @keyframes ocTruckMove {
     0% { transform: translateX(0) translateY(0); }
-    50% { transform: translateX(calc(76vw / 2)) translateY(-8px); }
+    50% { transform: translateX(calc(40vw)) translateY(-6px); }
     100% { transform: translateX(0) translateY(0); }
   }
 
@@ -829,122 +657,145 @@
     50% { transform: translateY(-8px); }
   }
 
-  @keyframes ocGpsPulse {
-    from { opacity: 0.8; transform: translate(-50%, -50%) scale(0.45); }
-    to { opacity: 0; transform: translate(-50%, -50%) scale(1.6); }
-  }
-
   @keyframes ocStaggerIn {
     to { opacity: 1; transform: translateY(0); }
   }
 
-  @keyframes ocCarousel {
+  @keyframes ocCarouselScroll {
     from { transform: translateX(0); }
     to { transform: translateX(-50%); }
   }
 
+  @keyframes ocCountUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Responsive ── */
   @media (max-width: 991px) {
-    .oc-hero-grid,
-    .oc-grid-two {
+    .oc-hero-inner {
       grid-template-columns: 1fr;
     }
 
-    .oc-success-stage {
-      min-height: 430px;
-    }
-
-    .oc-items-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 640px) {
-    .oc-shell {
-      width: min(100% - 22px, 1180px);
-    }
-
     .oc-hero {
-      min-height: auto;
-      padding: 32px 0 22px;
+      padding: 24px 0 20px;
     }
 
-    .oc-title {
-      font-size: 2.45rem;
+    .oc-success-stage {
+      min-height: 300px;
+      order: -1;
     }
 
     .oc-success-card {
-      min-height: 370px;
-      padding: 22px 16px;
-      border-radius: 14px;
+      max-width: 340px;
+      padding: 28px 20px;
     }
 
-    .oc-success-ring {
-      width: 142px;
-      height: 142px;
+    .oc-info-grid {
+      grid-template-columns: 1fr 1fr;
     }
 
-    .oc-success-core {
-      width: 104px;
-      height: 104px;
-    }
-
-    .oc-success-core i {
-      font-size: 3.5rem;
+    .oc-timeline::after {
+      width: 50%;
     }
 
     .oc-floating-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      font-size: 1.32rem;
+      width: 42px;
+      height: 42px;
+      font-size: 1.1rem;
     }
+  }
 
-    .oc-info-list,
-    .oc-items-grid {
+  @media (max-width: 767px) {
+    .oc-info-grid {
       grid-template-columns: 1fr;
     }
 
     .oc-timeline {
-      grid-template-columns: 1fr;
+      flex-direction: column;
+      padding-left: 30px;
       gap: 18px;
-      padding: 0 0 0 30px;
     }
 
-    .oc-timeline::before,
-    .oc-timeline::after {
+    .oc-timeline::before {
       top: 6px;
       bottom: 6px;
-      left: 8px;
+      left: 10px;
       right: auto;
-      width: 4px;
+      width: 3px;
       height: auto;
     }
 
     .oc-timeline::after {
-      bottom: 24%;
+      top: 6px;
+      bottom: 40%;
+      left: 10px;
+      width: 3px;
+      height: auto;
       transform-origin: top;
-      animation-name: ocMobileLineGrow;
     }
 
     .oc-step {
       text-align: left;
+      padding-top: 0;
+      padding-left: 30px;
+      font-size: 0.85rem;
     }
 
     .oc-step::before {
-      top: 0;
+      top: 2px;
       left: -22px;
       transform: none;
     }
 
-    .oc-action-row,
+    .oc-items-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
     .oc-hero-actions {
-      display: grid;
+      flex-direction: column;
+    }
+
+    .oc-hero-actions .btn {
+      width: 100%;
+    }
+
+    .oc-truck-icon {
+      width: 36px;
+      height: 36px;
+      font-size: 1.1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .oc-items-grid {
       grid-template-columns: 1fr;
     }
 
-    @keyframes ocMobileLineGrow {
-      from { transform: scaleY(0); }
-      to { transform: scaleY(1); }
+    .oc-check-ring {
+      width: 100px;
+      height: 100px;
+    }
+
+    .oc-check-core {
+      width: 74px;
+      height: 74px;
+    }
+
+    .oc-check-core i {
+      font-size: 2.4rem;
+    }
+
+    .oc-success-card h3 {
+      font-size: 1.3rem;
+    }
+
+    .oc-hero-title {
+      font-size: 1.6rem;
+    }
+
+    .oc-floating-icon {
+      display: none;
     }
   }
 
@@ -954,281 +805,374 @@
     *::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
-      scroll-behavior: auto !important;
       transition-duration: 0.01ms !important;
     }
   }
+
+  /* Ripple effect for buttons */
+  .btn-ripple {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-ripple .ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(0);
+    animation: rippleAnim 0.6s ease-out;
+    pointer-events: none;
+  }
+
+  @keyframes rippleAnim {
+    to { transform: scale(4); opacity: 0; }
+  }
 </style>
+{% endblock %}
 
-<div class="order-confirmation-page" data-order-total="{{ order.total_amount|floatformat:2 }}">
-  <canvas class="oc-confetti-canvas" id="ocConfetti"></canvas>
+{% block content %}
 
-  <section class="oc-hero">
-    <div class="oc-shell oc-hero-grid">
-      <div class="oc-hero-copy">
-        <div class="oc-kicker"><i class="bi bi-shield-check"></i> Secure payment confirmed</div>
-        <h1 class="oc-title">&#127881; Order Successfully <span>Placed!</span></h1>
-        <p class="oc-subtitle">
-          Thank you for shopping with GrocHub. Your order has been confirmed and is being prepared for delivery.
+<!-- ─── HERO SECTION ─── -->
+<section class="oc-hero">
+  <div class="container">
+    <div class="oc-hero-inner">
+      <div class="oc-hero-content">
+        <span class="oc-badge">
+          <i class="bi bi-shield-check"></i> Secure Payment Confirmed
+        </span>
+        <h1 class="oc-hero-title">
+          🎉 Order Successfully <span>Placed!</span>
+        </h1>
+        <p class="oc-hero-sub">
+          Thank you for shopping with <strong>GrocHub</strong>. Your order has been confirmed and is being prepared for delivery.
         </p>
         <div class="oc-hero-actions">
-          <a href="{% url 'store:product_list' %}" class="oc-btn oc-btn-primary js-ripple">
+          <a href="{% url 'store:product_list' %}" class="btn btn-gradient btn-ripple">
             <i class="bi bi-bag-heart"></i> Continue Shopping
           </a>
-          <a href="{% url 'store:profile' %}" class="oc-btn oc-btn-pulse js-ripple">
-            Track Order <i class="bi bi-arrow-right"></i>
+          <a href="{% url 'store:profile' %}" class="btn btn-outline-success btn-ripple">
+            <i class="bi bi-box-seam"></i> View Orders
           </a>
-          <button type="button" class="oc-btn oc-btn-invoice js-ripple" onclick="window.print()">
+          <button type="button" class="btn btn-outline-secondary btn-ripple" onclick="window.print()">
             <i class="bi bi-file-earmark-pdf"></i> Download Invoice
           </button>
         </div>
       </div>
 
-      <div class="oc-success-stage js-parallax">
-        <div class="oc-floating-icon oc-fi-1" data-depth="18"><i class="bi bi-apple"></i></div>
-        <div class="oc-floating-icon oc-fi-2" data-depth="24"><i class="bi bi-flower1"></i></div>
-        <div class="oc-floating-icon oc-fi-3" data-depth="14"><i class="bi bi-cup-straw"></i></div>
-        <div class="oc-floating-icon oc-fi-4" data-depth="20"><i class="bi bi-basket2"></i></div>
-        <div class="oc-floating-icon oc-fi-5" data-depth="12"><i class="bi bi-box2-heart"></i></div>
-        <div class="oc-success-card js-tilt">
-          <div>
-            <div class="oc-success-ring">
-              <div class="oc-success-core"><i class="bi bi-check-lg"></i></div>
+      <div class="oc-success-stage">
+        <div class="oc-floating-icon oc-fi-1"><i class="bi bi-apple"></i></div>
+        <div class="oc-floating-icon oc-fi-2"><i class="bi bi-flower1"></i></div>
+        <div class="oc-floating-icon oc-fi-3"><i class="bi bi-cup-straw"></i></div>
+        <div class="oc-floating-icon oc-fi-4"><i class="bi bi-basket2"></i></div>
+        <div class="oc-floating-icon oc-fi-5"><i class="bi bi-box2-heart"></i></div>
+        <div class="oc-success-card">
+          <div class="oc-check-ring">
+            <div class="oc-check-core">
+              <i class="bi bi-check-lg"></i>
             </div>
-            <h2>Confirmed in style</h2>
-            <p>Your groceries are queued for careful packing, freshness checks, and a smooth doorstep handoff.</p>
           </div>
-          <span class="oc-sparkle"></span>
-          <span class="oc-sparkle"></span>
-          <span class="oc-sparkle"></span>
-          <span class="oc-sparkle"></span>
+          <h3>Order Confirmed!</h3>
+          <p>Your groceries are queued for careful packing, freshness checks, and a smooth doorstep handoff.</p>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="oc-section">
-    <div class="oc-shell oc-grid-two">
-      <article class="oc-glass-card">
-        <div class="oc-card-body">
-          <div class="oc-section-head">
-            <div>
-              <h2>Order Information</h2>
-              <p>Everything is ready for fulfillment.</p>
-            </div>
-          </div>
-          <div class="oc-info-list">
-            <div class="oc-info-item"><span>Order #</span><strong>GH{{ order.id|stringformat:"06d" }}</strong></div>
-            <div class="oc-info-item"><span>Customer</span><strong>{{ shipping_address.full_name|default:order.user.get_full_name|default:order.user.username }}</strong></div>
-            <div class="oc-info-item"><span>Order Date</span><strong>{{ order.created_at|date:"M d, Y h:i A" }}</strong></div>
-            <div class="oc-info-item"><span>Delivery Address</span><strong>{{ shipping_address.city|default:order.city }}{% if shipping_address.state %}, {{ shipping_address.get_state_display }}{% endif %}</strong></div>
-            <div class="oc-info-item"><span>Payment Method</span><strong>Card / Stripe</strong></div>
-            <div class="oc-info-item"><span>Payment Status</span><strong class="oc-status-pill"><i class="bi bi-check-circle-fill"></i> {{ order.get_status_display }}</strong></div>
-            <div class="oc-info-item"><span>Order Status</span><strong>Being prepared</strong></div>
-          </div>
-
-          <div class="oc-timeline" aria-label="Order status timeline">
-            <div class="oc-step done">Order Confirmed</div>
-            <div class="oc-step done">Packed</div>
-            <div class="oc-step done">Out for Delivery</div>
-            <div class="oc-step">Delivered</div>
-          </div>
-        </div>
-      </article>
-
-      <article class="oc-glass-card oc-tracker">
-        <div class="oc-card-body">
-          <div class="oc-section-head">
-            <div>
-              <h2>Live Tracking</h2>
-              <p>Your groceries are on the way.</p>
-            </div>
-          </div>
-          <div class="oc-route" aria-hidden="true">
-            <div class="oc-route-line"></div>
-            <div class="oc-truck"><i class="bi bi-truck"></i></div>
-            <div class="oc-pin"><i class="bi bi-geo-alt-fill"></i></div>
-          </div>
-          <div class="oc-countdown">
-            Estimated Arrival: <strong id="arrivalMinutes">25</strong> Minutes
-          </div>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <section class="oc-section">
-    <div class="oc-shell">
-      <div class="oc-section-head">
-        <div>
-          <h2>Ordered Items</h2>
-          <p>Fresh picks in this delivery.</p>
-        </div>
-      </div>
-      <div class="oc-items-grid">
-        {% for item in order.items.all %}
-          <article class="oc-product-card js-tilt" style="animation-delay: {{ forloop.counter0 }}00ms;">
-            <div class="oc-product-media">
-              {% if item.product.image %}
-                <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}">
-              {% elif item.product.external_image_url %}
-                <img src="{{ item.product.external_image_url }}" alt="{{ item.product.title }}">
-              {% else %}
-                <i class="bi bi-basket2 fs-1 text-success"></i>
-              {% endif %}
-            </div>
-            <div class="oc-product-body">
-              <h3>{{ item.product.title }}</h3>
-              <div class="oc-product-meta">
-                <span>Qty {{ item.quantity }}</span>
-                <strong>&#8377;{{ item.total_price|floatformat:0 }}</strong>
+<!-- ─── ORDER INFO + LIVE TRACKING ─── -->
+<section class="py-4">
+  <div class="container">
+    <div class="row g-3">
+      <!-- Order Information -->
+      <div class="col-lg-7">
+        <div class="oc-card">
+          <div class="oc-card-body">
+            <div class="oc-section-head">
+              <div>
+                <h2><i class="bi bi-receipt text-success me-2"></i>Order Information</h2>
+                <p>Everything is ready for fulfillment.</p>
               </div>
             </div>
-          </article>
-        {% empty %}
-          <div class="oc-glass-card oc-empty">Order items will appear here once the payment provider confirms them.</div>
-        {% endfor %}
-      </div>
-    </div>
-  </section>
-
-  <section class="oc-section">
-    <div class="oc-shell oc-grid-two">
-      <article class="oc-glass-card">
-        <div class="oc-card-body">
-          <div class="oc-section-head">
-            <div>
-              <h2>Delivery Address</h2>
-              <p>Drop-off details for this order.</p>
-            </div>
-          </div>
-          <div class="oc-address-card">
-            <div class="oc-map-pin"><i class="bi bi-geo-alt-fill"></i></div>
-            <div>
-              <h3 class="h5 fw-bold mb-2">{{ shipping_address.full_name|default:order.user.get_full_name|default:order.user.username }}</h3>
-              <p class="mb-2 fw-semibold">
-                <i class="bi bi-telephone me-2 text-success"></i>{{ shipping_address.phone|default:order.phone|default:"Phone not added" }}
-              </p>
-              {% if shipping_address.email or order.user.email %}
-              <p class="mb-2 text-muted"><i class="bi bi-envelope me-2"></i>{{ shipping_address.email|default:order.user.email }}</p>
-              {% endif %}
-              <p class="mb-0 text-muted">
-                {{ shipping_address.address_line1|default:order.address_line1|default:order.address }}
-                {% if shipping_address.address_line2 %}<br>{{ shipping_address.address_line2 }}{% endif %}
-                {% if shipping_address.city %}<br>{{ shipping_address.city }}{% endif %}
-                {% if shipping_address.state %}, {{ shipping_address.get_state_display }}{% endif %}
-                {% if shipping_address.postal_code %} - {{ shipping_address.postal_code }}{% endif %}
-                {% if shipping_address.country %}<br>{{ shipping_address.country }}{% endif %}
-              </p>
-              {% if shipping_address.delivery_instructions %}
-              <div class="mt-3 p-3 rounded-3" style="background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.18);">
-                <strong>Special Instructions:</strong>
-                <div class="text-muted">{{ shipping_address.delivery_instructions }}</div>
+            <div class="oc-info-grid">
+              <div class="oc-info-item">
+                <span>Order #</span>
+                <strong>GH{{ order.id|stringformat:"06d" }}</strong>
               </div>
-              {% endif %}
+              <div class="oc-info-item">
+                <span>Customer</span>
+                <strong>{{ shipping_address.full_name|default:order.user.get_full_name|default:order.user.username }}</strong>
+              </div>
+              <div class="oc-info-item">
+                <span>Order Date</span>
+                <strong>{{ order.created_at|date:"M d, Y h:i A" }}</strong>
+              </div>
+              <div class="oc-info-item">
+                <span>Delivery To</span>
+                <strong>{{ shipping_address.city|default:order.city }}{% if shipping_address.state %}, {{ shipping_address.get_state_display }}{% endif %}</strong>
+              </div>
+              <div class="oc-info-item">
+                <span>Payment Method</span>
+                <strong>Card / Stripe</strong>
+              </div>
+              <div class="oc-info-item">
+                <span>Payment Status</span>
+                <strong><span class="oc-status-pill"><i class="bi bi-check-circle-fill"></i> {{ order.get_status_display }}</span></strong>
+              </div>
+              <div class="oc-info-item">
+                <span>Order Status</span>
+                <strong>Being prepared</strong>
+              </div>
+              <div class="oc-info-item">
+                <span>Est. Delivery</span>
+                <strong>Today (25-35 min)</strong>
+              </div>
+            </div>
+
+            <div class="oc-timeline" aria-label="Order status timeline">
+              <div class="oc-step done">Order Confirmed</div>
+              <div class="oc-step done">Packed</div>
+              <div class="oc-step done">Out for Delivery</div>
+              <div class="oc-step">Delivered</div>
             </div>
           </div>
         </div>
-      </article>
+      </div>
 
-      <article class="oc-glass-card">
-        <div class="oc-card-body">
-          <div class="oc-section-head">
-            <div>
-              <h2>Payment Summary</h2>
-              <p>Final amount paid for your basket.</p>
+      <!-- Live Tracking -->
+      <div class="col-lg-5">
+        <div class="oc-card oc-track-card">
+          <div class="oc-card-body">
+            <div class="oc-section-head">
+              <div>
+                <h2><i class="bi bi-truck text-success me-2"></i>Live Tracking</h2>
+                <p>Your groceries are on the way.</p>
+              </div>
+            </div>
+            <div class="oc-route-visual">
+              <div class="oc-route-line"></div>
+              <div class="oc-truck-icon"><i class="bi bi-truck"></i></div>
+              <div class="oc-pin-icon"><i class="bi bi-geo-alt-fill"></i></div>
+            </div>
+            <div class="text-center">
+              <div class="oc-countdown">
+                Estimated Arrival: <strong id="arrivalMinutes">25</strong> Minutes
+              </div>
             </div>
           </div>
-          <div class="oc-summary-row"><span>Subtotal</span><strong>&#8377;<span class="js-count" data-target="{{ order.total_amount|floatformat:2 }}">0</span></strong></div>
-          <div class="oc-summary-row"><span>Delivery Fee</span><strong>&#8377;<span class="js-count" data-target="0">0</span></strong></div>
-          <div class="oc-summary-row"><span>Discount</span><strong>- &#8377;<span class="js-count" data-target="0">0</span></strong></div>
-          <div class="oc-summary-row"><span>Tax</span><strong>Included</strong></div>
-          <div class="oc-summary-total">
-            <span>Total Amount</span>
-            <strong>&#8377;<span class="js-count" data-target="{{ order.total_amount|floatformat:2 }}">0</span></strong>
-          </div>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <section class="oc-section pb-5">
-    <div class="oc-shell">
-      <div class="oc-section-head">
-        <div>
-          <h2>You May Also Like</h2>
-          <p>Quick additions for your next GrocHub run.</p>
         </div>
       </div>
-      {% if recommended_products %}
-        <div class="oc-carousel" aria-label="Recommended products carousel">
-          <div class="oc-carousel-track">
-            {% for product in recommended_products %}
-              <article class="oc-recommend-card">
-                <div class="oc-product-media">
-                  {% if product.image %}
-                    <img src="{{ product.image.url }}" alt="{{ product.title }}">
-                  {% elif product.external_image_url %}
-                    <img src="{{ product.external_image_url }}" alt="{{ product.title }}">
-                  {% else %}
-                    <i class="bi bi-basket2 fs-1 text-success"></i>
-                  {% endif %}
-                </div>
-                <div class="oc-product-body">
-                  <h3>{{ product.title }}</h3>
-                  <div class="oc-product-meta mb-3">
-                    <span>{{ product.weight|default:"Fresh pack" }}</span>
-                    <strong>&#8377;{{ product.get_price|floatformat:0 }}</strong>
+    </div>
+  </div>
+</section>
+
+<!-- ─── ORDERED ITEMS ─── -->
+<section class="pb-4">
+  <div class="container">
+    <div class="oc-section-head">
+      <div>
+        <h2><i class="bi bi-basket3 text-success me-2"></i>Ordered Items</h2>
+        <p>Fresh picks in this delivery.</p>
+      </div>
+      <span class="badge bg-success rounded-pill px-3 py-2 fs-6">
+        {{ order_items|length }} Item{{ order_items|length|pluralize }}
+      </span>
+    </div>
+    <div class="oc-items-grid">
+      {% for item in order_items %}
+        <article class="oc-product-card">
+          <div class="oc-product-media">
+            {% if item.product.image %}
+              <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}" loading="lazy">
+            {% elif item.product.external_image_url %}
+              <img src="{{ item.product.external_image_url }}" alt="{{ item.product.title }}" loading="lazy">
+            {% else %}
+              <i class="bi bi-basket2 fs-1 text-success opacity-50"></i>
+            {% endif %}
+          </div>
+          <div class="oc-product-body">
+            <h4>{{ item.product.title }}</h4>
+            <div class="oc-product-meta">
+              <span><i class="bi bi-box-seam me-1"></i>Qty {{ item.quantity }}</span>
+              <strong>₹{{ item.total_price|floatformat:0 }}</strong>
+            </div>
+          </div>
+        </article>
+      {% empty %}
+        <div class="oc-card oc-empty col-12">
+          <i class="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
+          <p class="mb-0">Order items will appear here once the payment provider confirms them.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ─── DELIVERY ADDRESS + PAYMENT SUMMARY ─── -->
+<section class="pb-4">
+  <div class="container">
+    <div class="row g-3">
+      <!-- Delivery Address -->
+      <div class="col-lg-7">
+        <div class="oc-card">
+          <div class="oc-card-body">
+            <div class="oc-section-head">
+              <div>
+                <h2><i class="bi bi-geo-alt text-success me-2"></i>Delivery Address</h2>
+                <p>Drop-off details for this order.</p>
+              </div>
+            </div>
+            <div class="oc-address-grid">
+              <div class="oc-map-icon"><i class="bi bi-geo-alt-fill"></i></div>
+              <div>
+                <h5 class="fw-bold mb-2">{{ shipping_address.full_name|default:order.user.get_full_name|default:order.user.username }}</h5>
+                <p class="mb-2">
+                  <i class="bi bi-telephone text-success me-2"></i>
+                  {{ shipping_address.phone|default:order.phone|default:"Phone not added" }}
+                </p>
+                {% if shipping_address.email or order.user.email %}
+                  <p class="mb-2 text-muted">
+                    <i class="bi bi-envelope me-2"></i>{{ shipping_address.email|default:order.user.email }}
+                  </p>
+                {% endif %}
+                <p class="mb-0 text-muted">
+                  {{ shipping_address.address_line1|default:order.address_line1|default:order.address }}
+                  {% if shipping_address.address_line2 %}<br>{{ shipping_address.address_line2 }}{% endif %}
+                  {% if shipping_address.city %}<br>{{ shipping_address.city }}{% endif %}
+                  {% if shipping_address.state %} &mdash; {{ shipping_address.get_state_display }}{% endif %}
+                  {% if shipping_address.postal_code %} - {{ shipping_address.postal_code }}{% endif %}
+                  {% if shipping_address.country %}<br>{{ shipping_address.country }}{% endif %}
+                </p>
+                {% if shipping_address.delivery_instructions %}
+                  <div class="oc-instructions">
+                    <strong class="d-block mb-1"><i class="bi bi-info-circle text-success me-1"></i>Special Instructions:</strong>
+                    <p class="mb-0 text-muted">{{ shipping_address.delivery_instructions }}</p>
                   </div>
-                  <a href="{% url 'store:product_detail' product.slug %}" class="oc-add-mini d-inline-flex align-items-center justify-content-center text-decoration-none">
-                    Add to Cart
-                  </a>
-                </div>
-              </article>
-            {% endfor %}
-            {% for product in recommended_products %}
-              <article class="oc-recommend-card" aria-hidden="true">
-                <div class="oc-product-media">
-                  {% if product.image %}
-                    <img src="{{ product.image.url }}" alt="">
-                  {% elif product.external_image_url %}
-                    <img src="{{ product.external_image_url }}" alt="">
-                  {% else %}
-                    <i class="bi bi-basket2 fs-1 text-success"></i>
-                  {% endif %}
-                </div>
-                <div class="oc-product-body">
-                  <h3>{{ product.title }}</h3>
-                  <div class="oc-product-meta mb-3">
-                    <span>{{ product.weight|default:"Fresh pack" }}</span>
-                    <strong>&#8377;{{ product.get_price|floatformat:0 }}</strong>
-                  </div>
-                  <a href="{% url 'store:product_detail' product.slug %}" class="oc-add-mini d-inline-flex align-items-center justify-content-center text-decoration-none">
-                    Add to Cart
-                  </a>
-                </div>
-              </article>
-            {% endfor %}
+                {% endif %}
+              </div>
+            </div>
           </div>
         </div>
-      {% else %}
-        <div class="oc-glass-card oc-empty">Fresh recommendations will appear as soon as products are available.</div>
-      {% endif %}
+      </div>
 
-      <div class="oc-action-row">
-        <a href="{% url 'store:product_list' %}" class="oc-btn oc-btn-primary js-ripple">
-          <i class="bi bi-shop"></i> Continue Shopping
-        </a>
-        <a href="{% url 'store:profile' %}" class="oc-btn oc-btn-pulse js-ripple">
-          Track Order <i class="bi bi-arrow-up-right"></i>
-        </a>
-        <button type="button" class="oc-btn oc-btn-invoice js-ripple" onclick="window.print()">
-          <i class="bi bi-file-earmark-pdf-fill"></i> Download Invoice
-        </button>
+      <!-- Payment Summary -->
+      <div class="col-lg-5">
+        <div class="oc-card">
+          <div class="oc-card-body">
+            <div class="oc-section-head">
+              <div>
+                <h2><i class="bi bi-credit-card text-success me-2"></i>Payment Summary</h2>
+                <p>Final amount paid for your basket.</p>
+              </div>
+            </div>
+            <div class="oc-summary-row">
+              <span>Subtotal</span>
+              <strong>₹<span class="js-count" data-target="{{ order.total_amount|floatformat:2 }}">0</span></strong>
+            </div>
+            <div class="oc-summary-row">
+              <span>Delivery Fee</span>
+              <strong><span class="text-success">Free</span></strong>
+            </div>
+            <div class="oc-summary-row">
+              <span>Discount</span>
+              <strong class="text-success">- ₹<span class="js-count" data-target="0">0</span></strong>
+            </div>
+            <div class="oc-summary-row">
+              <span>Tax</span>
+              <strong>Included</strong>
+            </div>
+            <div class="oc-summary-total">
+              <span>Total Amount</span>
+              <strong>₹<span class="js-count" data-target="{{ order.total_amount|floatformat:2 }}">0</span></strong>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </section>
-</div>
+  </div>
+</section>
+
+<!-- ─── RECOMMENDED PRODUCTS ─── -->
+<section class="pb-5">
+  <div class="container">
+    <div class="oc-section-head">
+      <div>
+        <h2><i class="bi bi-star text-success me-2"></i>You May Also Like</h2>
+        <p>Quick additions for your next GrocHub run.</p>
+      </div>
+    </div>
+    {% if recommended_products %}
+      <div class="oc-carousel" aria-label="Recommended products carousel">
+        <div class="oc-carousel-track">
+          {% for product in recommended_products %}
+            <article class="oc-recommend-card">
+              <div class="oc-product-media">
+                {% if product.image %}
+                  <img src="{{ product.image.url }}" alt="{{ product.title }}" loading="lazy">
+                {% elif product.external_image_url %}
+                  <img src="{{ product.external_image_url }}" alt="{{ product.title }}" loading="lazy">
+                {% else %}
+                  <i class="bi bi-basket2 fs-1 text-success opacity-50"></i>
+                {% endif %}
+              </div>
+              <div class="oc-product-body">
+                <h4>{{ product.title }}</h4>
+                <div class="oc-product-meta">
+                  <span>{{ product.weight|default:"Fresh pack" }}</span>
+                  <strong>₹{{ product.get_price|floatformat:0 }}</strong>
+                </div>
+                <a href="{% url 'store:product_detail' product.slug %}" class="btn btn-success btn-sm w-100 btn-ripple">
+                  <i class="bi bi-cart-plus"></i> Add to Cart
+                </a>
+              </div>
+            </article>
+          {% endfor %}
+          {% for product in recommended_products %}
+            <article class="oc-recommend-card" aria-hidden="true">
+              <div class="oc-product-media">
+                {% if product.image %}
+                  <img src="{{ product.image.url }}" alt="" loading="lazy">
+                {% elif product.external_image_url %}
+                  <img src="{{ product.external_image_url }}" alt="" loading="lazy">
+                {% else %}
+                  <i class="bi bi-basket2 fs-1 text-success opacity-50"></i>
+                {% endif %}
+              </div>
+              <div class="oc-product-body">
+                <h4>{{ product.title }}</h4>
+                <div class="oc-product-meta">
+                  <span>{{ product.weight|default:"Fresh pack" }}</span>
+                  <strong>₹{{ product.get_price|floatformat:0 }}</strong>
+                </div>
+                <a href="{% url 'store:product_detail' product.slug %}" class="btn btn-success btn-sm w-100 btn-ripple">
+                  <i class="bi bi-cart-plus"></i> Add to Cart
+                </a>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="oc-card oc-empty">
+        <i class="bi bi-emoji-smile fs-1 text-muted mb-3 d-block"></i>
+        <p class="mb-0">Fresh recommendations will appear as soon as products are available.</p>
+      </div>
+    {% endif %}
+
+    <!-- Bottom Action Bar -->
+    <div class="d-flex flex-wrap gap-3 mt-4 justify-content-center">
+      <a href="{% url 'store:product_list' %}" class="btn btn-gradient btn-ripple px-4">
+        <i class="bi bi-shop"></i> Continue Shopping
+      </a>
+      <a href="{% url 'store:profile' %}" class="btn btn-outline-success btn-ripple px-4">
+        <i class="bi bi-box-seam"></i> Track Order
+      </a>
+      <button type="button" class="btn btn-outline-secondary btn-ripple px-4" onclick="window.print()">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Download Invoice
+      </button>
+    </div>
+  </div>
+</section>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -1236,24 +1180,28 @@
   (() => {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // ── Animated Counters ──
     function runCounters() {
       document.querySelectorAll('.js-count').forEach((node) => {
         const target = Number(node.dataset.target || 0);
         const duration = prefersReducedMotion ? 1 : 1200;
         const start = performance.now();
-        const step = (now) => {
+
+        function step(now) {
           const progress = Math.min((now - start) / duration, 1);
           const eased = 1 - Math.pow(1 - progress, 3);
           node.textContent = (target * eased).toLocaleString('en-IN', {
-            maximumFractionDigits: target % 1 ? 2 : 0,
-            minimumFractionDigits: target % 1 ? 2 : 0
+            maximumFractionDigits: target % 1 !== 0 ? 2 : 0,
+            minimumFractionDigits: target % 1 !== 0 ? 2 : 0
           });
           if (progress < 1) requestAnimationFrame(step);
-        };
+        }
+
         requestAnimationFrame(step);
       });
     }
 
+    // ── Countdown Timer ──
     function countdown() {
       const el = document.getElementById('arrivalMinutes');
       if (!el || prefersReducedMotion) return;
@@ -1264,31 +1212,32 @@
       }, 60000);
     }
 
+    // ── Ripple Effect ──
     function addRipples() {
-      document.querySelectorAll('.js-ripple').forEach((button) => {
-        button.addEventListener('click', (event) => {
-          const rect = button.getBoundingClientRect();
+      document.querySelectorAll('.btn-ripple').forEach((button) => {
+        button.addEventListener('click', function (e) {
+          const rect = this.getBoundingClientRect();
           const ripple = document.createElement('span');
           const size = Math.max(rect.width, rect.height);
-          ripple.className = 'oc-ripple';
-          ripple.style.width = `${size}px`;
-          ripple.style.height = `${size}px`;
-          ripple.style.left = `${event.clientX - rect.left - size / 2}px`;
-          ripple.style.top = `${event.clientY - rect.top - size / 2}px`;
-          button.appendChild(ripple);
-          window.setTimeout(() => ripple.remove(), 650);
+          ripple.className = 'ripple-effect';
+          ripple.style.width = ripple.style.height = `${size}px`;
+          ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+          ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+          this.appendChild(ripple);
+          setTimeout(() => ripple.remove(), 600);
         });
       });
     }
 
+    // ── Tilt Effect ──
     function addTilt() {
       if (prefersReducedMotion) return;
-      document.querySelectorAll('.js-tilt').forEach((card) => {
-        card.addEventListener('mousemove', (event) => {
+      document.querySelectorAll('.oc-card, .oc-product-card').forEach((card) => {
+        card.addEventListener('mousemove', (e) => {
           const rect = card.getBoundingClientRect();
-          const x = (event.clientX - rect.left) / rect.width - 0.5;
-          const y = (event.clientY - rect.top) / rect.height - 0.5;
-          card.style.transform = `perspective(1000px) rotateX(${-y * 7}deg) rotateY(${x * 8}deg) translateY(-4px)`;
+          const x = (e.clientX - rect.left) / rect.width - 0.5;
+          const y = (e.clientY - rect.top) / rect.height - 0.5;
+          card.style.transform = `perspective(1000px) rotateX(${-y * 4}deg) rotateY(${x * 5}deg) translateY(-2px)`;
         });
         card.addEventListener('mouseleave', () => {
           card.style.transform = '';
@@ -1296,84 +1245,12 @@
       });
     }
 
-    function addParallax() {
-      const stage = document.querySelector('.js-parallax');
-      if (!stage || prefersReducedMotion) return;
-      stage.addEventListener('mousemove', (event) => {
-        const rect = stage.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / rect.width - 0.5;
-        const y = (event.clientY - rect.top) / rect.height - 0.5;
-        stage.querySelectorAll('[data-depth]').forEach((item) => {
-          const depth = Number(item.dataset.depth || 10);
-          item.style.translate = `${x * depth}px ${y * depth}px`;
-        });
-      });
-      stage.addEventListener('mouseleave', () => {
-        stage.querySelectorAll('[data-depth]').forEach((item) => {
-          item.style.translate = '';
-        });
-      });
-    }
-
-    function confetti() {
-      const canvas = document.getElementById('ocConfetti');
-      if (!canvas || prefersReducedMotion) return;
-      const ctx = canvas.getContext('2d');
-      const colors = ['#22C55E', '#16A34A', '#FACC15', '#FFFFFF', '#38BDF8', '#F97316'];
-      let width = canvas.width = window.innerWidth;
-      let height = canvas.height = window.innerHeight;
-      const pieces = Array.from({ length: 150 }, () => ({
-        x: width / 2,
-        y: height * 0.22,
-        size: Math.random() * 8 + 4,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        vx: (Math.random() - 0.5) * 12,
-        vy: Math.random() * -9 - 2,
-        gravity: Math.random() * 0.22 + 0.12,
-        rotation: Math.random() * Math.PI,
-        spin: (Math.random() - 0.5) * 0.24,
-        life: 140 + Math.random() * 60
-      }));
-
-      const resize = () => {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
-      };
-      window.addEventListener('resize', resize, { passive: true });
-
-      function draw() {
-        ctx.clearRect(0, 0, width, height);
-        pieces.forEach((piece) => {
-          piece.x += piece.vx;
-          piece.y += piece.vy;
-          piece.vy += piece.gravity;
-          piece.rotation += piece.spin;
-          piece.life -= 1;
-          ctx.save();
-          ctx.globalAlpha = Math.max(piece.life / 160, 0);
-          ctx.translate(piece.x, piece.y);
-          ctx.rotate(piece.rotation);
-          ctx.fillStyle = piece.color;
-          ctx.fillRect(-piece.size / 2, -piece.size / 2, piece.size, piece.size * 0.62);
-          ctx.restore();
-        });
-        if (pieces.some((piece) => piece.life > 0 && piece.y < height + 60)) {
-          requestAnimationFrame(draw);
-        } else {
-          ctx.clearRect(0, 0, width, height);
-          window.removeEventListener('resize', resize);
-        }
-      }
-      requestAnimationFrame(draw);
-    }
-
+    // ── Initialize ──
     document.addEventListener('DOMContentLoaded', () => {
       runCounters();
       countdown();
       addRipples();
       addTilt();
-      addParallax();
-      window.setTimeout(confetti, 260);
     });
   })();
 </script>
