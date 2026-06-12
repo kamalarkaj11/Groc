@@ -795,19 +795,24 @@ def remove_from_cart(request):
             pass
     return redirect('store:cart')
 
-@login_required
 def cart_count(request):
     """
     Return cart item count as JSON for navbar badge.
     """
+    if not request.user.is_authenticated:
+        return JsonResponse({'count': 0})
     count = CartItem.objects.filter(user=request.user).count()
     return JsonResponse({'count': count})
 
-@login_required
 def cart_summary(request):
     """
     Return cart count and grandtotal as JSON for navbar.
     """
+    if not request.user.is_authenticated:
+        return JsonResponse({
+            'count': 0,
+            'grandtotal': '0',
+        })
     cart_items = CartItem.objects.filter(user=request.user)
     count = cart_items.count()
     grandtotal = sum(item.total_price() for item in cart_items)
