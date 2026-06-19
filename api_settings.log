@@ -1,0 +1,11 @@
+[2026-06-15 12:31:09,548] INFO api_settings API Settings page accessed by user: admin (ID: 1)
+[2026-06-15 12:31:16,450] INFO api_settings API Settings page accessed by user: admin (ID: 1)
+[2026-06-15 12:31:21,232] INFO api_settings API connection test initiated by user: admin (ID: 1)
+[2026-06-15 12:31:24,488] INFO api_settings API connection test result for user admin: success=False, status_code=403
+[2026-06-15 12:46:27,145] INFO api_settings API Settings page accessed by user: admin (ID: 1)
+[2026-06-15 13:23:05,549] INFO api_settings API Settings page accessed by user: admin (ID: 1)
+[2026-06-15 13:23:14,671] INFO api_settings API Settings page accessed by user: admin (ID: 1)
+[2026-06-15 13:23:25,935] INFO api_settings API Settings page accessed by user: admin (ID: 1)
+[2026-06-15 13:23:30,424] INFO api_settings API connection test initiated by user: admin (ID: 1)
+[2026-06-15 13:23:31,842] INFO api_settings API connection test result for user admin: success=False, status_code=403
+[2026-06-15 13:24:09,522] INFO api_settings API Settings page accessed by user: admin (ID: 1)

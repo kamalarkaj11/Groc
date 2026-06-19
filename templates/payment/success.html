@@ -846,6 +846,12 @@
         <p class="oc-hero-sub">
           Thank you for shopping with <strong>GrocHub</strong>. Your order has been confirmed and is being prepared for delivery.
         </p>
+        {% if notification_msg %}
+        <div class="alert alert-success d-flex align-items-center gap-2 mt-3 mb-0" role="alert">
+          <i class="bi bi-check-circle-fill fs-5 flex-shrink-0"></i>
+          <span>{{ notification_msg }}</span>
+        </div>
+        {% endif %}
         <div class="oc-hero-actions">
           <a href="{% url 'store:product_list' %}" class="btn btn-gradient btn-ripple">
             <i class="bi bi-bag-heart"></i> Continue Shopping

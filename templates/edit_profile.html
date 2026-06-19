@@ -1,34 +1,429 @@
-{% extends 'base.html' %}
-{% load crispy_forms_tags %}
+i{% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Edit Profile - GroceryHub{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-8 col-lg-6">
-    <div class="glass-card p-5">
-      <h2 class="text-center fw-bold text-success mb-5">
-        <i class="bi bi-person-gear me-2"></i>Edit Profile
-      </h2>
-      
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form|crispy }}
-        <button type="submit" class="btn btn-gradient btn-lg w-100 py-3 fs-5">
-          <i class="bi bi-check-circle me-2"></i>Update Profile
-        </button>
-      </form>
-      
-      <div class="text-center mt-4">
-        <a href="{% url 'store:profile' %}" class="text-muted">
-          ← Back to Profile
-        </a>
+<style>
+  :root {
+    --ep-green: #198754;
+    --ep-mint: #20c997;
+    --ep-yellow: #ffc857;
+    --ep-ink: #18251f;
+    --ep-muted: #66736c;
+    --ep-soft: #f4fbf7;
+    --ep-line: rgba(25, 135, 84, 0.16);
+    --ep-shadow: 0 18px 45px rgba(18, 55, 38, 0.12);
+  }
+
+  main.container {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .edit-page {
+    min-height: 70vh;
+    color: var(--ep-ink);
+    background:
+      radial-gradient(circle at top right, rgba(32, 201, 151, 0.12), transparent 30rem),
+      linear-gradient(180deg, #ffffff 0%, #f7fbf8 55%, #ffffff 100%);
+    padding: 54px 0 78px;
+  }
+
+  .ep-container {
+    width: min(720px, calc(100% - 32px));
+    margin: 0 auto;
+  }
+
+  .ep-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .ep-header h1 {
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 950;
+    color: var(--ep-ink);
+    margin-bottom: 8px;
+  }
+
+  .ep-header h1 i { color: var(--ep-green); }
+
+  .ep-header p {
+    color: var(--ep-muted);
+    font-weight: 600;
+  }
+
+  .ep-card {
+    border: 1px solid var(--ep-line);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: var(--ep-shadow);
+    overflow: hidden;
+  }
+
+  .ep-card-body {
+    padding: clamp(24px, 4vw, 40px);
+  }
+
+  .ep-avatar-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 32px;
+    padding: 20px;
+    background: var(--ep-soft);
+    border-radius: 12px;
+    border: 1px solid var(--ep-line);
+  }
+
+  .ep-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background: linear-gradient(135deg, var(--ep-green), var(--ep-mint));
+  }
+
+  .ep-avatar-initial {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 950;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    background: linear-gradient(135deg, var(--ep-green), var(--ep-mint));
+  }
+
+  .ep-avatar-info h3 {
+    margin: 0;
+    font-weight: 900;
+    font-size: 1.1rem;
+  }
+
+  .ep-avatar-info p {
+    margin: 4px 0 0;
+    color: var(--ep-muted);
+    font-size: 0.9rem;
+  }
+
+  .form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--ep-ink);
+    margin: 28px 0 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--ep-line);
+  }
+
+  .form-section-title i {
+    color: var(--ep-green);
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: 800;
+    color: var(--ep-ink);
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+  }
+
+  .form-group .form-control,
+  .form-group .form-select {
+    border: 1px solid var(--ep-line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: var(--ep-soft);
+  }
+
+  .form-group .form-control:focus,
+  .form-group .form-select:focus {
+    border-color: var(--ep-green);
+    box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.15);
+    background: #fff;
+  }
+
+  .form-group .helptext {
+    font-size: 0.8rem;
+    color: var(--ep-muted);
+    margin-top: 4px;
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .ep-submit {
+    display: flex;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--ep-line);
+  }
+
+  .ep-btn-save {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-weight: 900;
+    font-size: 1rem;
+    color: #183523;
+    background: var(--ep-yellow);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    text-decoration: none;
+  }
+
+  .ep-btn-save:hover {
+    background: #ffd775;
+    transform: translateY(-2px);
+    box-shadow: var(--ep-shadow);
+    color: #183523;
+  }
+
+  .ep-btn-cancel {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--ep-muted);
+    background: var(--ep-soft);
+    border: 1px solid var(--ep-line);
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .ep-btn-cancel:hover {
+    background: #e9ecef;
+    color: var(--ep-ink);
+  }
+
+  .error-list {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 0;
+  }
+
+  .error-list li {
+    color: #dc3545;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  @media (max-width: 575px) {
+    .edit-page { padding-top: 34px; }
+    .ep-container { width: min(100% - 24px, 720px); }
+    .form-row { grid-template-columns: 1fr; }
+    .ep-avatar-section { flex-direction: column; text-align: center; }
+    .ep-submit { flex-direction: column; }
+  }
+</style>
+
+<div class="edit-page">
+  <div class="ep-container">
+    <div class="ep-header">
+      <h1><i class="bi bi-person-gear me-2"></i>Edit Profile</h1>
+      <p>Update your personal information and preferences</p>
+    </div>
+
+    <div class="ep-card">
+      <div class="ep-card-body">
+        <!-- Avatar Preview -->
+        <div class="ep-avatar-section">
+          {% if user.userprofile.profile_image %}
+            <img src="{{ user.userprofile.profile_image.url }}" alt="Profile" class="ep-avatar" id="avatarPreview">
+          {% else %}
+            <div class="ep-avatar-initial" id="avatarPreview">{{ user.username.0|upper }}</div>
+          {% endif %}
+          <div class="ep-avatar-info">
+            <h3>{{ user.get_full_name|default:user.username }}</h3>
+            <p>{{ user.email|default:"No email set" }}</p>
+            <p class="mb-0"><small class="text-muted">Profile photo helps personalize your account</small></p>
+          </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          <!-- Personal Info Section -->
+          <div class="form-section-title">
+            <i class="bi bi-person"></i> Personal Details
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="id_first_name">First Name</label>
+              <input type="text" name="first_name" id="id_first_name" class="form-control"
+                     value="{{ form.first_name.value|default:'' }}" placeholder="First name">
+              {% if form.first_name.errors %}
+              <ul class="error-list">{% for e in form.first_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label for="id_last_name">Last Name</label>
+              <input type="text" name="last_name" id="id_last_name" class="form-control"
+                     value="{{ form.last_name.value|default:'' }}" placeholder="Last name">
+              {% if form.last_name.errors %}
+              <ul class="error-list">{% for e in form.last_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="id_email">Email Address <span class="text-danger">*</span></label>
+            <input type="email" name="email" id="id_email" class="form-control"
+                   value="{{ user.email|default:'' }}" placeholder="Email address"
+                   readonly style="background-color: #e9ecef; cursor: not-allowed;">
+            <small class="helptext" style="color: var(--ep-muted);">
+              <i class="bi bi-shield-lock" style="color: var(--ep-green);"></i>
+              Email can only be changed through email verification. Contact support to update your email.
+            </small>
+          </div>
+
+          <!-- Contact Section -->
+          <div class="form-section-title">
+            <i class="bi bi-telephone"></i> Contact Information
+          </div>
+
+          <div class="form-group">
+            <label for="id_phone_number">Phone Number {% if not profile.phone_number %}<span class="text-danger">*</span>{% endif %}</label>
+            <input type="tel" name="phone_number" id="id_phone_number" class="form-control"
+                   value="{{ form.phone_number.value|default:'' }}" placeholder="+91XXXXXXXXXX">
+            {% if not profile.phone_number %}
+            <small class="helptext" style="color: #dc3545;">
+              <i class="bi bi-exclamation-circle"></i> Phone number is required for order delivery notifications.
+            </small>
+            {% endif %}
+            {% if form.phone_number.errors %}
+            <ul class="error-list">{% for e in form.phone_number.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label for="id_state">State</label>
+            {{ form.state }}
+            {% if form.state.errors %}
+            <ul class="error-list">{% for e in form.state.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label for="id_address">Delivery Address</label>
+            <textarea name="address" id="id_address" class="form-control" rows="3"
+                      placeholder="Enter your delivery address">{{ form.address.value|default:'' }}</textarea>
+            {% if form.address.errors %}
+            <ul class="error-list">{% for e in form.address.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+
+          <!-- Current Location Section -->
+          <div class="form-section-title">
+            <i class="bi bi-geo-alt-fill"></i> Current Location
+          </div>
+
+          <div class="ep-avatar-section" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; align-items: center; gap: 12px; width: 100%;">
+              <button type="button" id="btnUseCurrentLocation" class="ep-btn-save" style="white-space: nowrap;">
+                <i class="bi bi-crosshair"></i> Use Current Location
+              </button>
+              <span style="color: var(--ep-muted); font-size: 0.9rem; font-weight: 600;">
+                <i class="bi bi-info-circle"></i> Uses GPS to auto-fill your address
+              </span>
+            </div>
+            <div id="locationStatus" style="display: none;"></div>
+          </div>
+
+          <div style="margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="id_current_address">Current Location Address</label>
+              {{ form.current_address }}
+            </div>
+          </div>
+
+          {{ form.latitude }}
+          {{ form.longitude }}
+          {{ form.city }}
+          {{ form.postal_code }}
+          {{ form.country }}
+          {{ form.address_source }}
+
+          <!-- Photo Section -->
+          <div class="form-section-title">
+            <i class="bi bi-camera"></i> Profile Photo
+          </div>
+
+          <div class="form-group">
+            <label for="id_profile_image">Upload Photo</label>
+            <input type="file" name="profile_image" id="id_profile_image" class="form-control"
+                   accept="image/*" onchange="previewAvatar(this)">
+            <small class="helptext">Accepted formats: JPEG, PNG, WebP, GIF. Max size: 5MB.</small>
+            {% if form.profile_image.errors %}
+            <ul class="error-list">{% for e in form.profile_image.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+          </div>
+
+          <!-- Submit -->
+          <div class="ep-submit">
+            <button type="submit" class="ep-btn-save">
+              <i class="bi bi-check-circle"></i> Save Changes
+            </button>
+            <a href="{% url 'store:profile' %}" class="ep-btn-cancel">
+              <i class="bi bi-arrow-left"></i> Cancel
+            </a>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 </div>
-{% endblock %}
-</xai:function_call)
 
-<xai:function_call name="create_file">
-<parameter name="absolute_path">e:/grocery_store/templates/registration/password_change_form.html
+<script>
+function previewAvatar(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const preview = document.getElementById('avatarPreview');
+      if (preview.tagName === 'IMG') {
+        preview.src = e.target.result;
+      } else {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        img.alt = 'Profile';
+        img.className = 'ep-avatar';
+        img.id = 'avatarPreview';
+        preview.parentNode.replaceChild(img, preview);
+      }
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
+<script src="{% static 'js/current_location.js' %}"></script>
+{% endblock %}

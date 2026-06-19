@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Error Log - API Settings{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/api_settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="api-settings-page" id="apiSettingsPage">
+    <div class="api-settings-hero">
+        <div class="api-hero-particles">
+            <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="container">
+            <div class="api-hero-content">
+                <div class="api-hero-badge">
+                    <i class="bi bi-lightning-charge-fill"></i> Admin Panel
+                </div>
+                <h1 class="api-hero-title">Error Log</h1>
+                <p class="api-hero-subtitle">Monitor API errors and connection failures</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container api-settings-container">
+        <div class="api-toolbar">
+            <div class="api-toolbar-left">
+                <a href="{% url 'api_settings:api_settings_page' %}" class="api-back-link">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <div class="api-table-wrap">
+            {% if errors %}
+            <div class="api-table-responsive">
+                <table class="api-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>API Key</th>
+                            <th>Status Code</th>
+                            <th>Error Message</th>
+                            <th>Response</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for error in errors %}
+                        <tr class="api-table-row">
+                            <td><span class="api-date-text">{{ error.timestamp|date:"M d, Y H:i:s" }}</span></td>
+                            <td><span class="api-name-text">{{ error.api_key|default:"N/A" }}</span></td>
+                            <td>
+                                <span class="api-conn-badge api-conn-failed">
+                                    {{ error.status_code|default:"N/A" }}
+                                </span>
+                            </td>
+                            <td><span class="api-url-text">{{ error.error_message|truncatechars:100 }}</span></td>
+                            <td>
+                                <button class="api-btn api-btn-outline api-btn-sm api-response-toggle" data-response="{{ error.response_body|escapejs }}">
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Response Modal -->
+            <div class="api-modal-overlay" id="responseModal" style="display:none;">
+                <div class="api-modal">
+                    <div class="api-modal-header">
+                        <h3><i class="bi bi-terminal"></i> Response Body</h3>
+                        <button class="api-modal-close" id="closeResponseModal"><i class="bi bi-x-lg"></i></button>
+                    </div>
+                    <div class="api-modal-body">
+                        <div class="api-response-box">
+                            <pre id="responseModalContent"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="api-empty-state">
+                <div class="api-empty-icon"><i class="bi bi-check-circle"></i></div>
+                <h3>No Errors Recorded</h3>
+                <p>All API connections are running smoothly. Errors will appear here when connection tests fail.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggles = document.querySelectorAll('.api-response-toggle');
+    const modal = document.getElementById('responseModal');
+    const content = document.getElementById('responseModalContent');
+    const closeBtn = document.getElementById('closeResponseModal');
+
+    toggles.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            content.textContent = btn.getAttribute('data-response') || 'No response body.';
+            modal.style.display = 'flex';
+        });
+    });
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() { modal.style.display = 'none'; });
+    }
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) modal.style.display = 'none';
+        });
+    }
+});
+</script>
+{% endblock %}

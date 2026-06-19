@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}API Settings - GrocHub{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/api_settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="api-settings-page" id="apiSettingsPage">
+    <!-- Hero Section -->
+    <div class="api-settings-hero">
+        <div class="api-hero-particles">
+            <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="container">
+            <div class="api-hero-content">
+                <div class="api-hero-badge">
+                    <i class="bi bi-lightning-charge-fill"></i> Admin Panel
+                </div>
+                <h1 class="api-hero-title">API Key Management</h1>
+                <p class="api-hero-subtitle">Securely manage, test, and monitor all your API integrations</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container api-settings-container">
+        <!-- Dashboard Stats -->
+        <div class="api-stats-grid">
+            <div class="api-stat-card api-stat-total">
+                <div class="api-stat-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+                <div class="api-stat-info">
+                    <span class="api-stat-number" id="statTotal">{{ stats.total }}</span>
+                    <span class="api-stat-label">Total APIs</span>
+                </div>
+            </div>
+            <div class="api-stat-card api-stat-active">
+                <div class="api-stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                <div class="api-stat-info">
+                    <span class="api-stat-number" id="statActive">{{ stats.active }}</span>
+                    <span class="api-stat-label">Active</span>
+                </div>
+            </div>
+            <div class="api-stat-card api-stat-disabled">
+                <div class="api-stat-icon"><i class="bi bi-pause-circle-fill"></i></div>
+                <div class="api-stat-info">
+                    <span class="api-stat-number" id="statInactive">{{ stats.inactive }}</span>
+                    <span class="api-stat-label">Disabled</span>
+                </div>
+            </div>
+            <div class="api-stat-card api-stat-failed">
+                <div class="api-stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+                <div class="api-stat-info">
+                    <span class="api-stat-number" id="statFailed">{{ stats.failed }}</span>
+                    <span class="api-stat-label">Failed</span>
+                </div>
+            </div>
+            <div class="api-stat-card api-stat-connected">
+                <div class="api-stat-icon"><i class="bi bi-wifi"></i></div>
+                <div class="api-stat-info">
+                    <span class="api-stat-number" id="statConnected">{{ stats.connected }}</span>
+                    <span class="api-stat-label">Connected</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="api-toolbar">
+            <div class="api-toolbar-left">
+                <h2 class="api-toolbar-title"><i class="bi bi-key-fill"></i> API Keys</h2>
+            </div>
+            <div class="api-toolbar-right">
+                <button type="button" class="api-btn api-btn-outline" id="darkModeToggle" title="Toggle Dark Mode">
+                    <i class="bi bi-moon-fill"></i>
+                </button>
+                <button type="button" class="api-btn api-btn-outline" id="refreshStatusBtn" title="Refresh Statuses">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <a href="{% url 'api_settings:api_key_export' %}" class="api-btn api-btn-outline" title="Export CSV">
+                    <i class="bi bi-download"></i> Export
+                </a>
+                <a href="{% url 'api_settings:api_key_activity' %}" class="api-btn api-btn-outline" title="Activity Log">
+                    <i class="bi bi-clock-history"></i> Activity
+                </a>
+                <a href="{% url 'api_settings:api_key_errors' %}" class="api-btn api-btn-outline" title="Error Log">
+                    <i class="bi bi-exclamation-triangle"></i> Errors
+                </a>
+                <a href="{% url 'api_settings:api_key_add' %}" class="api-btn api-btn-primary">
+                    <i class="bi bi-plus-lg"></i> Add API
+                </a>
+            </div>
+        </div>
+
+        <!-- Search & Filter -->
+        <div class="api-filter-bar">
+            <form method="get" action="{% url 'api_settings:api_settings_page' %}" class="api-filter-form">
+                <div class="api-filter-group">
+                    <div class="api-search-wrap">
+                        <i class="bi bi-search"></i>
+                        <input type="text" name="search" value="{{ search }}" placeholder="Search by name, provider, or URL..." class="api-search-input">
+                    </div>
+                </div>
+                <div class="api-filter-group">
+                    <select name="category" class="api-filter-select">
+                        <option value="">All Categories</option>
+                        {% for value, label in categories %}
+                        <option value="{{ value }}" {% if category == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="api-filter-group">
+                    <select name="status" class="api-filter-select">
+                        <option value="">All Statuses</option>
+                        {% for value, label in statuses %}
+                        <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="api-filter-group">
+                    <select name="conn_status" class="api-filter-select">
+                        <option value="">All Connections</option>
+                        {% for value, label in connection_statuses %}
+                        <option value="{{ value }}" {% if conn_status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="api-btn api-btn-primary api-btn-sm">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                {% if search or category or status or conn_status %}
+                <a href="{% url 'api_settings:api_settings_page' %}" class="api-btn api-btn-outline api-btn-sm">
+                    <i class="bi bi-x-lg"></i> Clear
+                </a>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- API Keys Table -->
+        <div class="api-table-wrap">
+            {% if api_keys %}
+            <div class="api-table-responsive">
+                <table class="api-table">
+                    <thead>
+                        <tr>
+                            <th>API Name</th>
+                            <th>Provider</th>
+                            <th>Category</th>
+                            <th>API Key</th>
+                            <th>Status</th>
+                            <th>Connection</th>
+                            <th>Last Updated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for key in api_keys %}
+                        <tr class="api-table-row" data-id="{{ key.id }}">
+                            <td>
+                                <div class="api-name-cell">
+                                    <span class="api-name-text">{{ key.name }}</span>
+                                    <span class="api-url-text">{{ key.base_url|truncatechars:40 }}</span>
+                                </div>
+                            </td>
+                            <td><span class="api-provider-badge">{{ key.provider }}</span></td>
+                            <td>
+                                <span class="api-category-badge api-cat-{{ key.category }}">
+                                    {{ key.get_category_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="api-key-cell">
+                                    <code class="api-key-masked" id="key-{{ key.id }}">{{ key.get_masked_key }}</code>
+                                    <button class="api-key-reveal-btn" data-id="{{ key.id }}" title="Reveal key">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="api-status-badge api-status-{{ key.status }}">
+                                    {{ key.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="api-conn-badge api-conn-{{ key.connection_status }}">
+                                    {{ key.get_connection_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="api-date-text">{{ key.updated_at|date:"M d, Y H:i" }}</span>
+                            </td>
+                            <td>
+                                <div class="api-actions-cell">
+                                    <button class="api-action-btn api-action-test" data-id="{{ key.id }}" title="Test Connection">
+                                        <i class="bi bi-play-circle"></i>
+                                    </button>
+                                    <button class="api-action-btn api-action-toggle" data-id="{{ key.id }}" title="Toggle Status">
+                                        <i class="bi bi-toggle-{{ key.status|yesno:'on,off' }}"></i>
+                                    </button>
+                                    <a href="{% url 'api_settings:api_key_edit' key.id %}" class="api-action-btn api-action-edit" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button class="api-action-btn api-action-delete" data-id="{{ key.id }}" data-name="{{ key.name }}" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="api-empty-state">
+                <div class="api-empty-icon">
+                    <i class="bi bi-key"></i>
+                </div>
+                <h3>No API Keys Found</h3>
+                <p>{% if search or category or status or conn_status %}No API keys match your filters. Try adjusting your search criteria.{% else %}Start by adding your first API key to manage integrations.{% endif %}</p>
+                {% if not search and not category and not status and not conn_status %}
+                <a href="{% url 'api_settings:api_key_add' %}" class="api-btn api-btn-primary">
+                    <i class="bi bi-plus-lg"></i> Add Your First API
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Test Result Modal -->
+        <div class="api-modal-overlay" id="testResultModal" style="display:none;">
+            <div class="api-modal">
+                <div class="api-modal-header">
+                    <h3><i class="bi bi-wifi"></i> Connection Test Result</h3>
+                    <button class="api-modal-close" id="closeTestModal"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <div class="api-modal-body" id="testResultContent">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="api-modal-overlay" id="deleteModal" style="display:none;">
+            <div class="api-modal api-modal-danger">
+                <div class="api-modal-header">
+                    <h3><i class="bi bi-exclamation-triangle-fill"></i> Confirm Delete</h3>
+                    <button class="api-modal-close" id="closeDeleteModal"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <div class="api-modal-body">
+                    <p>Are you sure you want to delete <strong id="deleteApiName"></strong>?</p>
+                    <p class="api-delete-note">This is a soft delete. The API key can be restored later.</p>
+                    <div class="api-modal-actions">
+                        <button class="api-btn api-btn-outline" id="cancelDelete">Cancel</button>
+                        <form id="deleteForm" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="api-btn api-btn-danger">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="api-toast-container" id="toastContainer"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/api_settings.js' %}"></script>
+{% endblock %}

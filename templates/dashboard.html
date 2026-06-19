@@ -1,21 +1,577 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Dashboard - GroceryHub{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center mt-5">
-    <div class="col-md-8">
-        <div class="card shadow-sm border-0">
-            <div class="card-body p-5">
-                <h1 class="mb-3">Welcome back, {{ request.user.username }}</h1>
-                <p class="lead text-muted">You are now logged in successfully.</p>
-                {% if profile %}
-                    <p class="mb-2"><strong>Verified phone:</strong> {{ profile.phone_number }}</p>
-                    <p><strong>Status:</strong> {% if profile.is_phone_verified %}Verified{% else %}Pending verification{% endif %}</p>
-                {% endif %}
-                <a href="{% url 'store:home' %}" class="btn btn-primary mt-4">Go to Home</a>
-            </div>
-        </div>
+<style>
+  :root {
+    --db-green: #198754;
+    --db-mint: #20c997;
+    --db-yellow: #ffc857;
+    --db-ink: #18251f;
+    --db-muted: #66736c;
+    --db-soft: #f4fbf7;
+    --db-line: rgba(25, 135, 84, 0.16);
+    --db-shadow: 0 18px 45px rgba(18, 55, 38, 0.12);
+  }
+
+  main.container {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .dashboard-page {
+    min-height: 70vh;
+    color: var(--db-ink);
+    background:
+      radial-gradient(circle at top left, rgba(32, 201, 151, 0.1), transparent 30rem),
+      linear-gradient(180deg, #ffffff 0%, #f7fbf8 55%, #ffffff 100%);
+    padding: 54px 0 78px;
+  }
+
+  .db-container {
+    width: min(1080px, calc(100% - 32px));
+    margin: 0 auto;
+  }
+
+  /* Hero */
+  .db-hero {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 24px;
+    align-items: center;
+    padding: clamp(24px, 5vw, 40px);
+    border-radius: 12px;
+    color: #fff;
+    background: linear-gradient(135deg, rgba(13, 76, 45, 0.95), rgba(25, 135, 84, 0.88));
+    box-shadow: var(--db-shadow);
+    margin-bottom: 28px;
+  }
+
+  .db-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,0.8);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    background: linear-gradient(135deg, var(--db-green), var(--db-mint));
+  }
+
+  .db-avatar-initial {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 950;
+    color: #fff;
+    border: 3px solid rgba(255,255,255,0.8);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    background: linear-gradient(135deg, var(--db-green), var(--db-mint));
+  }
+
+  .db-hero-info h1 {
+    margin: 0;
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    font-weight: 950;
+    line-height: 1.1;
+  }
+
+  .db-hero-info p {
+    margin: 6px 0 0;
+    color: rgba(255,255,255,0.8);
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  .db-hero-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .db-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 900;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+  }
+
+  .db-btn:hover { transform: translateY(-2px); box-shadow: var(--db-shadow); }
+  .db-btn-yellow { color: #183523; background: var(--db-yellow); }
+  .db-btn-yellow:hover { background: #ffd775; color: #183523; }
+  .db-btn-outline { color: #fff; border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.12); }
+  .db-btn-outline:hover { background: rgba(255,255,255,0.22); color: #fff; }
+
+  /* Stats Cards */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    border: 1px solid var(--db-line);
+    border-radius: 12px;
+    background: #fff;
+    padding: 22px;
+    box-shadow: 0 6px 16px rgba(24,37,31,0.05);
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .stat-card:hover { transform: translateY(-3px); box-shadow: var(--db-shadow); }
+
+  .stat-card-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+  }
+
+  .stat-card-icon.green { color: #198754; background: rgba(25,135,84,0.1); }
+  .stat-card-icon.blue { color: #0d6efd; background: rgba(13,110,253,0.1); }
+  .stat-card-icon.orange { color: #fd7e14; background: rgba(253,126,20,0.1); }
+  .stat-card-icon.purple { color: #6f42c1; background: rgba(111,66,193,0.1); }
+
+  .stat-card-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 950;
+    color: var(--db-ink);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-card-label {
+    color: var(--db-muted);
+    font-weight: 800;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* Main Grid */
+  .db-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .panel {
+    border: 1px solid var(--db-line);
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(24,37,31,0.05);
+  }
+
+  .panel-body { padding: clamp(20px, 3vw, 28px); }
+
+  .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 18px;
+    font-size: 1.15rem;
+    font-weight: 950;
+  }
+
+  .section-heading i { color: var(--db-green); }
+
+  /* Activity Timeline */
+  .activity-list { list-style: none; padding: 0; margin: 0; }
+
+  .activity-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--db-line);
+  }
+
+  .activity-item:last-child { border-bottom: none; }
+
+  .activity-icon {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    background: var(--db-soft);
+    color: var(--db-green);
+  }
+
+  .activity-text {
+    flex: 1;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--db-ink);
+  }
+
+  .activity-time {
+    color: var(--db-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .activity-badge {
+    display: inline-flex;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .badge-warning { background: #ffc107; color: #333; }
+  .badge-success { background: #198754; }
+  .badge-danger { background: #dc3545; }
+  .badge-info { background: #0dcaf0; color: #333; }
+  .badge-secondary { background: #6c757d; }
+
+  /* Orders Table */
+  .order-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--db-line);
+  }
+
+  .order-row:last-child { border-bottom: none; }
+
+  .order-id {
+    font-weight: 950;
+    color: var(--db-green);
+    font-size: 0.95rem;
+    min-width: 60px;
+  }
+
+  .order-info {
+    font-size: 0.85rem;
+    color: var(--db-muted);
+    font-weight: 600;
+  }
+
+  .order-amount {
+    font-weight: 950;
+    color: var(--db-ink);
+    font-size: 0.95rem;
+    text-align: right;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 850;
+    color: #fff;
+  }
+
+  .status-pill.pending { background: #ffc107; color: #333; }
+  .status-pill.paid { background: #198754; }
+  .status-pill.failed { background: #dc3545; }
+  .status-pill.delivered { background: #0dcaf0; color: #333; }
+
+  /* Side panel */
+  .side-stack { display: grid; gap: 24px; }
+
+  .account-detail {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px;
+    border: 1px solid var(--db-line);
+    border-radius: 8px;
+    background: var(--db-soft);
+    margin-bottom: 12px;
+  }
+
+  .account-detail:last-child { margin-bottom: 0; }
+
+  .account-detail-icon {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #183523;
+    background: var(--db-yellow);
+  }
+
+  .account-detail-label {
+    display: block;
+    color: var(--db-muted);
+    font-size: 0.75rem;
+    font-weight: 850;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .account-detail-value {
+    display: block;
+    color: var(--db-ink);
+    font-weight: 850;
+    font-size: 0.9rem;
+  }
+
+  .empty-state {
+    padding: 32px 20px;
+    border: 1px dashed rgba(25,135,84,0.3);
+    border-radius: 10px;
+    text-align: center;
+    color: var(--db-muted);
+  }
+
+  .empty-state i { font-size: 2.5rem; color: var(--db-green); }
+
+  @media (max-width: 991px) {
+    .db-hero { grid-template-columns: auto 1fr; }
+    .db-hero-actions { grid-column: 1 / -1; flex-direction: row; }
+    .db-grid { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 575px) {
+    .dashboard-page { padding-top: 34px; }
+    .db-container { width: min(100% - 24px, 1080px); }
+    .stats-grid { grid-template-columns: 1fr; }
+    .db-hero { grid-template-columns: 1fr; text-align: center; }
+    .db-avatar, .db-avatar-initial { margin: 0 auto; }
+    .db-hero-actions { justify-content: center; }
+  }
+</style>
+
+<div class="dashboard-page">
+  <div class="db-container">
+
+    <!-- Hero -->
+    <section class="db-hero">
+      <div>
+        {% if profile.profile_image %}
+          <img src="{{ profile.profile_image.url }}" alt="{{ user.username }}" class="db-avatar">
+        {% else %}
+          <div class="db-avatar-initial">{{ user.username.0|upper }}</div>
+        {% endif %}
+      </div>
+      <div class="db-hero-info">
+        <h1>Welcome, {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}!</h1>
+        <p>
+          <i class="bi bi-person-circle me-1"></i>{{ user.username }}
+          {% if user.email %} &middot; <i class="bi bi-envelope me-1"></i>{{ user.email }}{% endif %}
+        </p>
+      </div>
+      <div class="db-hero-actions">
+        <a href="{% url 'store:profile' %}" class="db-btn db-btn-yellow">
+          <i class="bi bi-person"></i> My Profile
+        </a>
+        <a href="{% url 'store:edit_profile' %}" class="db-btn db-btn-outline">
+          <i class="bi bi-pencil"></i> Edit Profile
+        </a>
+      </div>
+    </section>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-icon green"><i class="bi bi-bag-check"></i></div>
+        <span class="stat-card-value">{{ total_orders }}</span>
+        <span class="stat-card-label">Total Orders</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon blue"><i class="bi bi-credit-card"></i></div>
+        <span class="stat-card-value">Rs. {{ total_spent|floatformat:0 }}</span>
+        <span class="stat-card-label">Total Spent</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon orange"><i class="bi bi-star"></i></div>
+        <span class="stat-card-value">{{ total_reviews }}</span>
+        <span class="stat-card-label">Reviews</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-icon purple"><i class="bi bi-calendar-check"></i></div>
+        <span class="stat-card-value">{{ profile.created_at|date:"d M" }}</span>
+        <span class="stat-card-label">Member Since</span>
+      </div>
     </div>
+
+    <!-- Main Content -->
+    <div class="db-grid">
+      <!-- Left Column -->
+      <main>
+        <!-- Recent Activity -->
+        <section class="panel mb-4">
+          <div class="panel-body">
+            <h2 class="section-heading"><i class="bi bi-activity"></i> Recent Activity</h2>
+            {% if recent_activity %}
+            <ul class="activity-list">
+              {% for act in recent_activity %}
+              <li class="activity-item">
+                <div class="activity-icon"><i class="bi {{ act.icon }}"></i></div>
+                <div>
+                  <div class="activity-text">
+                    {{ act.text }}
+                    {% if act.status %}
+                      <span class="activity-badge badge-{{ act.status_class }}">{{ act.status }}</span>
+                    {% endif %}
+                  </div>
+                  <div class="activity-time">
+                    <i class="bi bi-clock"></i> {{ act.time|timesince }} ago
+                  </div>
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <div class="empty-state">
+              <i class="bi bi-inbox d-block mb-2"></i>
+              <p class="mb-2 fw-bold">No recent activity</p>
+              <small>Your orders, reviews, and other actions will appear here.</small>
+            </div>
+            {% endif %}
+          </div>
+        </section>
+
+        <!-- Recent Orders -->
+        <section class="panel">
+          <div class="panel-body">
+            <h2 class="section-heading"><i class="bi bi-box-seam"></i> Recent Orders</h2>
+            {% if recent_orders %}
+            {% for order in recent_orders %}
+            <div class="order-row">
+              <span class="order-id">#{{ order.id }}</span>
+              <div>
+                <div class="order-info">Rs. {{ order.total_amount }}</div>
+                <div class="order-info"><i class="bi bi-calendar3"></i> {{ order.created_at|date:"d M Y, h:i A" }}</div>
+              </div>
+              <span class="status-pill {{ order.status }}">{{ order.get_status_display }}</span>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="empty-state">
+              <i class="bi bi-bag-heart d-block mb-2"></i>
+              <p class="mb-2 fw-bold">No orders yet</p>
+              <a href="{% url 'store:product_list' %}" class="db-btn db-btn-yellow mt-2">
+                <i class="bi bi-shop"></i> Start Shopping
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </section>
+      </main>
+
+      <!-- Right Sidebar -->
+      <aside class="side-stack">
+        <!-- Account Info -->
+        <section class="panel">
+          <div class="panel-body">
+            <h2 class="section-heading"><i class="bi bi-info-circle"></i> Account Details</h2>
+
+            <div class="account-detail">
+              <span class="account-detail-icon"><i class="bi bi-calendar-heart"></i></span>
+              <div>
+                <span class="account-detail-label">Account Created</span>
+                <span class="account-detail-value">{{ user.date_joined|date:"d M Y, h:i A" }}</span>
+              </div>
+            </div>
+
+            <div class="account-detail">
+              <span class="account-detail-icon"><i class="bi bi-clock-history"></i></span>
+              <div>
+                <span class="account-detail-label">Last Login</span>
+                <span class="account-detail-value">{{ user.last_login|date:"d M Y, h:i A"|default:"Never" }}</span>
+              </div>
+            </div>
+
+            <div class="account-detail">
+              <span class="account-detail-icon"><i class="bi bi-telephone"></i></span>
+              <div>
+                <span class="account-detail-label">Phone Number</span>
+                {% if profile.phone_number %}
+                <span class="account-detail-value">{{ profile.phone_number }}</span>
+                {% else %}
+                <span class="account-detail-value">
+                  <a href="{% url 'store:edit_profile' %}" style="color: var(--db-green); text-decoration: none; font-weight: 900;">
+                    <i class="bi bi-plus-circle me-1"></i>Add Phone Number
+                  </a>
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="account-detail">
+              <span class="account-detail-icon"><i class="bi bi-toggle-on"></i></span>
+              <div>
+                <span class="account-detail-label">Account Status</span>
+                <span class="account-detail-value">
+                  {% if profile.account_status == 'active' %}
+                    <span class="text-success fw-bold">Active</span>
+                  {% else %}
+                    <span class="text-danger fw-bold">Inactive</span>
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+
+            <div class="account-detail">
+              <span class="account-detail-icon"><i class="bi bi-envelope"></i></span>
+              <div>
+                <span class="account-detail-label">Email</span>
+                <span class="account-detail-value">{{ user.email|default:"Not set" }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Quick Links -->
+        <section class="panel">
+          <div class="panel-body">
+            <h2 class="section-heading"><i class="bi bi-lightning"></i> Quick Links</h2>
+            <div class="d-grid gap-2">
+              <a href="{% url 'store:edit_profile' %}" class="db-btn db-btn-yellow text-center">
+                <i class="bi bi-pencil"></i> Edit Profile
+              </a>
+              <a href="{% url 'password_change' %}" class="db-btn db-btn-outline text-center" style="color: var(--db-ink); border-color: var(--db-line);">
+                <i class="bi bi-shield-lock"></i> Change Password
+              </a>
+              <a href="{% url 'store:cart' %}" class="db-btn db-btn-outline text-center" style="color: var(--db-ink); border-color: var(--db-line);">
+                <i class="bi bi-cart3"></i> View Cart
+              </a>
+              <a href="{% url 'store:product_list' %}" class="db-btn db-btn-outline text-center" style="color: var(--db-ink); border-color: var(--db-line);">
+                <i class="bi bi-shop"></i> Browse Products
+              </a>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+  </div>
 </div>
 {% endblock %}

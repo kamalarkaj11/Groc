@@ -702,6 +702,7 @@
   .account-menu.open .account-dropdown li:nth-child(1) .dropdown-link-custom { transition-delay: 0.04s; }
   .account-menu.open .account-dropdown li:nth-child(2) .dropdown-link-custom { transition-delay: 0.08s; }
   .account-menu.open .account-dropdown li:nth-child(3) .dropdown-link-custom { transition-delay: 0.12s; }
+  .account-menu.open .account-dropdown li:nth-child(4) .dropdown-link-custom { transition-delay: 0.16s; }
 
   .dropdown-link-custom i {
     width: 32px;
@@ -1904,6 +1905,9 @@
         <li><a href="{% url 'store:product_list' %}" class="nav-link-custom"><i class="bi bi-bag"></i> Products</a></li>
         <li><a href="{% url 'store:about' %}" class="nav-link-custom"><i class="bi bi-info-circle"></i> About</a></li>
         <li><a href="{% url 'store:contact' %}" class="nav-link-custom"><i class="bi bi-chat-dots"></i> Contact</a></li>
+        {% if request.user.is_superuser %}
+        <li><a href="{% url 'api_settings:api_settings_page' %}" class="nav-link-custom"><i class="bi bi-gear"></i> API Settings</a></li>
+        {% endif %}
       </ul>
 
       <div class="header-actions">
@@ -1930,6 +1934,9 @@
           </button>
           <ul class="account-dropdown" id="profileDropdown">
             <li><a href="{% url 'store:profile' %}" class="dropdown-link-custom"><i class="bi bi-person"></i> Profile</a></li>
+            {% if request.user.is_superuser %}
+            <li><a href="{% url 'api_settings:api_settings_page' %}" class="dropdown-link-custom"><i class="bi bi-gear"></i> API Settings</a></li>
+            {% endif %}
             <li><a href="/logout" class="dropdown-link-custom"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
           </ul>
           {% else %}

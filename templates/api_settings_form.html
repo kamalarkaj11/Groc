@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} API Key - GrocHub{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/api_settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="api-settings-page" id="apiSettingsPage">
+    <div class="api-settings-hero">
+        <div class="api-hero-particles">
+            <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="container">
+            <div class="api-hero-content">
+                <div class="api-hero-badge">
+                    <i class="bi bi-lightning-charge-fill"></i> Admin Panel
+                </div>
+                <h1 class="api-hero-title">{{ action }} API Key</h1>
+                <p class="api-hero-subtitle">{% if action == 'Add' %}Add a new API integration{% else %}Update API configuration for {{ api_key.name }}{% endif %}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container api-settings-container">
+        <div class="api-form-card">
+            <div class="api-form-card-header">
+                <a href="{% url 'api_settings:api_settings_page' %}" class="api-back-link">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+
+            <form method="post" class="api-form" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="api-form-errors">
+                    {% for error in form.non_field_errors %}
+                    <p><i class="bi bi-exclamation-circle"></i> {{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="api-form-grid">
+                    <!-- API Name -->
+                    <div class="api-form-group">
+                        <label for="id_name" class="api-form-label">
+                            <i class="bi bi-tag"></i> API Name <span class="api-required">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                        <span class="api-form-error">{{ form.name.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Provider -->
+                    <div class="api-form-group">
+                        <label for="id_provider" class="api-form-label">
+                            <i class="bi bi-building"></i> Provider <span class="api-required">*</span>
+                        </label>
+                        {{ form.provider }}
+                        {% if form.provider.errors %}
+                        <span class="api-form-error">{{ form.provider.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Base URL -->
+                    <div class="api-form-group api-form-full">
+                        <label for="id_base_url" class="api-form-label">
+                            <i class="bi bi-globe"></i> Base URL <span class="api-required">*</span>
+                        </label>
+                        {{ form.base_url }}
+                        {% if form.base_url.errors %}
+                        <span class="api-form-error">{{ form.base_url.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- API Key -->
+                    <div class="api-form-group api-form-full">
+                        <label for="id_api_key" class="api-form-label">
+                            <i class="bi bi-key"></i> API Key <span class="api-required">*</span>
+                        </label>
+                        <div class="api-key-input-wrap">
+                            {{ form.api_key }}
+                            <button type="button" class="api-key-toggle-btn" id="toggleFormKeyBtn">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        {% if form.api_key.errors %}
+                        <span class="api-form-error">{{ form.api_key.errors.0 }}</span>
+                        {% endif %}
+                        {% if form.api_key.help_text %}
+                        <span class="api-form-help">{{ form.api_key.help_text }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Category -->
+                    <div class="api-form-group">
+                        <label for="id_category" class="api-form-label">
+                            <i class="bi bi-folder"></i> Category <span class="api-required">*</span>
+                        </label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                        <span class="api-form-error">{{ form.category.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Status -->
+                    <div class="api-form-group">
+                        <label for="id_status" class="api-form-label">
+                            <i class="bi bi-toggle-on"></i> Status <span class="api-required">*</span>
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                        <span class="api-form-error">{{ form.status.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="api-form-actions">
+                    <a href="{% url 'api_settings:api_settings_page' %}" class="api-btn api-btn-outline">
+                        <i class="bi bi-x-lg"></i> Cancel
+                    </a>
+                    <button type="submit" class="api-btn api-btn-primary">
+                        <i class="bi bi-{% if action == 'Add' %}plus-lg{% else %}check-lg{% endif %}"></i>
+                        {{ action }} API Key
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggleFormKeyBtn');
+    const keyInput = document.getElementById('id_api_key');
+    if (toggleBtn && keyInput) {
+        toggleBtn.addEventListener('click', function() {
+            const icon = toggleBtn.querySelector('i');
+            if (keyInput.type === 'password') {
+                keyInput.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                keyInput.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        });
+        keyInput.type = 'password';
+    }
+});
+</script>
+{% endblock %}

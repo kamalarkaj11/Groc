@@ -602,6 +602,10 @@
       padding: 32px 0 24px;
     }
 
+    .product-video-row {
+      margin-top: 28px;
+    }
+
     .product-grid {
       gap: 20px;
     }
@@ -686,6 +690,10 @@
 
     .pd-hero {
       padding-top: 24px;
+    }
+
+    .product-video-row {
+      margin-top: 20px;
     }
 
     .product-media,
@@ -782,6 +790,10 @@
       width: min(100% - 12px, 1140px);
     }
 
+    .product-video-row {
+      margin-top: 16px;
+    }
+
     .product-media,
     .product-media img,
     .product-placeholder {
@@ -859,6 +871,37 @@
       font-size: 0.82rem;
       padding: 8px;
     }
+  }
+
+  /* ── Product Video ── */
+  .product-video-row {
+    margin-top: 42px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .product-video-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .product-video-player {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    object-fit: contain;
+    background: #000;
+  }
+
+  .product-video-player:focus-visible {
+    outline: 2px solid var(--pd-green);
+    outline-offset: -2px;
   }
 </style>
 
@@ -981,6 +1024,35 @@
           </div>
         </div>
       </div>
+      {% if product.product_video or product.external_video_url %}
+      <section class="product-video-row">
+        <div class="product-video-container">
+          {% if product.product_video %}
+          <video class="product-video-player" controls playsinline preload="metadata">
+            <source src="{{ product.product_video.url }}" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          {% elif product.external_video_url %}
+          {% with video_url=product.external_video_url %}
+            {% if "youtube.com" in video_url or "youtu.be" in video_url %}
+              {% if "youtu.be" in video_url %}
+                {% with video_id=video_url|cut:"https://youtu.be/" %}
+                <iframe class="product-video-player" src="https://www.youtube.com/embed/{{ video_id }}" title="Product video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                {% endwith %}
+              {% else %}
+              <iframe class="product-video-player" src="{{ video_url }}" title="Product video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+              {% endif %}
+            {% else %}
+            <video class="product-video-player" controls playsinline preload="metadata">
+              <source src="{{ video_url }}" type="video/mp4">
+              Your browser does not support the video tag.
+            </video>
+            {% endif %}
+          {% endwith %}
+          {% endif %}
+        </div>
+      </section>
+      {% endif %}
     </div>
   </section>
 

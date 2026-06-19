@@ -8,15 +8,22 @@ from crispy_forms.layout import Submit
 from .models import Profile, UserProfile, IndianState, Order, OTP, Category, Subcategory
 
 class CustomUserCreationForm(UserCreationForm):
+    first_name = forms.CharField(
+        max_length=30, required=True, label='First Name *',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'})
+    )
+    last_name = forms.CharField(
+        max_length=30, required=False, label='Last Name',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name (Optional)'})
+    )
     age = forms.IntegerField(required=False, min_value=13, label='Age')
     phone_number = forms.CharField(max_length=15, required=True, label='Phone Number')
     address = forms.CharField(widget=forms.Textarea, required=False, label='Address')
     state = forms.ChoiceField(choices=IndianState.choices, required=False, label='State')
 
-
     class Meta:
         model = User
-        fields = ('username', 'email', 'password1', 'password2', 'age', 'phone_number', 'address', 'state')
+        fields = ('first_name', 'last_name', 'username', 'email', 'password1', 'password2', 'age', 'phone_number', 'address', 'state')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -40,12 +47,16 @@ class CustomUserCreationForm(UserCreationForm):
             normalized = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
             if Profile.objects.filter(phone_number=normalized).exists():
                 raise forms.ValidationError('This phone number is already in use.')
+            if UserProfile.objects.filter(phone_number=normalized).exists():
+                raise forms.ValidationError('This phone number is already in use.')
             return normalized
         except phonenumbers.NumberParseException:
             raise forms.ValidationError('Enter a valid phone number.')
 
     def save(self, commit=True):
         user = super().save(commit=False)
+        user.first_name = self.cleaned_data.get('first_name', '')
+        user.last_name = self.cleaned_data.get('last_name', '')
         if commit:
             user.save()
             profile, created = UserProfile.objects.get_or_create(user=user)
@@ -62,17 +73,87 @@ class CustomUserChangeForm(UserChangeForm):
         fields = ('username', 'email')
 
 class ProfileForm(forms.ModelForm):
+    """Form for editing user profile including User model fields and UserProfile fields."""
+    first_name = forms.CharField(
+        max_length=30, required=False, label='First Name',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'})
+    )
+    last_name = forms.CharField(
+        max_length=30, required=False, label='Last Name',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'})
+    )
+    email = forms.EmailField(
+        required=False, label='Email',
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control', 'placeholder': 'Email address',
+            'readonly': 'readonly', 'style': 'background-color: #e9ecef; cursor: not-allowed;',
+        })
+    )
+
     class Meta:
         model = UserProfile
-        fields = ['age', 'phone_number', 'address', 'state', 'profile_image']
+        fields = ['phone_number', 'profile_image', 'address', 'state',
+                  'current_address', 'latitude', 'longitude', 'city',
+                  'postal_code', 'country', 'address_source']
         widgets = {
-            'address': forms.Textarea(attrs={'rows': 3}),
+            'address': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Delivery address'}),
+            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+91XXXXXXXXXX'}),
+            'state': forms.Select(attrs={'class': 'form-control'}),
+            'profile_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'current_address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Current location address', 'readonly': 'readonly'}),
+            'latitude': forms.HiddenInput(),
+            'longitude': forms.HiddenInput(),
+            'city': forms.HiddenInput(),
+            'postal_code': forms.HiddenInput(),
+            'country': forms.HiddenInput(),
+            'address_source': forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.instance and self.instance.user:
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
+            self.fields['email'].initial = self.instance.user.email
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', 'Update Profile', css_class='btn btn-primary btn-lg w-100'))
+
+    def clean_phone_number(self):
+        raw_phone = self.cleaned_data.get('phone_number', '').strip()
+        if not raw_phone:
+            return raw_phone
+        try:
+            parsed = phonenumbers.parse(raw_phone, 'IN')
+            if not phonenumbers.is_valid_number(parsed):
+                raise forms.ValidationError('Enter a valid phone number.')
+            normalized = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+            existing = UserProfile.objects.filter(phone_number=normalized).exclude(pk=self.instance.pk)
+            if existing.exists():
+                raise forms.ValidationError('This phone number is already in use.')
+            return normalized
+        except phonenumbers.NumberParseException:
+            raise forms.ValidationError('Enter a valid phone number.')
+
+    def clean_profile_image(self):
+        image = self.cleaned_data.get('profile_image')
+        if image:
+            if hasattr(image, 'size') and image.size > 5 * 1024 * 1024:
+                raise forms.ValidationError('Profile image must be less than 5MB.')
+            if hasattr(image, 'content_type'):
+                allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+                if image.content_type not in allowed_types:
+                    raise forms.ValidationError('Only JPEG, PNG, WebP, and GIF images are allowed.')
+        return image
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        if commit:
+            user = profile.user
+            user.first_name = self.cleaned_data.get('first_name', '')
+            user.last_name = self.cleaned_data.get('last_name', '')
+            user.save()
+            profile.save()
+        return profile
 
 class ChangePasswordForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):
@@ -109,6 +190,14 @@ class CheckoutShippingForm(forms.ModelForm):
     )
     latitude = forms.DecimalField(required=False, max_digits=9, decimal_places=6, widget=forms.HiddenInput())
     longitude = forms.DecimalField(required=False, max_digits=9, decimal_places=6, widget=forms.HiddenInput())
+    # Override state as a plain CharField (not a ChoiceField) so that unrecognized
+    # values from the "Use Current Location" feature (e.g. the string "undefined")
+    # are accepted at the field level and can be normalized in clean_state().
+    state = forms.CharField(
+        required=False,
+        label='State',
+        widget=forms.Select(attrs={'class': 'form-control'}, choices=[('', '--- Select State ---')] + list(IndianState.choices))
+    )
 
     class Meta:
         model = Order
@@ -116,7 +205,6 @@ class CheckoutShippingForm(forms.ModelForm):
         widgets = {
             'address_line1': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Street address, house number'}),
             'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
-            'state': forms.Select(attrs={'class': 'form-control'}),
             'pincode': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'PIN code (e.g., 400001)', 'maxlength': '10'}),
             'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone number (up to 15 characters)', 'maxlength': '15'}),
         }
@@ -135,20 +223,7 @@ class CheckoutShippingForm(forms.ModelForm):
 
     def clean_state(self):
         state = self.cleaned_data.get('state')
-        if state == 'undefined':
-            return ''
-        return state
-
-    def clean_phone(self):
-        phone = self.cleaned_data.get('phone', '')
-        digits = ''.join(filter(str.isdigit, phone))
-        if len(digits) > 15:
-            raise forms.ValidationError('Phone number must have no more than 15 digits in total.')
-        return phone
-
-    def clean_state(self):
-        state = self.cleaned_data.get('state')
-        if state == 'undefined':
+        if state in ('undefined', '', None):
             return ''
         return state
 

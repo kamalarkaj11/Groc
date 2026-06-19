@@ -53,12 +53,14 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'),
     path('verify-otp/<str:username>/', views.verify_otp, name='verify_otp'),
     path('profile/', views.profile, name='profile'),
+    path('profile/dashboard/', views.profile_dashboard, name='profile_dashboard'),
     path('logout/', views.logoutuser, name='logout'),
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     
     # Checkout & Stripe
     path('checkout/', views.checkout, name='checkout'),
     path('checkout/save-location/', views.checkout_save_location, name='checkout_save_location'),
+    path('api/save-current-location/', views.save_current_location, name='save_current_location'),
     path('checkout/create-session/', views.create_session, name='create_session'),
     path('checkout/success/<int:order_id>/', views.checkout_success, name='checkout_success'),
     path('checkout/cancel/', views.checkout_cancel, name='checkout_cancel'),

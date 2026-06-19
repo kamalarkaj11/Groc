@@ -79,16 +79,58 @@ class IndianState(models.TextChoices):
 
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    ADDRESS_SOURCE_CHOICES = [
+        ('manual', 'Manual Entry'),
+        ('current_location', 'Current Location'),
+    ]
+
+    ACCOUNT_STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='userprofile')
     age = models.PositiveIntegerField(null=True, blank=True)
-    phone_number = models.CharField(max_length=15, blank=False)
+    phone_number = models.CharField(max_length=15, blank=True, null=True, unique=True)
     address = models.TextField(blank=True)
     state = models.CharField(max_length=2, choices=IndianState.choices, blank=True)
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    account_status = models.CharField(max_length=10, choices=ACCOUNT_STATUS_CHOICES, default='active')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # Current location fields
+    current_address = models.TextField(blank=True, help_text="Full address from current location")
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True)
+    postal_code = models.CharField(max_length=10, blank=True)
+    country = models.CharField(max_length=64, default='India', blank=True)
+    address_source = models.CharField(
+        max_length=20, choices=ADDRESS_SOURCE_CHOICES, default='manual', blank=True
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['account_status']),
+        ]
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
+
+    def save(self, *args, **kwargs):
+        if not self.phone_number:
+            self.phone_number = None
+        super().save(*args, **kwargs)
+
+    @property
+    def full_name(self):
+        return self.user.get_full_name() or self.user.username
+
+    @property
+    def display_name(self):
+        full = self.user.get_full_name()
+        return full if full else self.user.username
 
 
 class OTP(models.Model):
@@ -123,7 +165,8 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    instance.userprofile.save()
+    if hasattr(instance, 'userprofile'):
+        instance.userprofile.save()
 
 
 @receiver(post_save, sender=User)
@@ -291,6 +334,8 @@ class Product(models.Model):
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     image = models.ImageField(upload_to='products/')
     external_image_url = models.URLField(blank=True)
+    product_video = models.FileField(upload_to='products/videos/', blank=True, null=True, help_text='Upload a product video (MP4, WebM, etc.)')
+    external_video_url = models.URLField(blank=True, help_text='External video URL (e.g. YouTube embed or direct video link)')
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
     subcategory = models.ForeignKey(
         Subcategory, on_delete=models.CASCADE, related_name='products',
@@ -401,6 +446,11 @@ class Order(models.Model):
     phone = models.CharField(max_length=15, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Notification delivery status
+    email_sent = models.BooleanField(default=False, help_text="Whether confirmation email has been sent")
+    sms_sent = models.BooleanField(default=False, help_text="Whether confirmation SMS has been sent")
+    notification_sent = models.BooleanField(default=False, help_text="Whether all notifications have been sent")
+
     def __str__(self):
         return f"Order {self.id} - {self.user.username}"
 
@@ -459,3 +509,62 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.product.title} x{self.quantity}"
 
+
+class NotificationLog(models.Model):
+    """Tracks delivery status of order confirmation notifications."""
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='notification_logs')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notification_logs')
+    email_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pending', 'Pending'),
+            ('sent', 'Sent'),
+            ('failed', 'Failed'),
+            ('skipped', 'Skipped'),
+        ],
+        default='pending',
+        help_text="Status of email delivery"
+    )
+    sms_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pending', 'Pending'),
+            ('sent', 'Sent'),
+            ('failed', 'Failed'),
+            ('skipped', 'Skipped'),
+        ],
+        default='pending',
+        help_text="Status of SMS delivery"
+    )
+    email_sent_at = models.DateTimeField(null=True, blank=True, help_text="When the email was successfully sent")
+    sms_sent_at = models.DateTimeField(null=True, blank=True, help_text="When the SMS was successfully sent")
+    email_error_message = models.TextField(blank=True, help_text="Error message if email sending failed")
+    sms_error_message = models.TextField(blank=True, help_text="Error message if SMS sending failed")
+    created_at = models.DateTimeField(auto_now_add=True, help_text="When this log entry was created")
+
+    class Meta:
+        verbose_name = 'Notification Log'
+        verbose_name_plural = 'Notification Logs'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['order', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"Notification #{self.id} - Order #{self.order_id} - Email: {self.email_status}, SMS: {self.sms_status}"
+
+    @property
+    def is_email_delivered(self):
+        return self.email_status == 'sent'
+
+    @property
+    def is_sms_delivered(self):
+        return self.sms_status == 'sent'
+
+    @property
+    def is_fully_delivered(self):
+        return self.is_email_delivered and self.is_sms_delivered
+
+    @property
+    def has_any_error(self):
+        return self.email_status == 'failed' or self.sms_status == 'failed'

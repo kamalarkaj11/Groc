@@ -16,10 +16,13 @@ from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.db import IntegrityError
-from django.db.models import Avg, Count, Q
+from django.db import models
+from django.db.models import Avg, Count, Q, Sum
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_http_methods, require_POST
@@ -29,6 +32,7 @@ from twilio.rest import Client
 from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm
 from .models import (Category, Subcategory, Order, OrderAddress, OrderItem, Product, Review, UserProfile, CartItem,
                      Profile, PhoneOTP, OTP)
+from .notifications import send_order_notifications as trigger_order_notifications
 from .signals import create_otp, generate_and_send_otp, send_otp_email
 from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_products
 
@@ -466,12 +470,10 @@ def signup_success(request):
 
 
 def dashboard(request):
+    """Redirect to the enhanced profile dashboard."""
     if not request.user.is_authenticated:
         return redirect('store:login')
-    profile = None
-    if hasattr(request.user, 'phone_profile'):
-        profile = request.user.phone_profile
-    return render(request, 'dashboard.html', {'profile': profile})
+    return redirect('store:profile_dashboard')
 
 
 def home(request):
@@ -861,6 +863,7 @@ def signup(request):
 
             profile = UserProfile.objects.get(user=user)
             profile.age = form.cleaned_data.get('age')
+            profile.phone_number = form.cleaned_data.get('phone_number')
             profile.address = form.cleaned_data.get('address')
             profile.state = form.cleaned_data.get('state')
             profile.save()
@@ -1171,27 +1174,108 @@ def resend_otp(request):
 
 @login_required
 def profile(request):
-    profile = request.user.userprofile
-    recent_orders = Order.objects.filter(user=request.user).order_by('-created_at')[:3]
+    """Display user profile with all stored registration details."""
+    user_profile = request.user.userprofile
+    recent_orders = Order.objects.filter(
+        user=request.user
+    ).select_related('shipping_address').order_by('-created_at')[:5]
+    total_orders = Order.objects.filter(user=request.user).count()
+    paid_orders = Order.objects.filter(user=request.user, status='paid').count()
+    recent_reviews = Review.objects.filter(
+        user=request.user
+    ).select_related('product').order_by('-created_at')[:5]
+
     context = {
-        'profile': profile,
+        'profile': user_profile,
         'recent_orders': recent_orders,
-        'total_orders': Order.objects.filter(user=request.user).count()
+        'total_orders': total_orders,
+        'paid_orders': paid_orders,
+        'recent_reviews': recent_reviews,
     }
     return render(request, 'profile.html', context)
 
+
 @login_required
 def edit_profile(request):
-    profile = request.user.userprofile
+    """Allow users to update their profile information."""
+    user_profile = request.user.userprofile
     if request.method == 'POST':
-        form = ProfileForm(request.POST, request.FILES, instance=profile)
+        form = ProfileForm(request.POST, request.FILES, instance=user_profile)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Profile updated!')
+            messages.success(request, 'Profile updated successfully!')
             return redirect('store:profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
-        form = ProfileForm(instance=profile)
-    return render(request, 'edit_profile.html', {'form': form})
+        form = ProfileForm(instance=user_profile)
+    return render(request, 'edit_profile.html', {'form': form, 'profile': user_profile})
+
+
+@login_required
+def profile_dashboard(request):
+    """Profile Dashboard showing account overview, recent activity, and statistics."""
+    user_profile = request.user.userprofile
+
+    # Optimized queries with select_related/prefetch_related
+    recent_orders = Order.objects.filter(
+        user=request.user
+    ).select_related('shipping_address').order_by('-created_at')[:5]
+    total_orders = Order.objects.filter(user=request.user).count()
+    paid_orders = Order.objects.filter(user=request.user, status='paid').count()
+    total_spent = Order.objects.filter(
+        user=request.user, status='paid'
+    ).aggregate(total=models.Sum('total_amount'))['total'] or 0
+
+    recent_reviews = Review.objects.filter(
+        user=request.user
+    ).select_related('product').order_by('-created_at')[:5]
+    total_reviews = Review.objects.filter(user=request.user).count()
+
+    recent_activity = []
+    # Recent orders as activity
+    for order in recent_orders[:3]:
+        recent_activity.append({
+            'type': 'order',
+            'icon': 'bi-bag-check',
+            'text': f'Order #{order.id} — Rs. {order.total_amount}',
+            'status': order.get_status_display(),
+            'status_class': {
+                'pending': 'warning',
+                'paid': 'success',
+                'failed': 'danger',
+                'delivered': 'info',
+            }.get(order.status, 'secondary'),
+            'time': order.created_at,
+        })
+    # Recent reviews as activity
+    for review in recent_reviews[:2]:
+        recent_activity.append({
+            'type': 'review',
+            'icon': 'bi-star',
+            'text': f'Reviewed "{review.product.title}" — {review.get_rating_display()}',
+            'time': review.created_at,
+        })
+    # Sort by time descending
+    recent_activity.sort(key=lambda x: x['time'], reverse=True)
+
+    # Order status breakdown
+    order_status_counts = Order.objects.filter(user=request.user).values('status').annotate(
+        count=models.Count('id')
+    ).order_by('status')
+
+    context = {
+        'profile': user_profile,
+        'recent_orders': recent_orders,
+        'total_orders': total_orders,
+        'paid_orders': paid_orders,
+        'total_spent': total_spent,
+        'recent_reviews': recent_reviews,
+        'total_reviews': total_reviews,
+        'recent_activity': recent_activity[:8],
+        'order_status_counts': order_status_counts,
+    }
+    return render(request, 'dashboard.html', context)
 
 @login_required
 def checkout(request):
@@ -1245,6 +1329,9 @@ def checkout(request):
                 return JsonResponse({'success': True})
             return redirect('store:checkout')
         else:
+            logger.warning('Checkout form invalid: %s', form.errors.as_json())
+            for field, errors in form.errors.items():
+                logger.warning('  Field %s: %s', field, ', '.join(errors))
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'errors': form.errors}, status=400)
             messages.error(request, 'Please correct shipping details.')
@@ -1262,7 +1349,8 @@ def checkout(request):
 
 @login_required
 @require_http_methods(['POST'])
-def checkout_save_location(request):
+def save_current_location(request):
+    """Save the user's current GPS location (from 'Use Current Location' button) to their profile."""
     try:
         payload = json.loads(request.body.decode('utf-8'))
         latitude = payload.get('latitude')
@@ -1271,8 +1359,96 @@ def checkout_save_location(request):
         if latitude is None or longitude is None:
             return JsonResponse({'success': False, 'error': 'Latitude and longitude are required.'}, status=400)
 
-        lat = float(latitude)
-        lon = float(longitude)
+        lat = round(float(latitude), 6)
+        lon = round(float(longitude), 6)
+        logger.info('[save_current_location] User %s: lat=%s, lon=%s', request.user.id, lat, lon)
+
+        # Reverse geocode via Nominatim
+        nominatim_url = (
+            f'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat}&lon={lon}&addressdetails=1'
+        )
+        req = urllib_request.Request(
+            nominatim_url,
+            headers={'User-Agent': 'GroceryHub/1.0'}
+        )
+        with urllib_request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+
+        display_name = data.get('display_name', '')
+        address_data = data.get('address', {})
+        house_number = address_data.get('house_number', '')
+        road = address_data.get('road', '')
+        suburb = address_data.get('suburb', '') or address_data.get('neighbourhood', '')
+        city = address_data.get('city') or address_data.get('town') or address_data.get('village') or ''
+        state_name = address_data.get('state') or ''
+        postcode = address_data.get('postcode', '')
+        country = address_data.get('country', 'India')
+
+        # Build a clean, human-readable full address
+        address_parts = []
+        if house_number:
+            address_parts.append(house_number)
+        if road:
+            address_parts.append(road)
+        if suburb:
+            address_parts.append(suburb)
+        if city:
+            address_parts.append(city)
+        if state_name:
+            address_parts.append(state_name)
+        if postcode:
+            address_parts.append(postcode)
+        if country:
+            address_parts.append(country)
+        full_address = ', '.join(address_parts) if address_parts else display_name
+
+        # Save to user profile
+        profile = request.user.userprofile
+        profile.current_address = full_address
+        profile.latitude = lat
+        profile.longitude = lon
+        profile.city = city
+        profile.postal_code = postcode
+        profile.country = country
+        profile.address_source = 'current_location'
+        profile.save()
+
+        return JsonResponse({
+            'success': True,
+            'address': full_address,
+            'display_name': display_name,
+            'city': city,
+            'state': state_name,
+            'postcode': postcode,
+            'country': country,
+            'latitude': str(lat),
+            'longitude': str(lon),
+        })
+    except ValueError:
+        return JsonResponse({'success': False, 'error': 'Invalid coordinates provided.'}, status=400)
+    except Exception as exc:
+        logger.error(f"[save_current_location] Error: {str(exc)}")
+        return JsonResponse({'success': False, 'error': 'Unable to fetch location details. Please enter address manually.'}, status=500)
+
+
+@login_required
+@require_http_methods(['POST'])
+def checkout_save_location(request):
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+        latitude = payload.get('latitude')
+        longitude = payload.get('longitude')
+        accuracy = payload.get('accuracy')
+
+        if latitude is None or longitude is None:
+            return JsonResponse({'success': False, 'error': 'Latitude and longitude are required.'}, status=400)
+
+        lat = round(float(latitude), 6)
+        lon = round(float(longitude), 6)
+        logger.info(
+            '[checkout_save_location] Received GPS coordinates: lat=%s, lon=%s, accuracy=%s',
+            lat, lon, accuracy,
+        )
         nominatim_url = (
             f'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={lat}&lon={lon}&addressdetails=1'
         )
@@ -1460,6 +1636,22 @@ def checkout_success(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     if order.status != 'paid':
         messages.warning(request, 'Order payment is still processing.')
+
+    # Fire async notifications via Celery if not already sent
+    if order.status == 'paid' and not order.notification_sent:
+        try:
+            trigger_order_notifications(order.id)
+        except Exception as exc:
+            logger.warning('Could not trigger notifications for order %s: %s', order.id, exc)
+
+    notification_msg = ''
+    if order.status == 'paid':
+        notification_msg = (
+            'Your order has been confirmed successfully. '
+            'A confirmation email and SMS have been sent to your registered contact details.'
+        )
+        messages.success(request, notification_msg)
+
     ordered_product_ids = order.items.values_list('product_id', flat=True)
     recommended_products = Product.objects.filter(
         is_out_of_stock=False
@@ -1474,12 +1666,110 @@ def checkout_success(request, order_id):
         'shipping_address': shipping_address,
         'payment': None,
         'recommended_products': recommended_products,
+        'notification_msg': notification_msg,
     }
     return render(request, 'payment/success.html', context)
 
 def checkout_cancel(request):
     messages.error(request, 'Payment cancelled.')
     return render(request, 'payment/cancel.html')
+
+def send_order_confirmation_email(order):
+    """Send order confirmation email to the customer's registered email address."""
+    shipping_address = getattr(order, 'shipping_address', None)
+    customer_email = order.user.email
+    if not customer_email and shipping_address:
+        customer_email = shipping_address.email
+    if not customer_email:
+        logger.warning('No email address found for order %s (user %s)', order.id, order.user.id)
+        return False
+
+    customer_name = order.user.get_full_name() or order.user.username
+    if shipping_address and shipping_address.full_name:
+        customer_name = shipping_address.full_name
+
+    customer_phone = ''
+    if shipping_address and shipping_address.phone:
+        customer_phone = shipping_address.phone
+    else:
+        user_profile = getattr(order.user, 'userprofile', None)
+        if user_profile and user_profile.phone_number:
+            customer_phone = user_profile.phone_number
+
+    order_items = order.items.select_related('product').all()
+
+    subject = f'Order #{order.id} Confirmed - GroceryHub'
+    html_message = render_to_string('emails/order_confirmation.html', {
+        'order': order,
+        'order_items': order_items,
+        'shipping_address': shipping_address,
+        'customer_name': customer_name,
+        'customer_email': customer_email,
+        'customer_phone': customer_phone,
+    })
+    plain_message = strip_tags(html_message)
+
+    try:
+        send_mail(
+            subject,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [customer_email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        logger.info('Order confirmation email sent for order %s to %s', order.id, customer_email)
+        return True
+    except Exception as exc:
+        logger.warning('Failed to send order confirmation email for order %s: %s', order.id, exc)
+        return False
+
+
+def send_order_confirmation_sms(order):
+    """Send order confirmation SMS to the customer's registered phone number."""
+    shipping_address = getattr(order, 'shipping_address', None)
+    customer_phone = ''
+    if shipping_address and shipping_address.phone:
+        customer_phone = shipping_address.phone
+    else:
+        user_profile = getattr(order.user, 'userprofile', None)
+        if user_profile and user_profile.phone_number:
+            customer_phone = user_profile.phone_number
+
+    if not customer_phone:
+        logger.warning('No phone number found for order %s (user %s)', order.id, order.user.id)
+        return False
+
+    customer_name = order.user.get_full_name() or order.user.username
+    if shipping_address and shipping_address.full_name:
+        customer_name = shipping_address.full_name
+
+    message_text = (
+        f"Hi {customer_name}! Your GroceryHub Order #{order.id} "
+        f"(Rs. {order.total_amount}) has been confirmed. "
+        f"We'll notify you when it's on its way. Thank you!"
+    )
+
+    try:
+        account_sid = settings.TWILIO_ACCOUNT_SID
+        auth_token = settings.TWILIO_AUTH_TOKEN
+        from_number = settings.TWILIO_PHONE_NUMBER
+        if not account_sid or not auth_token or not from_number:
+            logger.warning('Twilio not configured, skipping SMS for order %s', order.id)
+            return False
+
+        client = Client(account_sid, auth_token)
+        client.messages.create(
+            body=message_text,
+            from_=from_number,
+            to=customer_phone,
+        )
+        logger.info('Order confirmation SMS sent for order %s to %s', order.id, customer_phone)
+        return True
+    except Exception as exc:
+        logger.warning('Failed to send order confirmation SMS for order %s: %s', order.id, exc)
+        return False
+
 
 @csrf_exempt
 def stripe_webhook(request):
@@ -1503,14 +1793,20 @@ def stripe_webhook(request):
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         try:
-            order = Order.objects.get(stripe_session_id=session['id'])
+            order = Order.objects.select_related('user').get(stripe_session_id=session['id'])
             order.status = 'paid'
             order.save()
             CartItem.objects.filter(
                 user=order.user,
                 product_id__in=order.items.values_list('product_id', flat=True)
             ).delete()
-            # TODO: Deduct stock, send email
+
+            # Send async notifications via Celery
+            try:
+                trigger_order_notifications(order.id)
+            except Exception as notify_exc:
+                logger.warning('Order notification failed for order %s: %s', order.id, notify_exc)
+
             logger.info(f"Order {order.id} marked as paid")
         except Order.DoesNotExist:
             logger.error("Order not found for session")

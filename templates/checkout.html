@@ -20,7 +20,7 @@
                 <i class="bi bi-geo-alt-fill me-2"></i>Use Current Location
               </button>
               <div id="location-status" class="small text-muted">
-                Click the button to autofill your delivery address from your browser location.
+                Click the button to autofill your delivery address using your device's exact GPS location.
               </div>
             </div>
 
@@ -102,7 +102,7 @@ function getCookie(name) {
 
 const csrfToken = getCookie('csrftoken');
 
-async function sendLocationToServer(lat, lon) {
+async function sendLocationToServer(lat, lon, accuracy) {
   const response = await fetch('{% url "store:checkout_save_location" %}', {
     method: 'POST',
     headers: {
@@ -110,7 +110,7 @@ async function sendLocationToServer(lat, lon) {
       'X-CSRFToken': csrfToken,
       'X-Requested-With': 'XMLHttpRequest',
     },
-    body: JSON.stringify({ latitude: lat, longitude: lon }),
+    body: JSON.stringify({ latitude: lat, longitude: lon, accuracy: accuracy }),
   });
   return response.json();
 }
@@ -161,13 +161,13 @@ const stateNameToCode = {
   'West Bengal': 'WB',
 };
 
-async function fillLocationFields(lat, lon) {
+async function fillLocationFields(lat, lon, accuracy) {
   locationStatus.classList.remove('text-danger');
   locationStatus.classList.add('text-muted');
   locationStatus.textContent = 'Fetching address from coordinates…';
 
   try {
-    const result = await sendLocationToServer(lat, lon);
+    const result = await sendLocationToServer(lat, lon, accuracy);
     if (!result.success) {
       throw new Error(result.error || 'Unable to resolve location');
     }
@@ -186,10 +186,15 @@ async function fillLocationFields(lat, lon) {
       stateInput.value = stateNameToCode[result.state_name];
     } else if (result.state_name) {
       console.warn('State name not mapped to code:', result.state_name);
+      // Leave state field empty rather than setting it to an invalid value
+      stateInput.value = '';
     }
 
-    latitudeInput.value = lat;
-    longitudeInput.value = lon;
+    // Round to 6 decimal places to satisfy DecimalField(max_digits=9, decimal_places=6)
+    const roundedLat = Math.round(lat * 1_000_000) / 1_000_000;
+    const roundedLon = Math.round(lon * 1_000_000) / 1_000_000;
+    latitudeInput.value = roundedLat;
+    longitudeInput.value = roundedLon;
     updateMap(lat, lon);
     locationStatus.textContent = 'Address filled. You can still edit it before placing your order.';
   } catch (error) {
@@ -219,26 +224,106 @@ function handleLocationError(error) {
   }
 }
 
-locationButton.addEventListener('click', function () {
+/* ---------- High-accuracy GPS geolocation ---------- */
+const GEO_OPTIONS = {
+  enableHighAccuracy: true,   // request real-time GPS, not IP/WiFi approx
+  timeout: 15000,             // 15 s to get a fix
+  maximumAge: 0,              // never use a cached position
+};
+
+const ACCURACY_THRESHOLD_METERS = 50;
+let geoRetryCount = 0;
+const MAX_GEO_RETRIES = 2;
+
+function setButtonLoading(loading) {
+  if (loading) {
+    locationButton.disabled = true;
+    locationButton.dataset.originalHtml = locationButton.innerHTML;
+    locationButton.innerHTML =
+      '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Detecting location…';
+  } else {
+    locationButton.disabled = false;
+    if (locationButton.dataset.originalHtml) {
+      locationButton.innerHTML = locationButton.dataset.originalHtml;
+    }
+  }
+}
+
+function requestGeolocation() {
   if (!navigator.geolocation) {
     locationStatus.classList.remove('text-muted');
     locationStatus.classList.add('text-danger');
-    locationStatus.textContent = 'Geolocation is not supported by your browser.';
+    locationStatus.textContent = 'Geolocation is not supported by your browser. Please enter your address manually.';
     return;
   }
 
+  setButtonLoading(true);
   locationStatus.classList.remove('text-danger');
   locationStatus.classList.add('text-muted');
-  locationStatus.textContent = 'Requesting permission to access your location…';
+  locationStatus.textContent = 'Requesting precise GPS location…';
 
   navigator.geolocation.getCurrentPosition(
     function (position) {
-      fillLocationFields(position.coords.latitude, position.coords.longitude);
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
+      const timestamp = position.timestamp;
+
+      /* Debug logs – visible in browser DevTools console */
+      console.log('[GeoLocation] Latitude:', lat);
+      console.log('[GeoLocation] Longitude:', lon);
+      console.log('[GeoLocation] Accuracy radius:', accuracy, 'meters');
+      console.log('[GeoLocation] Timestamp:', new Date(timestamp).toISOString());
+
+      if (accuracy > ACCURACY_THRESHOLD_METERS) {
+        console.warn(
+          `[GeoLocation] Accuracy ${accuracy}m exceeds ${ACCURACY_THRESHOLD_METERS}m threshold.`
+        );
+        if (geoRetryCount < MAX_GEO_RETRIES) {
+          geoRetryCount++;
+          locationStatus.textContent =
+            `Location accuracy is low (${Math.round(accuracy)}m). Retrying (${geoRetryCount}/${MAX_GEO_RETRIES})…`;
+          /* Small delay then retry – GPS often improves on second fix */
+          setTimeout(requestGeolocation, 1500);
+          return;
+        }
+        /* After max retries, show warning but still use the coordinates */
+        locationStatus.classList.remove('text-muted');
+        locationStatus.classList.add('text-warning');
+        locationStatus.textContent =
+          `Location accuracy is ${Math.round(accuracy)}m. For better accuracy, enable High Accuracy / GPS mode in your device settings and try again.`;
+      } else {
+        locationStatus.classList.remove('text-muted');
+        locationStatus.classList.add('text-muted');
+        locationStatus.textContent =
+          `GPS fix obtained (accuracy: ${Math.round(accuracy)}m). Fetching address…`;
+      }
+
+      geoRetryCount = 0;
+      fillLocationFields(lat, lon, accuracy);
     },
-    handleLocationError,
-    { timeout: 15000, maximumAge: 60000 }
+    function (error) {
+      setButtonLoading(false);
+      handleLocationError(error);
+    },
+    GEO_OPTIONS
   );
+}
+
+locationButton.addEventListener('click', function () {
+  geoRetryCount = 0;
+  requestGeolocation();
 });
+
+/* Re-enable button after fillLocationFields completes (success or error) */
+const _origFill = fillLocationFields;
+fillLocationFields = async function (lat, lon, accuracy) {
+  try {
+    await _origFill(lat, lon, accuracy);
+  } finally {
+    setButtonLoading(false);
+  }
+};
 
 payButton.addEventListener('click', async function() {
   const formData = new FormData(shippingForm);

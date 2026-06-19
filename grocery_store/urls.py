@@ -24,6 +24,7 @@ urlpatterns = [
     path('', include('store.urls')),
     path('accounts/', include('django.contrib.auth.urls')),  # login/logout/password_change etc.
     path('profile/', include('django.contrib.auth.urls')),  # For password change
+    path('api-settings/', include('api_settings.urls')),
 ]
 
 if settings.DEBUG:
