@@ -1634,18 +1634,14 @@ def create_session(request):
 
 def checkout_success(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
-    if order.status != 'paid':
+    if order.status not in ('paid', 'confirmed'):
         messages.warning(request, 'Order payment is still processing.')
 
-    # Fire async notifications via Celery if not already sent
-    if order.status == 'paid' and not order.notification_sent:
-        try:
-            trigger_order_notifications(order.id)
-        except Exception as exc:
-            logger.warning('Could not trigger notifications for order %s: %s', order.id, exc)
+    # Notifications are triggered automatically via the signal in signals.py
+    # when order status is set to 'confirmed'. No manual trigger needed here.
 
     notification_msg = ''
-    if order.status == 'paid':
+    if order.status == 'confirmed':
         notification_msg = (
             'Your order has been confirmed successfully. '
             'A confirmation email and SMS have been sent to your registered contact details.'
@@ -1794,20 +1790,14 @@ def stripe_webhook(request):
         session = event['data']['object']
         try:
             order = Order.objects.select_related('user').get(stripe_session_id=session['id'])
-            order.status = 'paid'
+            order.status = 'confirmed'
             order.save()
             CartItem.objects.filter(
                 user=order.user,
                 product_id__in=order.items.values_list('product_id', flat=True)
             ).delete()
 
-            # Send async notifications via Celery
-            try:
-                trigger_order_notifications(order.id)
-            except Exception as notify_exc:
-                logger.warning('Order notification failed for order %s: %s', order.id, notify_exc)
-
-            logger.info(f"Order {order.id} marked as paid")
+            logger.info(f"Order {order.id} marked as confirmed (notifications will be sent via signal)")
         except Order.DoesNotExist:
             logger.error("Order not found for session")
     

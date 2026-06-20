@@ -94,3 +94,37 @@ def generate_and_send_otp(user):
     return otp
 
 
+# ---------------------------------------------------------------------------
+# Order Confirmation Signal
+# ---------------------------------------------------------------------------
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from .models import Order
+
+@receiver(post_save, sender=Order)
+def order_status_confirmed_handler(sender, instance, **kwargs):
+    """
+    Signal handler that triggers order confirmation notifications
+    when the order status changes to 'confirmed'.
+    
+    This ensures notifications are sent automatically whenever an order
+    is confirmed, whether via admin panel, API, or any other code path.
+    Duplicate notifications are prevented by the notification_sent flag.
+    """
+    if instance.status == 'confirmed' and not instance.notification_sent:
+        logger.info(
+            'Order #%s status changed to "confirmed". Triggering notifications.',
+            instance.id,
+        )
+        try:
+            from .notifications import send_order_notifications
+            send_order_notifications(instance.id)
+        except Exception as exc:
+            logger.error(
+                'Failed to trigger notifications for confirmed order #%s: %s',
+                instance.id, exc,
+                exc_info=True,
+            )
+
+
