@@ -451,6 +451,7 @@ class Order(models.Model):
     email_sent = models.BooleanField(default=False, help_text="Whether confirmation email has been sent")
     sms_sent = models.BooleanField(default=False, help_text="Whether confirmation SMS has been sent")
     notification_sent = models.BooleanField(default=False, help_text="Whether all notifications have been sent")
+    notification_sent_at = models.DateTimeField(null=True, blank=True, help_text="When notifications were sent")
 
     def __str__(self):
         return f"Order {self.id} - {self.user.username}"

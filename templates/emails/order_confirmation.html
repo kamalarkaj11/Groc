@@ -2,117 +2,350 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Order Confirmation - GroceryHub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed – Thank You for Shopping With Us!</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f8f9fa; }
-        .header { text-align: center; padding: 30px 0; background: linear-gradient(135deg, #28a745, #20c997); color: white; border-radius: 10px 10px 0 0; }
-        .content { background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .order-id { font-size: 24px; font-weight: bold; color: #28a745; text-align: center; margin: 10px 0; }
-        .info-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .info-table td { padding: 10px 12px; border-bottom: 1px solid #eee; }
-        .info-table td:first-child { font-weight: bold; color: #666; width: 40%; }
-        .items-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        .items-table th { background: #f0fdf4; padding: 10px; text-align: left; font-size: 13px; color: #198754; border-bottom: 2px solid #28a745; }
-        .items-table td { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
-        .total-row { font-weight: bold; font-size: 18px; color: #28a745; text-align: right; margin-top: 15px; padding-top: 15px; border-top: 2px solid #28a745; }
-        .address-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #28a745; margin: 15px 0; }
-        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: white; background: #28a745; }
-        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 14px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f4f6f8;
+            padding: 0;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        .header {
+            background: linear-gradient(135deg, #198754, #20c997);
+            padding: 36px 30px 30px;
+            text-align: center;
+            color: white;
+        }
+        .header .logo {
+            margin-bottom: 12px;
+        }
+        .header .logo img {
+            max-width: 140px;
+            height: auto;
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        .header p {
+            font-size: 15px;
+            opacity: 0.92;
+        }
+        .badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 18px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+        }
+        .content { padding: 28px 30px; }
+        .greeting { font-size: 16px; margin-bottom: 16px; }
+        .greeting strong { color: #198754; }
+
+        .order-summary {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .order-summary .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+        .order-summary .row .label { color: #555; font-weight: 600; }
+        .order-summary .row .value { color: #222; font-weight: 500; }
+        .order-summary .order-id {
+            font-size: 20px;
+            font-weight: 700;
+            color: #198754;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #198754;
+            margin: 20px 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #bbf7d0;
+        }
+
+        .address-box {
+            background: #f8f9fa;
+            padding: 14px 16px;
+            border-radius: 8px;
+            border-left: 4px solid #198754;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+        .address-box strong { color: #222; }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .items-table thead th {
+            background: #f0fdf4;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #198754;
+            border-bottom: 2px solid #198754;
+        }
+        .items-table tbody td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .items-table tbody tr:last-child td { border-bottom: none; }
+
+        .total-section {
+            background: #f0fdf4;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin: 16px 0 20px;
+            text-align: right;
+        }
+        .total-section .total-label { font-size: 14px; color: #555; }
+        .total-section .total-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #198754;
+        }
+
+        .info-block {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .info-block .info-card {
+            flex: 1;
+            min-width: 140px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px 14px;
+        }
+        .info-block .info-card .info-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+        .info-block .info-card .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #222;
+        }
+
+        .thank-you {
+            background: #f0fdf4;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .thank-you h3 { color: #198754; font-size: 18px; margin-bottom: 6px; }
+        .thank-you p { font-size: 14px; color: #555; }
+
+        .support-section {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-top: 20px;
+        }
+        .support-section h4 {
+            color: #856404;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        .support-section p {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.8;
+        }
+        .support-section a { color: #198754; text-decoration: none; }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #eee;
+        }
+        .footer a { color: #198754; text-decoration: none; }
+
+        @media (max-width: 480px) {
+            .container { margin: 10px; border-radius: 8px; }
+            .header { padding: 24px 18px 20px; }
+            .header h1 { font-size: 20px; }
+            .content { padding: 20px 16px; }
+            .info-block .info-card { min-width: 100%; }
+            .items-table { font-size: 12px; }
+            .items-table thead th, .items-table tbody td { padding: 8px; }
+            .total-section .total-amount { font-size: 20px; }
+            .order-summary .row { font-size: 13px; }
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Order Confirmed!</h1>
-        <p>Thank you for your purchase</p>
-    </div>
+    <div class="container">
 
-    <div class="content">
-        <p>Hello <strong>{{ customer_name }}</strong>,</p>
-        <p>Your order has been confirmed and is being processed. Here are your order details:</p>
-
-        <div class="order-id">Order #{{ order.id }}</div>
-        <p style="text-align:center;"><span class="badge">{{ order.get_status_display }}</span></p>
-
-        <table class="info-table">
-            <tr>
-                <td>Order Date</td>
-                <td>{{ order.created_at|date:"d M Y, h:i A" }}</td>
-            </tr>
-            <tr>
-                <td>Email</td>
-                <td>{{ customer_email }}</td>
-            </tr>
-            <tr>
-                <td>Phone</td>
-                <td>{{ customer_phone }}</td>
-            </tr>
-        </table>
-
-        {% if shipping_address %}
-        <h3 style="color: #198754;">Delivery Address</h3>
-        <div class="address-box">
-            <strong>{{ shipping_address.full_name }}</strong><br>
-            {{ shipping_address.address_line1 }}<br>
-            {% if shipping_address.address_line2 %}{{ shipping_address.address_line2 }}<br>{% endif %}
-            {{ shipping_address.city }}{% if shipping_address.get_state_display %}, {{ shipping_address.get_state_display }}{% endif %} - {{ shipping_address.postal_code }}<br>
-            {{ shipping_address.country }}<br>
-            Phone: {{ shipping_address.phone }}
-            {% if shipping_address.delivery_instructions %}<br><em>Note: {{ shipping_address.delivery_instructions }}</em>{% endif %}
-        </div>
-        {% endif %}
-
-        <h3 style="color: #198754;">Order Items</h3>
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Qty</th>
-                    <th>Price</th>
-                    <th style="text-align:right;">Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in order_items %}
-                <tr>
-                    <td>{{ item.product.title }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>Rs. {{ item.price }}</td>
-                    <td style="text-align:right;">Rs. {{ item.total_price }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <div class="total-row">
-            Total: Rs. {{ order.total_amount }}
+        <div class="header">
+            <div class="logo">
+                <img src="https://img.icons8.com/color/96/null/grocery-store.png"
+                     alt="GrocHub"
+                     style="max-width: 140px; height: auto;"
+                     width="140">
+            </div>
+            <h1>Order Confirmed!</h1>
+            <p>Thank you for shopping with us</p>
+            <span class="badge">{{ order.get_status_display }}</span>
         </div>
 
-        <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin-top: 20px;">
-            <h3 style="color: #198754; font-size: 16px; margin: 0 0 10px;">Expected Delivery</h3>
-            <p style="margin: 0; color: #333; font-size: 14px;">
-                <i class="bi bi-truck" style="color: #198754;"></i> 
-                Your order is being prepared and will be delivered within <strong>2–4 business days</strong>.
-                You will receive real-time tracking updates on your registered mobile number.
+        <div class="content">
+            <p class="greeting">Dear <strong>{{ customer_name }}</strong>,</p>
+            <p style="margin-bottom: 18px; font-size: 15px; color: #444;">
+                Your order has been successfully confirmed and is being processed.
+                Here are your order details:
+            </p>
+
+            <div class="order-summary">
+                <div class="order-id">Order #{{ order.id }}</div>
+                <div class="row">
+                    <span class="label">Order Date</span>
+                    <span class="value">{{ order.created_at|date:"d M Y, h:i A" }}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Order Time</span>
+                    <span class="value">{{ order.created_at|date:"h:i A" }}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Payment Method</span>
+                    <span class="value">{{ payment_method }}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Total Amount</span>
+                    <span class="value" style="font-size: 18px; font-weight: 700; color: #198754;">₹{{ order.total_amount }}</span>
+                </div>
+            </div>
+
+            {% if shipping_address %}
+            <div class="section-title">Delivery Address</div>
+            <div class="address-box">
+                <strong>{{ shipping_address.full_name }}</strong><br>
+                {% if shipping_address.address_line1 %}{{ shipping_address.address_line1 }}<br>{% endif %}
+                {% if shipping_address.address_line2 %}{{ shipping_address.address_line2 }}<br>{% endif %}
+                {% if shipping_address.city %}{{ shipping_address.city }}{% endif %}
+                {% if shipping_address.get_state_display %}, {{ shipping_address.get_state_display }}{% endif %}
+                {% if shipping_address.postal_code %} - {{ shipping_address.postal_code }}{% endif %}<br>
+                {{ shipping_address.country }}<br>
+                Phone: {{ shipping_address.phone }}
+                {% if shipping_address.delivery_instructions %}
+                <br><em style="color: #666;">Note: {{ shipping_address.delivery_instructions }}</em>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="section-title">Ordered Products</div>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th style="text-align:center;">Qty</th>
+                        <th style="text-align:right;">Price</th>
+                        <th style="text-align:right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in order_items %}
+                    <tr>
+                        <td>{{ item.product.title }}</td>
+                        <td style="text-align:center;">{{ item.quantity }}</td>
+                        <td style="text-align:right;">₹{{ item.price }}</td>
+                        <td style="text-align:right; font-weight: 600;">₹{{ item.total_price }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="total-section">
+                <div class="total-label">Total Amount</div>
+                <div class="total-amount">₹{{ order.total_amount }}</div>
+            </div>
+
+            <div class="info-block">
+                <div class="info-card">
+                    <div class="info-label">Expected Delivery</div>
+                    <div class="info-value">{{ expected_delivery|date:"d M Y" }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Payment</div>
+                    <div class="info-value">{{ payment_method }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Order Status</div>
+                    <div class="info-value">{{ order.get_status_display }}</div>
+                </div>
+            </div>
+
+            <div class="thank-you">
+                <h3>Thank You, {{ customer_name }}!</h3>
+                <p>We appreciate your trust in us. Your order is being carefully prepared and will reach you soon.</p>
+            </div>
+
+            <div class="support-section">
+                <h4>Need Help? Contact Us</h4>
+                <p>
+                    <strong>GrocHub Customer Support</strong><br>
+                    Email: <a href="mailto:{{ support_email }}">{{ support_email }}</a><br>
+                    Phone: {{ support_phone }}<br>
+                    Hours: {{ support_hours }}
+                </p>
+            </div>
+
+            <p style="margin-top: 20px; font-size: 13px; color: #888; text-align: center;">
+                You will receive real-time updates on your order status.
+                If you have any questions, please contact our support team.
             </p>
         </div>
 
-        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin-top: 15px;">
-            <h3 style="color: #856404; font-size: 16px; margin: 0 0 10px;">Need Help?</h3>
-            <p style="margin: 0; color: #333; font-size: 14px;">
-                <strong>GrocHub Support Team</strong><br>
-                📧 Email: support@grochub.com<br>
-                📞 Phone: +91-XXXXX-XXXXX<br>
-                ⏰ Hours: Mon–Sat, 9:00 AM – 8:00 PM (IST)
+        <div class="footer">
+            <p>&copy; {% now "Y" %} GrocHub. Fresh groceries delivered to your door.</p>
+            <p style="margin-top: 4px;">
+                <a href="#">Privacy Policy</a> &bull;
+                <a href="#">Terms of Service</a>
             </p>
         </div>
 
-        <p style="margin-top: 25px; color: #666; font-size: 14px;">
-            You will receive updates on your order status. If you have any questions, please contact us.
-        </p>
-    </div>
-
-    <div class="footer">
-        <p>&copy; {% now "Y" %} GrocHub. Fresh groceries delivered to your door.</p>
     </div>
 </body>
 </html>

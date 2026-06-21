@@ -201,6 +201,9 @@ TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
 
+# Support contact
+SUPPORT_PHONE_NUMBER = os.getenv('SUPPORT_PHONE_NUMBER', '+91-XXXXX-XXXXX')
+
 # User profile signals
 from django.contrib.auth import signals
 
@@ -233,12 +236,37 @@ LOGGING = {
             'filename': BASE_DIR / 'api_settings.log',
             'formatter': 'verbose',
         },
+        'notification_file': {
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'notifications.log',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'api_settings': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': True,
+        },
+        'services.email_service': {
+            'handlers': ['console', 'notification_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'services.sms_service': {
+            'handlers': ['console', 'notification_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'services.notification_service': {
+            'handlers': ['console', 'notification_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'store.notifications': {
+            'handlers': ['console', 'notification_file'],
+            'level': 'INFO',
+            'propagate': False,
         },
     },
 }
