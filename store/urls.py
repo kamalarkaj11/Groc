@@ -69,6 +69,9 @@ urlpatterns = [
     path('webhook/stripe/', views.stripe_webhook, name='stripe_webhook'),
     
 
+    # Newsletter
+    path('newsletter/subscribe/', views.newsletter_subscribe, name='newsletter_subscribe'),
+
     # About & Contact
     path('about/', views.about, name='about'),
     path('contact/', views.contact, name='contact'),

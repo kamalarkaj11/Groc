@@ -6,7 +6,7 @@ from django.urls import reverse
 from .models import (
     Profile, PhoneOTP, Review, UserProfile, Category,
     Subcategory, SubSubCategory, Product, CartItem, Order, OrderItem, OrderAddress, OTP,
-    NotificationLog
+    NotificationLog, NewsletterSubscriber
 )
 
 
@@ -221,6 +221,7 @@ admin.site.register(CartItem)
 admin.site.register(OTP)
 admin.site.register(Profile)
 admin.site.register(PhoneOTP)
+admin.site.register(NewsletterSubscriber)
 
 
 # ---------- Order Admin ----------

@@ -369,10 +369,11 @@
         <span class="footer-badge"><i class="bi bi-lightning-charge"></i> Fresh deals every week</span>
         <h2 class="footer-title">Bring home fresh groceries without the market rush.</h2>
       </div>
-      <form class="footer-newsletter">
-        <input type="email" placeholder="Enter your email" aria-label="Email address">
-        <button type="submit">Subscribe <i class="bi bi-send"></i></button>
+      <form class="footer-newsletter" id="newsletter-form">
+        <input type="email" id="newsletter-email" placeholder="Enter your email" aria-label="Email address" required>
+        <button type="submit" id="newsletter-submit-btn">Subscribe <i class="bi bi-send"></i></button>
       </form>
+      <div id="newsletter-feedback" style="margin-top: 10px; font-size: 0.9rem; font-weight: 600; display: none;"></div>
     </div>
 
     <div class="footer-main">
@@ -448,3 +449,101 @@
     </div>
   </div>
 </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('newsletter-form');
+  const emailInput = document.getElementById('newsletter-email');
+  const submitBtn = document.getElementById('newsletter-submit-btn');
+  const feedback = document.getElementById('newsletter-feedback');
+
+  if (!form) return;
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const email = emailInput.value.trim();
+
+    // Reset feedback
+    feedback.style.display = 'none';
+    feedback.className = '';
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = 'Subscribing... <i class="bi bi-hourglass-split"></i>';
+
+    // Client-side validation
+    if (!email) {
+      showFeedback('Please enter your email address.', 'error');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Subscribe <i class="bi bi-send"></i>';
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showFeedback('Please enter a valid email address.', 'error');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Subscribe <i class="bi bi-send"></i>';
+      return;
+    }
+
+    // Send AJAX request
+    fetch('{% url "store:newsletter_subscribe" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+      },
+      body: JSON.stringify({ email: email }),
+    })
+    .then(function(response) {
+      return response.json().then(function(data) {
+        return { status: response.status, data: data };
+      });
+    })
+    .then(function(result) {
+      if (result.data.success) {
+        showFeedback(result.data.message, 'success');
+        emailInput.value = '';
+      } else {
+        showFeedback(result.data.message, 'error');
+      }
+    })
+    .catch(function(error) {
+      showFeedback('An error occurred. Please try again later.', 'error');
+    })
+    .finally(function() {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = 'Subscribe <i class="bi bi-send"></i>';
+    });
+  });
+
+  function showFeedback(message, type) {
+    feedback.textContent = message;
+    feedback.style.display = 'block';
+    if (type === 'success') {
+      feedback.style.color = '#20c997';
+    } else {
+      feedback.style.color = '#ff6b6b';
+    }
+    // Auto-hide after 5 seconds
+    setTimeout(function() {
+      feedback.style.display = 'none';
+    }, 5000);
+  }
+
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      var cookies = document.cookie.split(';');
+      for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+});
+</script>

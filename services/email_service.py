@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils import timezone
 
-from store.models import Order, NotificationLog
+from store.models import Order, NotificationLog, NewsletterSubscriber
 
 logger = logging.getLogger(__name__)
 
@@ -187,3 +187,87 @@ def send_order_confirmation_email(order):
         log.email_error_message = error_msg
         log.save()
         return {'status': 'failed', 'channel': 'email', 'error': error_msg}
+
+
+def send_newsletter_notification(subscriber_email, subscribed_at):
+    """
+    Send a notification email to the admin when a new user subscribes to the newsletter.
+
+    Args:
+        subscriber_email (str): The email address that subscribed.
+        subscribed_at (datetime): The timestamp of subscription.
+
+    Returns:
+        dict with keys: status ('success'|'failed'), error (if any)
+    """
+    admin_email = settings.DEFAULT_FROM_EMAIL
+    recipient_email = 'kamalarkaj11@gmail.com'
+    website_name = 'GrocHub'
+
+    subject = 'New Newsletter Subscription'
+
+    subscription_date = subscribed_at.strftime('%Y-%m-%d %I:%M %p')
+
+    # Build email body
+    body_parts = [
+        'A new user has subscribed to the newsletter.\n',
+        f'Subscriber Email: {subscriber_email}',
+        f'Subscription Date: {subscription_date}',
+    ]
+    plain_message = '\n'.join(body_parts)
+
+    # HTML version
+    html_message = f'''
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #198754, #20c997); padding: 20px; border-radius: 8px 8px 0 0;">
+            <h1 style="color: #fff; margin: 0; font-size: 24px;">{website_name}</h1>
+        </div>
+        <div style="background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0;">
+            <p style="font-size: 16px; color: #333;">A new user has subscribed to the newsletter.</p>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #fff; font-weight: bold; color: #555;">Subscriber Email</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #fff; color: #333;">{subscriber_email}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; font-weight: bold; color: #555;">Subscription Date</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; background: #f5f5f5; color: #333;">{subscription_date}</td>
+                </tr>
+            </table>
+        </div>
+        <p style="color: #999; font-size: 12px; margin-top: 20px; text-align: center;">
+            This is an automated notification from {website_name}.
+        </p>
+    </div>
+    '''
+
+    try:
+        logger.info(
+            'Sending newsletter subscription notification for %s to %s',
+            subscriber_email, recipient_email,
+        )
+        sent_count = send_mail(
+            subject,
+            plain_message,
+            admin_email,
+            [recipient_email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        if sent_count == 1:
+            logger.info(
+                '✓ Newsletter notification sent successfully | Subscriber: %s',
+                subscriber_email,
+            )
+            return {'status': 'success'}
+        else:
+            raise RuntimeError(f'SMTP returned sent_count={sent_count}')
+
+    except Exception as exc:
+        error_msg = str(exc)
+        logger.error(
+            '✗ Newsletter notification failed | Subscriber: %s | Error: %s',
+            subscriber_email, error_msg,
+            exc_info=True,
+        )
+        return {'status': 'failed', 'error': error_msg}

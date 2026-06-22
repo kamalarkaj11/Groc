@@ -29,9 +29,13 @@ from django.views.decorators.http import require_http_methods, require_POST
 from twilio.rest import Client
 
 
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
 from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm
 from .models import (Category, Subcategory, Order, OrderAddress, OrderItem, Product, Review, UserProfile, CartItem,
-                     Profile, PhoneOTP, OTP)
+                     Profile, PhoneOTP, OTP, NewsletterSubscriber)
 from .notifications import send_order_notifications as trigger_order_notifications
 from .signals import create_otp, generate_and_send_otp, send_otp_email
 from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_products
@@ -1930,6 +1934,47 @@ def subsubcategory_products(request, category_slug, subcategory_slug, subsubcate
         ],
     }
     return render(request, 'products/subsubcategory_products.html', context)
+
+
+@require_POST
+def newsletter_subscribe(request):
+    """
+    AJAX endpoint for newsletter subscription.
+    Validates email, prevents duplicates, saves to DB, and sends notification.
+    """
+    import json
+    from services.email_service import send_newsletter_notification
+
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+        email = data.get('email', '').strip()
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        email = request.POST.get('email', '').strip()
+
+    # Frontend validation already done, but re-validate on backend
+    if not email:
+        return JsonResponse({'success': False, 'message': 'Please enter your email address.'}, status=400)
+
+    try:
+        validate_email(email)
+    except ValidationError:
+        return JsonResponse({'success': False, 'message': 'Please enter a valid email address.'}, status=400)
+
+    # Check for duplicate
+    if NewsletterSubscriber.objects.filter(email__iexact=email).exists():
+        return JsonResponse({'success': False, 'message': 'This email is already subscribed.'}, status=409)
+
+    # Save to database
+    subscriber = NewsletterSubscriber.objects.create(email=email)
+
+    # Send notification email (non-blocking - don't fail the subscription if email fails)
+    try:
+        send_newsletter_notification(subscriber.email, subscriber.subscribed_at)
+    except Exception as exc:
+        logger.exception('Failed to send newsletter notification for %s: %s', email, exc)
+
+    logger.info('✓ New newsletter subscriber: %s', email)
+    return JsonResponse({'success': True, 'message': 'Thank you for subscribing to our newsletter.'})
 
 
 def load_subcategories(request):

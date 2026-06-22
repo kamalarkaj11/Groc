@@ -271,6 +271,19 @@ class Subcategory(models.Model):
             )
 
 
+class NewsletterSubscriber(models.Model):
+    email = models.EmailField(unique=True)
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Newsletter Subscriber'
+        verbose_name_plural = 'Newsletter Subscribers'
+        ordering = ['-subscribed_at']
+
+    def __str__(self):
+        return self.email
+
+
 class SubSubCategory(models.Model):
     """Sub-subcategory under a Subcategory. E.g., Fruits > Fresh Fruits > Apple, Mango."""
     name = models.CharField(max_length=100)
