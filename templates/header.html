@@ -1905,9 +1905,6 @@
         <li><a href="{% url 'store:product_list' %}" class="nav-link-custom"><i class="bi bi-bag"></i> Products</a></li>
         <li><a href="{% url 'store:about' %}" class="nav-link-custom"><i class="bi bi-info-circle"></i> About</a></li>
         <li><a href="{% url 'store:contact' %}" class="nav-link-custom"><i class="bi bi-chat-dots"></i> Contact</a></li>
-        {% if request.user.is_superuser %}
-        <li><a href="{% url 'api_settings:api_settings_page' %}" class="nav-link-custom"><i class="bi bi-gear"></i> API Settings</a></li>
-        {% endif %}
       </ul>
 
       <div class="header-actions">
