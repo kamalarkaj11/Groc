@@ -1944,7 +1944,6 @@ def newsletter_subscribe(request):
     Backend validation ensures empty/invalid values cannot be submitted even if frontend is bypassed.
     """
     import json
-    from services.email_service import send_newsletter_notification
 
     # Strictly require application/json content type
     content_type = request.META.get('CONTENT_TYPE', '')
@@ -1988,11 +1987,24 @@ def newsletter_subscribe(request):
     # Save to database
     subscriber = NewsletterSubscriber.objects.create(email=email)
 
-    # Send notification email (non-blocking - don't fail the subscription if email fails)
+    # Send notification email asynchronously via Celery so the HTTP response returns immediately.
+    # If Celery is not available, fall back to synchronous sending.
     try:
-        send_newsletter_notification(subscriber.email, subscriber.subscribed_at)
+        from .tasks import send_newsletter_notification_task
+        # Pass subscribed_at as ISO string for JSON serialization
+        send_newsletter_notification_task.delay(
+            subscriber.email,
+            subscriber.subscribed_at.isoformat(),
+        )
+        logger.info('✓ Newsletter notification dispatched to Celery for: %s', email)
     except Exception as exc:
-        logger.exception('Failed to send newsletter notification for %s: %s', email, exc)
+        # Fallback: send synchronously if Celery is not available
+        logger.warning('Celery not available, sending newsletter notification synchronously: %s', exc)
+        try:
+            from services.email_service import send_newsletter_notification
+            send_newsletter_notification(subscriber.email, subscriber.subscribed_at)
+        except Exception as inner_exc:
+            logger.exception('Failed to send newsletter notification for %s: %s', email, inner_exc)
 
     logger.info('✓ New newsletter subscriber: %s', email)
     return JsonResponse({'success': True, 'message': 'Thank you for subscribing to our newsletter.'})

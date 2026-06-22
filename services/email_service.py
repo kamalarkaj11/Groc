@@ -169,7 +169,7 @@ def send_order_confirmation_email(order):
             log.email_error_message = ''
             log.save()
             logger.info(
-                '✓ Email Sent Successfully | Order #%s | To: %s',
+                'Email Sent Successfully | Order #%s | To: %s',
                 order.id, customer_email,
             )
             return {'status': 'success', 'channel': 'email', 'recipient': customer_email}
@@ -179,7 +179,7 @@ def send_order_confirmation_email(order):
     except Exception as exc:
         error_msg = str(exc)
         logger.error(
-            '✗ Email Failed | Order #%s | To: %s | Error: %s',
+            'Email Failed | Order #%s | To: %s | Error: %s',
             order.id, customer_email, error_msg,
             exc_info=True,
         )
@@ -256,7 +256,7 @@ def send_newsletter_notification(subscriber_email, subscribed_at):
         )
         if sent_count == 1:
             logger.info(
-                '✓ Newsletter notification sent successfully | Subscriber: %s',
+                'Newsletter notification sent successfully | Subscriber: %s',
                 subscriber_email,
             )
             return {'status': 'success'}
@@ -266,7 +266,7 @@ def send_newsletter_notification(subscriber_email, subscribed_at):
     except Exception as exc:
         error_msg = str(exc)
         logger.error(
-            '✗ Newsletter notification failed | Subscriber: %s | Error: %s',
+            'Newsletter notification failed | Subscriber: %s | Error: %s',
             subscriber_email, error_msg,
             exc_info=True,
         )

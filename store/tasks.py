@@ -1,5 +1,5 @@
 """
-Celery tasks for sending order confirmation notifications (email & SMS).
+Celery tasks for sending order confirmation notifications (email & SMS) and newsletter notifications.
 Includes automatic retry with exponential backoff (up to 3 retries).
 """
 
@@ -15,7 +15,7 @@ from django.utils import timezone
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 
-from .models import Order, NotificationLog
+from .models import Order, NotificationLog, NewsletterSubscriber
 
 logger = logging.getLogger(__name__)
 
@@ -382,3 +382,51 @@ def send_order_notifications(self, order_id):
         'email_task_id': email_task.id,
         'sms_task_id': sms_task.id,
     }
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_newsletter_notification_task(self, subscriber_email, subscribed_at_str):
+    """
+    Celery task to send newsletter subscription notification email to admin.
+    Runs asynchronously so the subscription endpoint returns immediately.
+
+    Args:
+        subscriber_email (str): The email address that subscribed.
+        subscribed_at_str (str): ISO-formatted datetime string of subscription time.
+
+    Retries: up to 3 times with exponential backoff (60s, 120s, 240s).
+    """
+    from services.email_service import send_newsletter_notification
+    from datetime import datetime
+
+    try:
+        # Parse the datetime string back to a datetime object
+        subscribed_at = datetime.fromisoformat(subscribed_at_str)
+
+        logger.info(
+            'Dispatching newsletter notification for %s (async)',
+            subscriber_email,
+        )
+        result = send_newsletter_notification(subscriber_email, subscribed_at)
+        logger.info(
+            '✓ Newsletter notification task completed for %s: %s',
+            subscriber_email, result,
+        )
+        return result
+    except Exception as exc:
+        error_msg = str(exc)
+        logger.error(
+            '✗ Newsletter notification task failed for %s: %s',
+            subscriber_email, error_msg,
+            exc_info=True,
+        )
+        # Retry with exponential backoff
+        try:
+            countdown = 60 * (2 ** self.request.retries)  # 60s, 120s, 240s
+            raise self.retry(exc=exc, countdown=countdown)
+        except self.MaxRetriesExceededError:
+            logger.error(
+                'Max retries exceeded for newsletter notification for %s. Final error: %s',
+                subscriber_email, error_msg,
+            )
+            return {'status': 'failed', 'error': error_msg, 'retries_exhausted': True}
