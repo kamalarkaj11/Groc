@@ -1941,9 +1941,15 @@ def newsletter_subscribe(request):
     """
     AJAX endpoint for newsletter subscription.
     Validates email, prevents duplicates, saves to DB, and sends notification.
+    Backend validation ensures empty/invalid values cannot be submitted even if frontend is bypassed.
     """
     import json
     from services.email_service import send_newsletter_notification
+
+    # Strictly require application/json content type
+    content_type = request.META.get('CONTENT_TYPE', '')
+    if 'application/json' not in content_type and 'application/x-www-form-urlencoded' not in content_type:
+        return JsonResponse({'success': False, 'message': 'Invalid content type.'}, status=400)
 
     try:
         data = json.loads(request.body.decode('utf-8'))
@@ -1951,16 +1957,31 @@ def newsletter_subscribe(request):
     except (json.JSONDecodeError, UnicodeDecodeError):
         email = request.POST.get('email', '').strip()
 
-    # Frontend validation already done, but re-validate on backend
+    # Backend validation — reject empty, whitespace-only, or missing email
     if not email:
         return JsonResponse({'success': False, 'message': 'Please enter your email address.'}, status=400)
 
+    # Reject if email is just whitespace after stripping
+    if len(email) == 0:
+        return JsonResponse({'success': False, 'message': 'Please enter your email address.'}, status=400)
+
+    # Validate email format using Django's built-in validator
     try:
         validate_email(email)
     except ValidationError:
         return JsonResponse({'success': False, 'message': 'Please enter a valid email address.'}, status=400)
 
-    # Check for duplicate
+    # Additional regex validation for extra safety
+    import re
+    email_regex = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+    if not email_regex.match(email):
+        return JsonResponse({'success': False, 'message': 'Please enter a valid email address.'}, status=400)
+
+    # Reject if email is too long (defense against buffer overflow / long string attacks)
+    if len(email) > 254:
+        return JsonResponse({'success': False, 'message': 'Email address is too long.'}, status=400)
+
+    # Check for duplicate (case-insensitive)
     if NewsletterSubscriber.objects.filter(email__iexact=email).exists():
         return JsonResponse({'success': False, 'message': 'This email is already subscribed.'}, status=409)
 

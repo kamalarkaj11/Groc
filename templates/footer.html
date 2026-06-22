@@ -122,11 +122,18 @@
     transition: transform 0.2s ease, background 0.2s ease;
   }
 
-  .footer-newsletter button:hover,
+  .footer-newsletter button:hover:not(:disabled),
   .footer-shop-link:hover {
     color: #183523;
     background: #ffd775;
     transform: translateY(-2px);
+  }
+
+  .footer-newsletter button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    background: #b89f47;
   }
 
   .footer-main {
@@ -369,9 +376,9 @@
         <span class="footer-badge"><i class="bi bi-lightning-charge"></i> Fresh deals every week</span>
         <h2 class="footer-title">Bring home fresh groceries without the market rush.</h2>
       </div>
-      <form class="footer-newsletter" id="newsletter-form">
-        <input type="email" id="newsletter-email" placeholder="Enter your email" aria-label="Email address" required>
-        <button type="submit" id="newsletter-submit-btn">Subscribe <i class="bi bi-send"></i></button>
+      <form class="footer-newsletter" id="newsletter-form" novalidate>
+        <input type="email" id="newsletter-email" placeholder="Enter your email" aria-label="Email address" required autocomplete="email">
+        <button type="submit" id="newsletter-submit-btn" disabled>Subscribe <i class="bi bi-send"></i></button>
       </form>
       <div id="newsletter-feedback" style="margin-top: 10px; font-size: 0.9rem; font-weight: 600; display: none;"></div>
     </div>
@@ -459,32 +466,81 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (!form) return;
 
+  // Email validation regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  // Track if a request is in progress
+  var isSubmitting = false;
+
+  /**
+   * Validates the email field and updates button/feedback state in real-time.
+   * Returns: 'empty', 'invalid', or 'valid'
+   */
+  function validateEmailField() {
+    var email = emailInput.value.trim();
+
+    if (!email) {
+      // Empty field
+      submitBtn.disabled = true;
+      feedback.style.display = 'block';
+      feedback.textContent = 'Please enter your email address.';
+      feedback.style.color = '#ff6b6b';
+      return 'empty';
+    }
+
+    if (!emailRegex.test(email)) {
+      // Invalid format
+      submitBtn.disabled = true;
+      feedback.style.display = 'block';
+      feedback.textContent = 'Please enter a valid email address.';
+      feedback.style.color = '#ff6b6b';
+      return 'invalid';
+    }
+
+    // Valid email
+    submitBtn.disabled = false;
+    feedback.style.display = 'none';
+    feedback.textContent = '';
+    return 'valid';
+  }
+
+  // Real-time validation on every keystroke (with debounce)
+  var validationTimeout = null;
+  emailInput.addEventListener('input', function() {
+    clearTimeout(validationTimeout);
+    validationTimeout = setTimeout(validateEmailField, 200);
+  });
+
+  // Also validate on blur (when user leaves the field)
+  emailInput.addEventListener('blur', validateEmailField);
+
+  // Initial validation check on page load
+  validateEmailField();
+
+  // Form submit handler
   form.addEventListener('submit', function(e) {
+    // Always prevent default form submission
     e.preventDefault();
 
-    const email = emailInput.value.trim();
+    // Prevent multiple clicks while processing
+    if (isSubmitting) {
+      return;
+    }
 
-    // Reset feedback
-    feedback.style.display = 'none';
-    feedback.className = '';
+    // Re-validate the email
+    var validation = validateEmailField();
+
+    if (validation !== 'valid') {
+      // Email is empty or invalid — do NOT submit, do NOT show loading, do NOT call API
+      return;
+    }
+
+    // Mark as submitting to prevent double clicks
+    isSubmitting = true;
     submitBtn.disabled = true;
     submitBtn.innerHTML = 'Subscribing... <i class="bi bi-hourglass-split"></i>';
 
-    // Client-side validation
-    if (!email) {
-      showFeedback('Please enter your email address.', 'error');
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = 'Subscribe <i class="bi bi-send"></i>';
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      showFeedback('Please enter a valid email address.', 'error');
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = 'Subscribe <i class="bi bi-send"></i>';
-      return;
-    }
+    var email = emailInput.value.trim();
 
     // Send AJAX request
     fetch('{% url "store:newsletter_subscribe" %}', {
@@ -512,8 +568,11 @@ document.addEventListener('DOMContentLoaded', function() {
       showFeedback('An error occurred. Please try again later.', 'error');
     })
     .finally(function() {
-      submitBtn.disabled = false;
+      // Re-enable button only if email is still valid after the request
+      isSubmitting = false;
       submitBtn.innerHTML = 'Subscribe <i class="bi bi-send"></i>';
+      // Re-validate to set correct button state
+      validateEmailField();
     });
   });
 
