@@ -568,11 +568,18 @@ document.addEventListener('DOMContentLoaded', function() {
       showFeedback('An error occurred. Please try again later.', 'error');
     })
     .finally(function() {
-      // Re-enable button only if email is still valid after the request
+      // Always reset button state after request completes
       isSubmitting = false;
       submitBtn.innerHTML = 'Subscribe <i class="bi bi-send"></i>';
-      // Re-validate to set correct button state
-      validateEmailField();
+      // Re-enable button if the email field still has a valid email
+      // (do NOT call validateEmailField() here — it would overwrite the
+      //  feedback message that was just set in .then() / .catch())
+      var emailAfter = emailInput.value.trim();
+      if (emailAfter && emailRegex.test(emailAfter)) {
+        submitBtn.disabled = false;
+      } else {
+        submitBtn.disabled = true;
+      }
     });
   });
 
