@@ -1,37 +1,334 @@
-<!DOCTYPE html>
+<!doctype html>
 {% load static %}
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Grocery Store{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}" />
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
     {% block extra_css %}{% endblock %}
-</head>
-<body>
+  </head>
+  <body>
     {% include 'header.html' %}
 
-    <main class="container my-4">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-        {% block content %}{% endblock %}
-    </main>
+    <main class="container my-4">{% block content %}{% endblock %}</main>
 
     {% include 'footer.html' %}
+    {% if user.is_authenticated %}
+    {% with phone_profile=user.phone_profile %}
+    {% if phone_profile %}
+    <script>
+      window.verificationPopupData = {
+        emailVerified: {{ phone_profile.is_email_verified|yesno:"true,false" }},
+        phoneVerified: {{ phone_profile.is_phone_verified|yesno:"true,false" }},
+        userEmail: "{{ user.email|default:''|escapejs }}",
+        verifyEmailUrl: "{% url 'store:profile' %}#verify-email",
+        verifyPhoneUrl: "{% url 'store:profile' %}#verify-phone"
+      };
+    </script>
+    {% endif %}
+    {% endwith %}
+    {% endif %}
+
+    <div
+      class="verify-popup"
+      id="verificationReminderPopup"
+      style="display: none"
+      role="alert"
+      aria-live="polite"
+    >
+      <button
+        type="button"
+        class="verify-popup-close"
+        id="verificationPopupClose"
+        aria-label="Close notification"
+      >
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <div class="verify-popup-icon" id="verificationPopupIcon">
+        <i class="bi bi-shield-exclamation" id="verificationPopupIconIco"></i>
+      </div>
+      <div class="verify-popup-content">
+        <strong id="verificationPopupTitle">Verification Required</strong>
+        <p id="verificationPopupMessage">Please verify your account.</p>
+        <a href="#" class="verify-popup-btn" id="verificationPopupBtn">
+          <i class="bi bi-patch-check me-1"></i>
+          <span id="verificationPopupBtnText">Verify Now</span>
+        </a>
+      </div>
+    </div>
+
+    <style>
+      .verify-popup {
+        position: fixed;
+        top: 24px;
+        right: -420px;
+        z-index: 99999;
+        width: 400px;
+        max-width: calc(100vw - 32px);
+        padding: 20px 24px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow:
+          0 24px 80px rgba(0, 0, 0, 0.14),
+          0 8px 24px rgba(0, 0, 0, 0.08);
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        transition:
+          opacity 0.4s ease,
+          transform 0.4s ease;
+      }
+      .verify-popup.is-visible {
+        animation: verifySlideIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+      .verify-popup.fade-out {
+        opacity: 0;
+        transform: translateX(40px);
+      }
+      .verify-popup-close {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        width: 30px;
+        height: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.04);
+        color: #6b7280;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .verify-popup-close:hover {
+        background: rgba(0, 0, 0, 0.1);
+        color: #1f2937;
+      }
+      .verify-popup-icon {
+        width: 46px;
+        height: 46px;
+        flex: 0 0 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        font-size: 1.3rem;
+        color: #92400e;
+        background: linear-gradient(135deg, #fef3c7, #fde68a);
+        box-shadow: 0 4px 14px rgba(245, 158, 11, 0.18);
+      }
+      .verify-popup-icon--phone {
+        color: #1e40af;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.18);
+      }
+      .verify-popup-icon--both {
+        color: #7f1d1d;
+        background: linear-gradient(135deg, #fee2e2, #fecaca);
+        box-shadow: 0 4px 14px rgba(220, 38, 38, 0.18);
+      }
+      .verify-popup-content {
+        flex: 1;
+        min-width: 0;
+        padding-right: 8px;
+      }
+      .verify-popup-content strong {
+        display: block;
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #111827;
+        margin-bottom: 4px;
+      }
+      .verify-popup-content p {
+        margin: 0 0 12px;
+        font-size: 0.84rem;
+        color: #4b5563;
+        line-height: 1.55;
+      }
+      .verify-popup-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 18px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        color: #fff;
+        font-weight: 800;
+        font-size: 0.84rem;
+        text-decoration: none;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+        box-shadow: 0 8px 20px rgba(22, 163, 74, 0.22);
+      }
+      .verify-popup-btn:hover {
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(22, 163, 74, 0.3);
+      }
+      @keyframes verifySlideIn {
+        from {
+          right: -420px;
+          opacity: 0;
+        }
+        to {
+          right: 20px;
+          opacity: 1;
+        }
+      }
+      @media (max-width: 480px) {
+        .verify-popup {
+          width: calc(100vw - 24px);
+          max-width: calc(100vw - 24px);
+          right: -100vw;
+          top: 72px;
+          padding: 16px 18px;
+        }
+        @keyframes verifySlideIn {
+          from {
+            right: -100vw;
+            opacity: 0;
+          }
+          to {
+            right: 12px;
+            opacity: 1;
+          }
+        }
+      }
+    </style>
+    <script>
+      (function () {
+        var SESSION_KEY = "verification_reminder_shown";
+        var popup = document.getElementById("verificationReminderPopup");
+        var closeBtn = document.getElementById("verificationPopupClose");
+        var data = window.verificationPopupData;
+
+        if (!popup || !data) return;
+
+        // If already shown in this session, do not show again
+        if (sessionStorage.getItem(SESSION_KEY) === "true") return;
+
+        var emailVerified =
+          data.emailVerified === true || data.emailVerified === "true";
+        var phoneVerified =
+          data.phoneVerified === true || data.phoneVerified === "true";
+
+        // Determine which case applies
+        var caseKey = "";
+        var title = "";
+        var message = "";
+        var btnText = "";
+        var btnHref = "#";
+        var iconClass = "bi-shield-exclamation";
+        var iconExtraClass = "";
+
+        if (emailVerified && !phoneVerified) {
+          // Case 1: Phone not verified
+          caseKey = "phone_required";
+          title = "Phone Verification Required";
+          message =
+            "Your email address has been verified successfully. Please verify your mobile number to secure your account and access all features.";
+          btnText = "Verify Phone Number";
+          btnHref = data.verifyPhoneUrl;
+          iconClass = "bi-phone";
+          iconExtraClass = "verify-popup-icon--phone";
+        } else if (!emailVerified && phoneVerified) {
+          // Case 2: Email not verified
+          caseKey = "email_required";
+          title = "Email Verification Required";
+          message =
+            "Your mobile number has been verified successfully. Please verify your email address to secure your account and access all features.";
+          btnText = "Verify Email Address";
+          btnHref = data.verifyEmailUrl;
+          iconClass = "bi-envelope-exclamation";
+          iconExtraClass = "verify-popup-icon--info";
+        } else if (!emailVerified && !phoneVerified) {
+          // Case 3: Both not verified
+          caseKey = "both_required";
+          title = "Account Verification Required";
+          message =
+            "Please verify both your email address and mobile number to complete your account setup and unlock all features.";
+          btnText = "Verify Now";
+          btnHref = data.verifyEmailUrl;
+          iconClass = "bi-shield-exclamation";
+          iconExtraClass = "verify-popup-icon--both";
+        } else {
+          // Both verified - no popup
+          return;
+        }
+
+        // Update popup content
+        document.getElementById("verificationPopupTitle").textContent = title;
+        document.getElementById("verificationPopupMessage").textContent =
+          message;
+        document.getElementById("verificationPopupBtnText").textContent =
+          btnText;
+        document
+          .getElementById("verificationPopupBtn")
+          .setAttribute("href", btnHref);
+        var iconEl = document.getElementById("verificationPopupIcon");
+        iconEl.className = "verify-popup-icon " + iconExtraClass;
+        document.getElementById("verificationPopupIconIco").className =
+          "bi " + iconClass;
+
+        // Show popup
+        popup.style.display = "flex";
+        popup.classList.add("is-visible");
+
+        // Mark as shown for this session
+        sessionStorage.setItem(SESSION_KEY, "true");
+
+        // Auto-dismiss after 6 seconds
+        var dismissTimer = null;
+        function startDismissTimer() {
+          dismissTimer = setTimeout(function () {
+            popup.classList.add("fade-out");
+            setTimeout(function () {
+              popup.style.display = "none";
+            }, 400);
+          }, 6000);
+        }
+        setTimeout(startDismissTimer, 700);
+
+        closeBtn.addEventListener("click", function () {
+          clearTimeout(dismissTimer);
+          popup.classList.add("fade-out");
+          setTimeout(function () {
+            popup.style.display = "none";
+          }, 400);
+        });
+      })();
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/main.js' %}"></script>
     {% block extra_js %}{% endblock %}
-</body>
+  </body>
 </html>

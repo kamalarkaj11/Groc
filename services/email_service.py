@@ -123,7 +123,7 @@ def send_order_confirmation_email(order):
     order_items = list(order.items.select_related('product').all())
 
     expected_delivery = timezone.now() + timedelta(days=3)
-    support_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'support@grochub.com')
+    support_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'kamalarkaj11@gmail.com')
     support_phone = getattr(settings, 'SUPPORT_PHONE_NUMBER', '+91-XXXXX-XXXXX')
 
     payment_method = 'Card Payment (Stripe)'
@@ -187,6 +187,118 @@ def send_order_confirmation_email(order):
         log.email_error_message = error_msg
         log.save()
         return {'status': 'failed', 'channel': 'email', 'error': error_msg}
+
+
+def send_contact_notification(contact_message):
+    """
+    Send a notification email to the admin when a new contact form is submitted.
+
+    Args:
+        contact_message: ContactMessage instance
+
+    Returns:
+        dict with keys: status ('success'|'failed'), error (if any)
+    """
+    admin_email = 'kamalarkaj11@gmail.com'
+    website_name = 'GrocHub'
+
+    subject = f'New Contact Form Submission - {website_name}'
+
+    submitted_at = contact_message.created_at.strftime('%Y-%m-%d %I:%M %p') if contact_message.created_at else 'N/A'
+
+    html_message = render_to_string('emails/contact_notification.html', {
+        'contact': contact_message,
+        'submitted_at': submitted_at,
+        'website_name': website_name,
+        'admin_email': admin_email,
+        'support_phone': getattr(settings, 'SUPPORT_PHONE_NUMBER', '+91-XXXXX-XXXXX'),
+    })
+    plain_message = strip_tags(html_message)
+
+    try:
+        logger.info(
+            'Sending contact notification for %s to %s',
+            contact_message.email, admin_email,
+        )
+        sent_count = send_mail(
+            subject,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [admin_email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        if sent_count == 1:
+            logger.info(
+                'Contact notification sent successfully | From: %s',
+                contact_message.email,
+            )
+            return {'status': 'success', 'recipient': admin_email}
+        else:
+            raise RuntimeError(f'SMTP returned sent_count={sent_count}')
+
+    except Exception as exc:
+        error_msg = str(exc)
+        logger.error(
+            'Contact notification failed | From: %s | Error: %s',
+            contact_message.email, error_msg,
+            exc_info=True,
+        )
+        return {'status': 'failed', 'error': error_msg}
+
+
+def send_contact_confirmation(contact_message):
+    """
+    Send a confirmation email to the user who submitted the contact form.
+
+    Args:
+        contact_message: ContactMessage instance
+
+    Returns:
+        dict with keys: status ('success'|'failed'), error (if any)
+    """
+    website_name = 'GrocHub'
+
+    subject = f'Thank You for Contacting {website_name}'
+
+    html_message = render_to_string('emails/contact_confirmation.html', {
+        'contact': contact_message,
+        'website_name': website_name,
+        'support_email': settings.DEFAULT_FROM_EMAIL,
+        'support_phone': getattr(settings, 'SUPPORT_PHONE_NUMBER', '+91-XXXXX-XXXXX'),
+    })
+    plain_message = strip_tags(html_message)
+
+    try:
+        logger.info(
+            'Sending contact confirmation to %s',
+            contact_message.email,
+        )
+        sent_count = send_mail(
+            subject,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [contact_message.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        if sent_count == 1:
+            logger.info(
+                'Contact confirmation sent successfully to %s',
+                contact_message.email,
+            )
+            return {'status': 'success', 'recipient': contact_message.email}
+        else:
+            raise RuntimeError(f'SMTP returned sent_count={sent_count}')
+
+    except Exception as exc:
+        error_msg = str(exc)
+        logger.error(
+            'Contact confirmation failed | To: %s | Error: %s',
+            contact_message.email, error_msg,
+            exc_info=True,
+        )
+        return {'status': 'failed', 'error': error_msg}
 
 
 def send_newsletter_notification(subscriber_email, subscribed_at):

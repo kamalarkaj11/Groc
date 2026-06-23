@@ -473,23 +473,32 @@ document.addEventListener('DOMContentLoaded', function() {
   var isSubmitting = false;
 
   /**
-   * Validates the email field and updates button/feedback state in real-time.
+   * Validates the email field and updates button/feedback state.
+   * @param {boolean} showEmptyError - If true, show "Please enter your email address." when field is empty.
+   *                                    If false, hide the error when field is empty (used during typing/blur).
    * Returns: 'empty', 'invalid', or 'valid'
    */
-  function validateEmailField() {
+  function validateEmailField(showEmptyError) {
     var email = emailInput.value.trim();
 
     if (!email) {
       // Empty field
       submitBtn.disabled = true;
-      feedback.style.display = 'block';
-      feedback.textContent = 'Please enter your email address.';
-      feedback.style.color = '#ff6b6b';
+      if (showEmptyError) {
+        // Only show the empty-field error when the user clicked Subscribe
+        feedback.style.display = 'block';
+        feedback.textContent = 'Please enter your email address.';
+        feedback.style.color = '#ff6b6b';
+      } else {
+        // Hide error during typing, blur, or page load
+        feedback.style.display = 'none';
+        feedback.textContent = '';
+      }
       return 'empty';
     }
 
     if (!emailRegex.test(email)) {
-      // Invalid format
+      // Invalid format — always show this when the field has content
       submitBtn.disabled = true;
       feedback.style.display = 'block';
       feedback.textContent = 'Please enter a valid email address.';
@@ -497,7 +506,7 @@ document.addEventListener('DOMContentLoaded', function() {
       return 'invalid';
     }
 
-    // Valid email
+    // Valid email — hide all errors, enable button
     submitBtn.disabled = false;
     feedback.style.display = 'none';
     feedback.textContent = '';
@@ -507,15 +516,25 @@ document.addEventListener('DOMContentLoaded', function() {
   // Real-time validation on every keystroke (with debounce)
   var validationTimeout = null;
   emailInput.addEventListener('input', function() {
+    // Immediately hide any error message when the user starts typing (req #4)
+    feedback.style.display = 'none';
+    feedback.textContent = '';
+
+    // Debounced validation: check for valid/invalid format,
+    // but do NOT show the empty-field error while typing
     clearTimeout(validationTimeout);
-    validationTimeout = setTimeout(validateEmailField, 200);
+    validationTimeout = setTimeout(function() {
+      validateEmailField(false);
+    }, 200);
   });
 
   // Also validate on blur (when user leaves the field)
-  emailInput.addEventListener('blur', validateEmailField);
+  // Never show the empty-field error on blur, only check for invalid format
+  emailInput.addEventListener('blur', function() {
+    validateEmailField(false);
+  });
 
-  // Initial validation check on page load
-  validateEmailField();
+  // No validation on page load — no error message visible initially (req #1)
 
   // Form submit handler
   form.addEventListener('submit', function(e) {
@@ -527,8 +546,8 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
-    // Re-validate the email
-    var validation = validateEmailField();
+    // Re-validate the email — pass true to show empty-field error on submit
+    var validation = validateEmailField(true);
 
     if (validation !== 'valid') {
       // Email is empty or invalid — do NOT submit, do NOT show loading, do NOT call API

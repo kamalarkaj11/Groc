@@ -15,7 +15,7 @@ from django.utils import timezone
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 
-from .models import Order, NotificationLog, NewsletterSubscriber
+from .models import Order, NotificationLog, NewsletterSubscriber, ContactMessage
 
 logger = logging.getLogger(__name__)
 
@@ -428,5 +428,97 @@ def send_newsletter_notification_task(self, subscriber_email, subscribed_at_str)
             logger.error(
                 'Max retries exceeded for newsletter notification for %s. Final error: %s',
                 subscriber_email, error_msg,
+            )
+            return {'status': 'failed', 'error': error_msg, 'retries_exhausted': True}
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_contact_notification_task(self, contact_message_id):
+    """
+    Celery task to send contact form notification email to admin.
+    Runs asynchronously so the contact form endpoint returns immediately.
+
+    Args:
+        contact_message_id (int): ID of the ContactMessage instance.
+
+    Retries: up to 3 times with exponential backoff (60s, 120s, 240s).
+    """
+    from services.email_service import send_contact_notification
+
+    try:
+        contact_message = ContactMessage.objects.get(id=contact_message_id)
+        logger.info(
+            'Dispatching contact notification for message #%s from %s (async)',
+            contact_message_id, contact_message.email,
+        )
+        result = send_contact_notification(contact_message)
+        logger.info(
+            'Contact notification task completed for message #%s: %s',
+            contact_message_id, result,
+        )
+        return result
+    except ContactMessage.DoesNotExist:
+        logger.error('ContactMessage %s not found for notification.', contact_message_id)
+        return {'status': 'error', 'error': 'ContactMessage not found'}
+    except Exception as exc:
+        error_msg = str(exc)
+        logger.error(
+            'Contact notification task failed for message #%s: %s',
+            contact_message_id, error_msg,
+            exc_info=True,
+        )
+        try:
+            countdown = 60 * (2 ** self.request.retries)
+            raise self.retry(exc=exc, countdown=countdown)
+        except self.MaxRetriesExceededError:
+            logger.error(
+                'Max retries exceeded for contact notification for message #%s. Final error: %s',
+                contact_message_id, error_msg,
+            )
+            return {'status': 'failed', 'error': error_msg, 'retries_exhausted': True}
+
+
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_contact_confirmation_task(self, contact_message_id):
+    """
+    Celery task to send contact form confirmation email to the user.
+    Runs asynchronously so the contact form endpoint returns immediately.
+
+    Args:
+        contact_message_id (int): ID of the ContactMessage instance.
+
+    Retries: up to 3 times with exponential backoff (60s, 120s, 240s).
+    """
+    from services.email_service import send_contact_confirmation
+
+    try:
+        contact_message = ContactMessage.objects.get(id=contact_message_id)
+        logger.info(
+            'Dispatching contact confirmation for message #%s to %s (async)',
+            contact_message_id, contact_message.email,
+        )
+        result = send_contact_confirmation(contact_message)
+        logger.info(
+            'Contact confirmation task completed for message #%s: %s',
+            contact_message_id, result,
+        )
+        return result
+    except ContactMessage.DoesNotExist:
+        logger.error('ContactMessage %s not found for confirmation.', contact_message_id)
+        return {'status': 'error', 'error': 'ContactMessage not found'}
+    except Exception as exc:
+        error_msg = str(exc)
+        logger.error(
+            'Contact confirmation task failed for message #%s: %s',
+            contact_message_id, error_msg,
+            exc_info=True,
+        )
+        try:
+            countdown = 60 * (2 ** self.request.retries)
+            raise self.retry(exc=exc, countdown=countdown)
+        except self.MaxRetriesExceededError:
+            logger.error(
+                'Max retries exceeded for contact confirmation for message #%s. Final error: %s',
+                contact_message_id, error_msg,
             )
             return {'status': 'failed', 'error': error_msg, 'retries_exhausted': True}

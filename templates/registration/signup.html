@@ -594,7 +594,42 @@
       </p>
 
       <form method="post" action="{% url 'store:signup' %}" id="signup-form">
-        {% csrf_token %} {{ form|crispy }}
+        {% csrf_token %}
+        {{ form.first_name|as_crispy_field }}
+        {{ form.last_name|as_crispy_field }}
+        {{ form.username|as_crispy_field }}
+        {{ form.email|as_crispy_field }}
+        {{ form.phone_number|as_crispy_field }}
+        {{ form.password1|as_crispy_field }}
+        {{ form.password2|as_crispy_field }}
+
+        <div class="mb-3">
+          <label class="form-label" style="margin-bottom:7px;color:var(--auth-green-deep);font-weight:800;">Verify Account Using *</label>
+          <div class="d-flex gap-3">
+            <label class="verify-option flex-fill d-flex align-items-center gap-2 p-3 rounded-3" style="border:2px solid var(--auth-line);cursor:pointer;transition:all 0.2s;" id="verify-email-label">
+              <input type="radio" name="verification_method" value="email" class="form-check-input" {% if form.verification_method.value == 'email' or not form.verification_method.value %}checked{% endif %} onchange="updateVerifyChoice(this)">
+              <div>
+                <i class="bi bi-envelope-check" style="font-size:1.2rem;color:var(--auth-green);"></i>
+                <span style="font-weight:800;font-size:0.9rem;">Email Address</span>
+              </div>
+            </label>
+            <label class="verify-option flex-fill d-flex align-items-center gap-2 p-3 rounded-3" style="border:2px solid var(--auth-line);cursor:pointer;transition:all 0.2s;" id="verify-phone-label">
+              <input type="radio" name="verification_method" value="phone" class="form-check-input" {% if form.verification_method.value == 'phone' %}checked{% endif %} onchange="updateVerifyChoice(this)">
+              <div>
+                <i class="bi bi-phone" style="font-size:1.2rem;color:var(--auth-green);"></i>
+                <span style="font-weight:800;font-size:0.9rem;">Phone Number</span>
+              </div>
+            </label>
+          </div>
+          {% if form.verification_method.errors %}
+          <div class="invalid-feedback d-block">{{ form.verification_method.errors.0 }}</div>
+          {% endif %}
+        </div>
+
+        {{ form.age|as_crispy_field }}
+        {{ form.address|as_crispy_field }}
+        {{ form.state|as_crispy_field }}
+
         <button type="submit" class="auth-submit">
           <i class="bi bi-person-plus me-2"></i>Create Account
         </button>
@@ -602,9 +637,9 @@
 
       <div class="otp-note">
         <i class="bi bi-info-circle"></i>
-        <div>
-          After signup, you will verify email first, then confirm your phone
-          with SMS OTP before your account is activated.
+        <div id="verify-info-text">
+          Choose how you want to verify your account. You only need to verify
+          <strong>one</strong> contact method — either email or phone number.
         </div>
       </div>
 
@@ -618,10 +653,33 @@
 {% endblock %}
 {% block extra_js %}
 <script>
+  function updateVerifyChoice(radio) {
+    const emailLabel = document.getElementById('verify-email-label');
+    const phoneLabel = document.getElementById('verify-phone-label');
+    const infoText = document.getElementById('verify-info-text');
+    const selected = radio.value;
+
+    emailLabel.style.borderColor = selected === 'email' ? 'var(--auth-green)' : 'var(--auth-line)';
+    emailLabel.style.background = selected === 'email' ? 'rgba(21,128,61,0.06)' : 'transparent';
+    phoneLabel.style.borderColor = selected === 'phone' ? 'var(--auth-green)' : 'var(--auth-line)';
+    phoneLabel.style.background = selected === 'phone' ? 'rgba(21,128,61,0.06)' : 'transparent';
+
+    if (infoText) {
+      if (selected === 'email') {
+        infoText.innerHTML = 'A verification code will be sent to your <strong>email address</strong>. Phone number will be saved but does not require verification.';
+      } else {
+        infoText.innerHTML = 'A verification code will be sent to your <strong>phone number</strong> via SMS. Email will be saved but does not require verification.';
+      }
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById("signup-form");
-
     if (!form) return;
+
+    // Initialize selection styling
+    const checked = form.querySelector('input[name="verification_method"]:checked');
+    if (checked) updateVerifyChoice(checked);
 
     form.querySelectorAll('input[type="password"]').forEach((input, index) => {
       const wrapper = document.createElement("div");

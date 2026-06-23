@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm
+from django.utils.decorators import method_decorator
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
@@ -33,9 +34,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
-from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm
+from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm, ContactForm
 from .models import (Category, Subcategory, Order, OrderAddress, OrderItem, Product, Review, UserProfile, CartItem,
-                     Profile, PhoneOTP, OTP, NewsletterSubscriber)
+                     Profile, PhoneOTP, OTP, NewsletterSubscriber, OrderTracking, OrderTrackingHistory, Notification,
+                     OrderStatusHistory)
 from .notifications import send_order_notifications as trigger_order_notifications
 from .signals import create_otp, generate_and_send_otp, send_otp_email
 from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_products
@@ -43,6 +45,15 @@ from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_p
 logger = logging.getLogger(__name__)
 PHONE_OTP_RESEND_COOLDOWN_SECONDS = 30
 PHONE_OTP_MAX_ATTEMPTS = 3
+
+
+def api_login_required(view_func):
+    """Decorator that returns JSON 401 for unauthenticated API requests instead of redirecting to login."""
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({'success': False, 'error': 'Authentication required.'}, status=401)
+        return view_func(request, *args, **kwargs)
+    return wrapped
 
 
 def deliver_email_otp(user, request=None, create_new=False):
@@ -200,6 +211,17 @@ def normal_login_view(request):
                     return redirect(next_url)
                 return redirect('store:dashboard')
             else:
+                # Check if user exists but is inactive (pending verification)
+                try:
+                    inactive_user = User.objects.get(username=username)
+                    if not inactive_user.is_active and inactive_user.check_password(password):
+                        messages.warning(
+                            request,
+                            "Your account is not yet active. Please verify your email address or phone number before logging in."
+                        )
+                        return redirect('store:login')
+                except User.DoesNotExist:
+                    pass
                 messages.error(request, "Invalid username or password.")
         else:
             messages.error(request, "Invalid username or password.")
@@ -657,8 +679,29 @@ def add_to_cart(request):
         if not created:
             cart_item.quantity += quantity
             cart_item.save()
+
+        if created:
+            Notification.objects.create(
+                user=request.user,
+                title='Product added to cart',
+                message=f'{product.title} has been added to your cart.',
+                notification_type='order',
+            )
+        
+        # Get updated cart count
+        cart_count = CartItem.objects.filter(user=request.user).count()
+        
+        # Return JSON for AJAX requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'message': f'{product.title} added to cart!',
+                'cart_count': cart_count,
+                'product_title': product.title,
+            })
+        
         messages.success(request, f'{product.title} added to cart!')
-    return redirect('store:cart')
+        return redirect('store:cart')
 
 
 def _product_image_url(product):
@@ -873,17 +916,47 @@ def signup(request):
             profile.save()
 
             normalized_phone = form.cleaned_data.get('phone_number')
+            verification_method = form.cleaned_data.get('verification_method', 'email')
+
+            # Store verification method on Profile
+            try:
+                phone_profile, _ = Profile.objects.get_or_create(
+                    user=user,
+                    defaults={'phone_number': normalized_phone or 'pending'}
+                )
+                phone_profile.verification_method = verification_method
+                phone_profile.save(update_fields=['verification_method'])
+            except Exception:
+                pass
+
             request.session['signup_user_id'] = user.id
             request.session['signup_phone'] = normalized_phone
+            request.session['verification_method'] = verification_method
             request.session['email_verified'] = False
             request.session['email_otp_resend_at'] = timezone.now().isoformat()
 
-            _, email_sent, _ = deliver_email_otp(user, request=request)
-            if email_sent:
-                messages.success(request, 'Account created. Please verify your email address with the code we sent.')
+            if verification_method == 'phone':
+                # Skip email verification, go directly to phone OTP
+                request.session['email_verified'] = True
+                try:
+                    otp_code = generate_otp()
+                    send_otp_via_twilio(normalized_phone, otp_code)
+                    create_or_update_phone_otp(normalized_phone, otp_code)
+                    request.session['signup_phone_otp_sent_at'] = timezone.now().isoformat()
+                    request.session['signup_phone_otp_phone'] = normalized_phone
+                    messages.success(request, f'OTP has been sent to your phone number.')
+                except Exception:
+                    logger.exception('Failed to send signup phone OTP for user %s', user.id)
+                    messages.warning(request, 'Account created, but we could not send the phone OTP right now. Please use resend OTP.')
+                return redirect('store:verify_signup_phone_otp')
             else:
-                messages.warning(request, 'Account created, but we could not send the email OTP right now. Please use resend OTP.')
-            return redirect('store:verify_email_otp')
+                # Email verification flow
+                _, email_sent, _ = deliver_email_otp(user, request=request)
+                if email_sent:
+                    messages.success(request, 'Account created. Please verify your email address with the code we sent.')
+                else:
+                    messages.warning(request, 'Account created, but we could not send the email OTP right now. Please use resend OTP.')
+                return redirect('store:verify_email_otp')
     else:
         form = CustomUserCreationForm()
     return render(request, 'registration/signup.html', {'form': form})
@@ -896,6 +969,7 @@ def verify_email_otp_view(request):
         return redirect('store:signup')
 
     user = get_object_or_404(User, id=signup_user_id, is_active=False)
+    verification_method = request.session.get('verification_method', 'email')
 
     if request.method == 'POST':
         form = OTPVerificationForm(request.POST, user=user)
@@ -906,22 +980,66 @@ def verify_email_otp_view(request):
                 latest_otp.save()
 
             request.session['email_verified'] = True
-            try:
-                success, wait_seconds = send_signup_phone_otp(request, request.session['signup_phone'])
-                if success:
-                    messages.success(request, 'OTP has been sent to your phone number.')
-                else:
-                    messages.warning(request, f'Email verified. Please wait {wait_seconds} seconds before requesting a new phone OTP.')
-            except Exception:
-                logger.exception('Failed to automatically send signup phone OTP for user %s', user.id)
-                messages.error(request, 'Email verified, but we could not send the phone OTP right now. Please use resend OTP.')
-            return redirect('store:verify_signup_phone_otp')
+
+            if verification_method == 'email':
+                # Email is the chosen method — activate account now
+                user.is_active = True
+                user.save()
+
+                # Mark email as verified on Profile
+                try:
+                    phone_profile, _ = Profile.objects.get_or_create(
+                        user=user,
+                        defaults={'phone_number': 'pending'}
+                    )
+                    phone_profile.is_email_verified = True
+                    phone_profile.verified_at = timezone.now()
+                    phone_profile.save()
+                except Exception:
+                    pass
+
+                # Store phone on UserProfile if provided
+                phone = request.session.get('signup_phone')
+                if phone:
+                    user_profile, _ = UserProfile.objects.get_or_create(user=user)
+                    user_profile.phone_number = phone
+                    user_profile.save()
+
+                login(request, user)
+                request.session.pop('signup_user_id', None)
+                request.session.pop('signup_phone', None)
+                request.session.pop('email_verified', None)
+                request.session.pop('email_otp_resend_at', None)
+                request.session.pop('verification_method', None)
+
+                Notification.objects.create(
+                    user=user,
+                    title='Account activated',
+                    message='Your account has been verified and activated successfully via email.',
+                    notification_type='auth',
+                )
+
+                messages.success(request, 'Email verified and account activated. Welcome to GroceryHub!')
+                return redirect('store:dashboard')
+            else:
+                # Phone was chosen, but email was still verified — proceed to phone OTP
+                try:
+                    success, wait_seconds = send_signup_phone_otp(request, request.session['signup_phone'])
+                    if success:
+                        messages.success(request, 'OTP has been sent to your phone number.')
+                    else:
+                        messages.warning(request, f'Email verified. Please wait {wait_seconds} seconds before requesting a new phone OTP.')
+                except Exception:
+                    logger.exception('Failed to automatically send signup phone OTP for user %s', user.id)
+                    messages.error(request, 'Email verified, but we could not send the phone OTP right now. Please use resend OTP.')
+                return redirect('store:verify_signup_phone_otp')
     else:
         form = OTPVerificationForm(user=user)
 
     return render(request, 'registration/verify_email_otp.html', {
         'form': form,
         'user_email': user.email,
+        'verification_method': verification_method,
         'email_delivery_failed': request.session.get('email_otp_delivery_failed', False),
         'debug_email_otp': request.session.get('email_otp_debug_code') if getattr(settings, 'EMAIL_OTP_SHOW_ON_DELIVERY_FAILURE', False) else '',
     })
@@ -963,6 +1081,7 @@ def verify_phone_otp_view(request):
     signup_user_id = request.session.get('signup_user_id')
     email_verified = request.session.get('email_verified')
     phone = request.session.get('signup_phone')
+    verification_method = request.session.get('verification_method', 'email')
 
     if not signup_user_id or not email_verified or not phone:
         messages.error(request, 'Please complete signup and email verification first.')
@@ -1015,8 +1134,10 @@ def verify_phone_otp_view(request):
                     user=user,
                     defaults={
                         'phone_number': phone,
-                        'is_email_verified': True,
                         'is_phone_verified': True,
+                        'is_email_verified': verification_method == 'email' and email_verified,
+                        'verification_method': verification_method,
+                        'verified_at': timezone.now(),
                     }
                 )
             except IntegrityError:
@@ -1034,6 +1155,14 @@ def verify_phone_otp_view(request):
             request.session.pop('email_otp_resend_at', None)
             request.session.pop('signup_phone_otp_sent_at', None)
             request.session.pop('signup_phone_otp_phone', None)
+            request.session.pop('verification_method', None)
+
+            Notification.objects.create(
+                user=user,
+                title='Account activated',
+                message='Your account has been verified and activated successfully via phone.',
+                notification_type='auth',
+            )
 
             messages.success(request, 'Phone verified and account activated. Welcome to GroceryHub!')
             return redirect('store:dashboard')
@@ -1191,6 +1320,7 @@ def profile(request):
 
     context = {
         'profile': user_profile,
+        'profile_obj': getattr(request.user, 'phone_profile', None),
         'recent_orders': recent_orders,
         'total_orders': total_orders,
         'paid_orders': paid_orders,
@@ -1207,6 +1337,12 @@ def edit_profile(request):
         form = ProfileForm(request.POST, request.FILES, instance=user_profile)
         if form.is_valid():
             form.save()
+            Notification.objects.create(
+                user=request.user,
+                title='Profile updated',
+                message='Your profile has been updated successfully.',
+                notification_type='profile',
+            )
             messages.success(request, 'Profile updated successfully!')
             return redirect('store:profile')
         else:
@@ -1270,6 +1406,7 @@ def profile_dashboard(request):
 
     context = {
         'profile': user_profile,
+        'profile_obj': getattr(request.user, 'phone_profile', None),
         'recent_orders': recent_orders,
         'total_orders': total_orders,
         'paid_orders': paid_orders,
@@ -1699,6 +1836,7 @@ def send_order_confirmation_email(order):
     order_items = order.items.select_related('product').all()
 
     subject = f'Order #{order.id} Confirmed - GroceryHub'
+    track_order_url = f"https://groc-production-6c7e.up.railway.app/track-order/{order.id}/"
     html_message = render_to_string('emails/order_confirmation.html', {
         'order': order,
         'order_items': order_items,
@@ -1706,6 +1844,7 @@ def send_order_confirmation_email(order):
         'customer_name': customer_name,
         'customer_email': customer_email,
         'customer_phone': customer_phone,
+        'track_order_url': track_order_url,
     })
     plain_message = strip_tags(html_message)
 
@@ -1813,7 +1952,26 @@ def about(request):
 
 
 def contact(request):
-    return render(request, 'contact.html')
+    form = ContactForm()
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            contact_message = form.save(commit=False)
+            contact_message.ip_address = request.META.get('REMOTE_ADDR')
+            contact_message.save()
+            try:
+                from services.email_service import send_contact_notification, send_contact_confirmation
+                send_contact_notification(contact_message)
+                send_contact_confirmation(contact_message)
+            except Exception as e:
+                logger.error('Contact email notification failed: %s', e)
+            messages.success(
+                request,
+                'Message Sent Successfully! Thank you for contacting GrocHub. '
+                'Your message has been received and our team will respond as soon as possible.'
+            )
+            return redirect('store:contact')
+    return render(request, 'contact.html', {'form': form})
 
 
 # ---------- Category & Subcategory Product Pages ----------
@@ -1936,6 +2094,171 @@ def subsubcategory_products(request, category_slug, subcategory_slug, subsubcate
     return render(request, 'products/subsubcategory_products.html', context)
 
 
+# ============================================================
+# Profile Verification (Post-Login OTP Verification)
+# ============================================================
+
+@login_required
+@require_POST
+def profile_send_otp(request):
+    """Send an OTP to the user's email or phone for profile verification."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        data = {}
+
+    method = data.get('method', 'email')
+    user = request.user
+
+    # Rate limiting: check session for last OTP send time
+    last_sent = request.session.get('profile_otp_sent_at')
+    if last_sent:
+        from datetime import datetime
+        try:
+            last_sent_dt = datetime.fromisoformat(last_sent)
+            elapsed = (timezone.now() - last_sent_dt).total_seconds()
+            if elapsed < 30:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Please wait {int(30 - elapsed)} seconds before requesting a new OTP.',
+                }, status=429)
+        except (ValueError, TypeError):
+            pass
+
+    if method == 'email':
+        if not user.email:
+            return JsonResponse({'success': False, 'error': 'No email address on file.'}, status=400)
+        otp_code = generate_otp()
+        expires_at = timezone.now() + timedelta(minutes=5)
+        from .models import OTP
+        # Invalidate old OTPs
+        OTP.objects.filter(user=user, is_latest=True).update(is_latest=False)
+        otp = OTP.objects.create(user=user, otp=otp_code, expires_at=expires_at, is_latest=True)
+        try:
+            from django.core.mail import send_mail
+            subject = 'Your Profile Verification Code'
+            html = render_to_string('registration/otp_email.html', {
+                'user': user, 'otp': otp_code, 'expires_in': '5 minutes',
+            })
+            plain = strip_tags(html)
+            send_mail(subject, plain, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=html, fail_silently=False)
+        except Exception as exc:
+            logger.warning('Failed to send profile verification email to %s: %s', user.email, exc)
+            return JsonResponse({'success': False, 'error': 'Could not send email OTP. Please try again later.'}, status=500)
+
+    elif method == 'phone':
+        phone = None
+        user_profile = getattr(user, 'userprofile', None)
+        if user_profile and user_profile.phone_number:
+            phone = user_profile.phone_number
+        if not phone:
+            phone_profile = getattr(user, 'phone_profile', None)
+            if phone_profile and phone_profile.phone_number:
+                phone = phone_profile.phone_number
+        if not phone:
+            return JsonResponse({'success': False, 'error': 'No phone number on file.'}, status=400)
+        otp_code = generate_otp()
+        try:
+            send_otp_via_twilio(phone, otp_code)
+        except Exception as exc:
+            logger.warning('Failed to send profile verification SMS to %s: %s', phone, exc)
+            return JsonResponse({'success': False, 'error': 'Could not send SMS OTP. Please try again later.'}, status=500)
+        # Store in session for verification (both keys for compatibility)
+        request.session['profile_phone_otp'] = otp_code
+        request.session['profile_otp_code'] = otp_code
+    else:
+        return JsonResponse({'success': False, 'error': 'Invalid verification method.'}, status=400)
+
+    request.session['profile_otp_sent_at'] = timezone.now().isoformat()
+    request.session['profile_otp_method'] = method
+    request.session['profile_otp_attempts'] = 0
+    # Store OTP in session for both methods (for simple verification)
+    if method == 'email':
+        request.session['profile_otp_code'] = otp.otp
+        request.session['profile_otp_expires'] = otp.expires_at.isoformat()
+
+    return JsonResponse({
+        'success': True,
+        'message': f'OTP sent to your {"email" if method == "email" else "phone number"}.',
+        'method': method,
+    })
+
+
+@login_required
+@require_POST
+def profile_verify_otp(request):
+    """Verify the OTP and mark the profile as verified."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        data = {}
+
+    otp_input = data.get('otp', '').strip()
+    if not otp_input:
+        return JsonResponse({'success': False, 'error': 'Please enter the OTP.'}, status=400)
+
+    # Rate limiting on attempts
+    attempts = request.session.get('profile_otp_attempts', 0)
+    if attempts >= 5:
+        return JsonResponse({'success': False, 'error': 'Too many failed attempts. Please request a new OTP.'}, status=429)
+
+    stored_otp = request.session.get('profile_otp_code', '')
+    expires_iso = request.session.get('profile_otp_expires')
+    method = request.session.get('profile_otp_method', 'email')
+
+    if not stored_otp:
+        return JsonResponse({'success': False, 'error': 'No OTP found. Please request a new one.'}, status=400)
+
+    # Check expiry
+    if expires_iso:
+        try:
+            from datetime import datetime
+            expires_dt = datetime.fromisoformat(expires_iso)
+            if timezone.now() > expires_dt:
+                return JsonResponse({'success': False, 'error': 'OTP has expired. Please request a new one.'}, status=400)
+        except (ValueError, TypeError):
+            pass
+
+    if otp_input != stored_otp:
+        request.session['profile_otp_attempts'] = attempts + 1
+        remaining = max(0, 5 - (attempts + 1))
+        return JsonResponse({
+            'success': False,
+            'error': f'Invalid OTP. You have {remaining} attempt(s) left.',
+        }, status=400)
+
+    # OTP verified — mark profile as verified
+    user = request.user
+    try:
+        phone_profile = getattr(user, 'phone_profile', None)
+        if phone_profile:
+            phone_profile.profile_verified_at = timezone.now()
+            if method == 'email':
+                phone_profile.is_email_verified = True
+            else:
+                phone_profile.is_phone_verified = True
+            phone_profile.save()
+    except Exception as exc:
+        logger.warning('Failed to update profile verification for user %s: %s', user.id, exc)
+
+    # Create notification
+    Notification.objects.create(
+        user=user,
+        title='Account verified',
+        message='Your account has been successfully verified via ' + ('email' if method == 'email' else 'phone') + '.',
+        notification_type='auth',
+    )
+
+    # Clear session OTP data
+    for key in ['profile_otp_code', 'profile_otp_expires', 'profile_otp_sent_at', 'profile_otp_method', 'profile_otp_attempts', 'profile_phone_otp']:
+        request.session.pop(key, None)
+
+    return JsonResponse({
+        'success': True,
+        'message': 'Your account has been successfully verified!',
+    })
+
+
 @require_POST
 def newsletter_subscribe(request):
     """
@@ -2016,4 +2339,399 @@ def load_subcategories(request):
     category_id = request.GET.get('category_id')
     subcategories = Subcategory.objects.filter(category_id=category_id).values('id', 'name', 'slug')
     return JsonResponse(list(subcategories), safe=False)
+
+
+# ============================================================
+# Order Tracking / Delivery Tracking Views
+# ============================================================
+
+@login_required
+def my_orders(request):
+    """Display all orders for the logged-in customer with search, filter, and sort."""
+    orders = Order.objects.filter(
+        user=request.user
+    ).select_related('shipping_address').prefetch_related(
+        'items__product', 'tracking', 'status_history'
+    )
+
+    # Search by Order ID
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        orders = orders.filter(
+            Q(order_id__icontains=search_query) | Q(id__icontains=search_query)
+        )
+
+    # Filter by Status
+    status_filter = request.GET.get('status', '').strip()
+    if status_filter and status_filter in dict(Order.ORDER_STATUS_CHOICES):
+        orders = orders.filter(status=status_filter)
+
+    # Filter by Payment Status
+    payment_filter = request.GET.get('payment', '').strip()
+    if payment_filter and payment_filter in dict(Order.PAYMENT_STATUS_CHOICES):
+        orders = orders.filter(payment_status=payment_filter)
+
+    # Date range filter
+    date_from = request.GET.get('date_from', '').strip()
+    date_to = request.GET.get('date_to', '').strip()
+    if date_from:
+        orders = orders.filter(created_at__gte=date_from)
+    if date_to:
+        orders = orders.filter(created_at__lte=date_to + ' 23:59:59')
+
+    # Sort
+    sort_by = request.GET.get('sort', '-created_at')
+    valid_sorts = {
+        'latest': '-created_at',
+        'oldest': 'created_at',
+        'highest': '-total_amount',
+        'lowest': 'total_amount',
+    }
+    sort_field = valid_sorts.get(sort_by, '-created_at')
+    orders = orders.order_by(sort_field)
+
+    paginator = Paginator(orders, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'orders': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'payment_filter': payment_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'sort_by': sort_by,
+        'status_choices': Order.ORDER_STATUS_CHOICES,
+        'payment_status_choices': Order.PAYMENT_STATUS_CHOICES,
+        'sort_choices': [
+            ('latest', 'Latest First'),
+            ('oldest', 'Oldest First'),
+            ('highest', 'Highest Amount'),
+            ('lowest', 'Lowest Amount'),
+        ],
+    }
+    return render(request, 'my_orders.html', context)
+
+
+@login_required
+def order_detail(request, order_id):
+    """Display detailed information for a specific order."""
+    order = get_object_or_404(Order, id=order_id)
+
+    # Security: customers can only view their own orders; admins can view all
+    if not request.user.is_staff and order.user != request.user:
+        messages.error(request, 'You do not have permission to view this order.')
+        return redirect('store:profile_dashboard')
+
+    # Get related data
+    items = OrderItem.objects.filter(order=order).select_related('product')
+    shipping_address = getattr(order, 'shipping_address', None)
+    status_history = OrderStatusHistory.objects.filter(order=order).order_by('-created_at')
+    tracking, created = OrderTracking.objects.get_or_create(order=order)
+    tracking_history = OrderTrackingHistory.objects.filter(tracking=tracking).order_by('created_at')
+
+    # Build timeline
+    status_sequence = ['pending', 'confirmed', 'packed', 'shipped', 'out_for_delivery', 'delivered']
+    timeline_items = []
+    for s in status_sequence:
+        is_completed = tracking.is_status_completed(s)
+        is_current = tracking.is_current_status(s)
+        if tracking.status == 'cancelled' and s == 'pending':
+            css_class = 'cancelled'
+        elif is_completed:
+            css_class = 'completed'
+        elif is_current:
+            css_class = 'current'
+        else:
+            css_class = ''
+        timeline_items.append({
+            'key': s,
+            'label': {
+                'pending': 'Order Placed',
+                'confirmed': 'Order Confirmed',
+                'packed': 'Packed',
+                'shipped': 'Shipped',
+                'out_for_delivery': 'Out For Delivery',
+                'delivered': 'Delivered',
+            }[s],
+            'icon': {
+                'pending': 'bi-receipt',
+                'confirmed': 'bi-check-lg',
+                'packed': 'bi-box-seam',
+                'shipped': 'bi-truck',
+                'out_for_delivery': 'bi-geo-alt',
+                'delivered': 'bi-house-check',
+            }[s],
+            'css_class': css_class,
+        })
+
+    context = {
+        'order': order,
+        'items': items,
+        'shipping_address': shipping_address,
+        'status_history': status_history,
+        'tracking': tracking,
+        'tracking_history': tracking_history,
+        'timeline_items': timeline_items,
+    }
+    return render(request, 'order_detail.html', context)
+
+
+@login_required
+def track_order(request, order_id):
+    """Display the tracking page for a specific order."""
+    order = get_object_or_404(Order, id=order_id)
+
+    # Security: customers can only track their own orders; admins can track all
+    if not request.user.is_staff and order.user != request.user:
+        messages.error(request, 'You do not have permission to view this order.')
+        return redirect('store:profile_dashboard')
+
+    # Get or create tracking record
+    tracking, created = OrderTracking.objects.get_or_create(order=order)
+
+    # Get history records
+    history = OrderTrackingHistory.objects.filter(tracking=tracking).order_by('created_at')
+
+    # Pre-compute timeline item classes to avoid complex template logic
+    status_sequence = ['pending', 'confirmed', 'packed', 'shipped', 'out_for_delivery', 'delivered']
+    timeline_items = []
+    for s in status_sequence:
+        is_completed = tracking.is_status_completed(s)
+        is_current = tracking.is_current_status(s)
+        if tracking.status == 'cancelled' and s == 'pending':
+            css_class = 'cancelled'
+        elif is_completed:
+            css_class = 'completed'
+        elif is_current:
+            css_class = 'current'
+        else:
+            css_class = ''
+        timeline_items.append({
+            'key': s,
+            'label': {
+                'pending': 'Order Placed',
+                'confirmed': 'Order Confirmed',
+                'packed': 'Packed',
+                'shipped': 'Shipped',
+                'out_for_delivery': 'Out For Delivery',
+                'delivered': 'Delivered',
+            }[s],
+            'icon': {
+                'pending': 'bi-receipt',
+                'confirmed': 'bi-check-lg',
+                'packed': 'bi-box-seam',
+                'shipped': 'bi-truck',
+                'out_for_delivery': 'bi-geo-alt',
+                'delivered': 'bi-house-check',
+            }[s],
+            'css_class': css_class,
+        })
+
+    context = {
+        'order': order,
+        'tracking': tracking,
+        'history': history,
+        'timeline_items': timeline_items,
+    }
+    return render(request, 'track_order.html', context)
+
+
+@login_required
+def api_order_status(request, order_id):
+    """API endpoint to get the current order status (for real-time updates)."""
+    order = get_object_or_404(Order, id=order_id)
+
+    # Security: customers can only view their own orders; admins can view all
+    if not request.user.is_staff and order.user != request.user:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    tracking, created = OrderTracking.objects.get_or_create(order=order)
+    status_history = OrderStatusHistory.objects.filter(order=order).order_by('-created_at')
+
+    return JsonResponse({
+        'order_id': order.order_id,
+        'order_status': order.status,
+        'order_status_display': order.get_status_display(),
+        'payment_status': order.payment_status,
+        'payment_status_display': order.get_payment_status_display(),
+        'tracking_status': tracking.status,
+        'tracking_status_display': tracking.get_status_display(),
+        'progress_percentage': tracking.get_progress_percentage(),
+        'estimated_delivery': tracking.estimated_delivery_date.isoformat() if tracking.estimated_delivery_date else None,
+        'status_history': [
+            {
+                'previous': h.previous_status,
+                'new': h.new_status,
+                'changed_by': h.changed_by_name,
+                'date': h.created_at.strftime('%d %b %Y %I:%M %p'),
+            }
+            for h in status_history
+        ],
+    })
+
+
+# ============================================================
+# Notification Center Views & APIs
+# ============================================================
+
+def _serialize_notification(n):
+    return {
+        'id': n.id,
+        'title': n.title,
+        'message': n.message,
+        'type': n.notification_type,
+        'type_display': n.get_notification_type_display(),
+        'is_read': n.is_read,
+        'created_at': n.created_at.strftime('%d %b %Y, %I:%M %p'),
+        'time_ago': _time_ago(n.created_at),
+    }
+
+
+def _time_ago(dt):
+    diff = timezone.now() - dt
+    seconds = int(diff.total_seconds())
+    if seconds < 60:
+        return 'Just now'
+    minutes = seconds // 60
+    if minutes < 60:
+        return f'{minutes}m ago'
+    hours = minutes // 60
+    if hours < 24:
+        return f'{hours}h ago'
+    days = hours // 24
+    if days < 30:
+        return f'{days}d ago'
+    return dt.strftime('%d %b %Y')
+
+
+@login_required
+def notifications_page(request):
+    """Full notification page with pagination, search, and filter."""
+    qs = Notification.objects.filter(user=request.user)
+
+    search_query = request.GET.get('q', '').strip()
+    if search_query:
+        qs = qs.filter(Q(title__icontains=search_query) | Q(message__icontains=search_query))
+
+    filter_type = request.GET.get('type', '').strip()
+    if filter_type in dict(Notification.NOTIFICATION_TYPE_CHOICES):
+        qs = qs.filter(notification_type=filter_type)
+
+    filter_read = request.GET.get('read', '').strip()
+    if filter_read == 'unread':
+        qs = qs.filter(is_read=False)
+    elif filter_read == 'read':
+        qs = qs.filter(is_read=True)
+
+    paginator = Paginator(qs, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    context = {
+        'page_obj': page_obj,
+        'notifications': page_obj,
+        'is_paginated': page_obj.has_other_pages(),
+        'search_query': search_query,
+        'filter_type': filter_type,
+        'filter_read': filter_read,
+        'total_count': qs.count(),
+        'type_choices': Notification.NOTIFICATION_TYPE_CHOICES,
+    }
+    return render(request, 'notifications.html', context)
+
+
+@api_login_required
+def api_notification_list(request):
+    """Return recent notifications as JSON for the dropdown (max 10)."""
+    notifications = Notification.objects.filter(user=request.user)[:10]
+    return JsonResponse({
+        'notifications': [_serialize_notification(n) for n in notifications],
+        'unread_count': Notification.objects.filter(user=request.user, is_read=False).count(),
+        'total_count': Notification.objects.filter(user=request.user).count(),
+    })
+
+
+@api_login_required
+def api_notification_unread_count(request):
+    """Return just the unread count for badge polling."""
+    count = Notification.objects.filter(user=request.user, is_read=False).count()
+    total = Notification.objects.filter(user=request.user).count()
+    return JsonResponse({'unread_count': count, 'total_count': total})
+
+
+@login_required
+@require_POST
+def api_notification_mark_read(request):
+    """Mark a single notification as read."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        data = {}
+    notification_id = data.get('id') or request.POST.get('id')
+    if not notification_id:
+        return JsonResponse({'success': False, 'error': 'Notification ID required.'}, status=400)
+    try:
+        n = Notification.objects.get(id=notification_id, user=request.user)
+        n.is_read = True
+        n.save(update_fields=['is_read'])
+        return JsonResponse({'success': True, 'unread_count': Notification.objects.filter(user=request.user, is_read=False).count()})
+    except Notification.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Notification not found.'}, status=404)
+
+
+@login_required
+@require_POST
+def api_notification_mark_unread(request):
+    """Mark a single notification as unread."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        data = {}
+    notification_id = data.get('id') or request.POST.get('id')
+    if not notification_id:
+        return JsonResponse({'success': False, 'error': 'Notification ID required.'}, status=400)
+    try:
+        n = Notification.objects.get(id=notification_id, user=request.user)
+        n.is_read = False
+        n.save(update_fields=['is_read'])
+        return JsonResponse({'success': True, 'unread_count': Notification.objects.filter(user=request.user, is_read=False).count()})
+    except Notification.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Notification not found.'}, status=404)
+
+
+@login_required
+@require_POST
+def api_notification_delete(request):
+    """Delete a single notification."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        data = {}
+    notification_id = data.get('id') or request.POST.get('id')
+    if not notification_id:
+        return JsonResponse({'success': False, 'error': 'Notification ID required.'}, status=400)
+    try:
+        Notification.objects.filter(id=notification_id, user=request.user).delete()
+        return JsonResponse({'success': True, 'unread_count': Notification.objects.filter(user=request.user, is_read=False).count()})
+    except Notification.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Notification not found.'}, status=404)
+
+
+@login_required
+@require_POST
+def api_notification_mark_all_read(request):
+    """Mark all notifications as read for the current user."""
+    Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
+    return JsonResponse({'success': True, 'unread_count': 0})
+
+
+@login_required
+@require_POST
+def api_notification_clear_all(request):
+    """Delete all notifications for the current user."""
+    Notification.objects.filter(user=request.user).delete()
+    return JsonResponse({'success': True, 'unread_count': 0})
 

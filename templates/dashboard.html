@@ -463,6 +463,11 @@
           <div class="panel-body">
             <h2 class="section-heading"><i class="bi bi-box-seam"></i> Recent Orders</h2>
             {% if recent_orders %}
+            <div class="d-flex justify-content-end mb-2">
+              <a href="{% url 'store:my_orders' %}" class="btn btn-sm btn-outline-success" style="font-weight: 800;">
+                View All Orders <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
             {% for order in recent_orders %}
             <div class="order-row">
               <span class="order-id">#{{ order.id }}</span>
@@ -470,7 +475,12 @@
                 <div class="order-info">Rs. {{ order.total_amount }}</div>
                 <div class="order-info"><i class="bi bi-calendar3"></i> {{ order.created_at|date:"d M Y, h:i A" }}</div>
               </div>
-              <span class="status-pill {{ order.status }}">{{ order.get_status_display }}</span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="status-pill {{ order.status }}">{{ order.get_status_display }}</span>
+                <a href="{% url 'store:track_order' order.id %}" class="btn btn-sm btn-outline-success" title="Track Order">
+                  <i class="bi bi-box-seam"></i>
+                </a>
+              </div>
             </div>
             {% endfor %}
             {% else %}

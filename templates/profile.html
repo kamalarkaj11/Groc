@@ -294,6 +294,145 @@
 
   .full-width { grid-column: 1 / -1; }
 
+  /* Verify Banner */
+  .verify-banner {
+    margin-top: 20px;
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.12);
+    overflow: hidden;
+  }
+  .verify-banner--success {
+    border-color: var(--pf-green);
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    box-shadow: 0 8px 24px rgba(25, 135, 84, 0.10);
+  }
+  .verify-banner-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 24px;
+    flex-wrap: wrap;
+  }
+  .verify-banner-icon {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    color: #92400e;
+    background: rgba(245, 158, 11, 0.15);
+  }
+  .verify-banner-icon--success {
+    color: var(--pf-green);
+    background: rgba(25, 135, 84, 0.12);
+  }
+  .verify-banner-text {
+    flex: 1;
+    min-width: 0;
+  }
+  .verify-banner-text strong {
+    display: block;
+    font-size: 1rem;
+    font-weight: 900;
+    color: var(--pf-ink);
+  }
+  .verify-banner-text span {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--pf-muted);
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  /* Verify Modal */
+  .verify-modal .modal-content {
+    border: 0;
+    border-radius: 16px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.18);
+    overflow: hidden;
+  }
+  .verify-modal .modal-header {
+    background: linear-gradient(135deg, var(--pf-green), var(--pf-mint));
+    color: #fff;
+    border: 0;
+    padding: 24px 28px;
+  }
+  .verify-modal .modal-title {
+    font-weight: 900;
+    font-size: 1.2rem;
+  }
+  .verify-modal .modal-header .btn-close {
+    filter: brightness(0) invert(1);
+  }
+  .verify-modal .modal-body {
+    padding: 28px;
+  }
+  .verify-modal .otp-input {
+    width: 100%;
+    height: 60px;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: 12px;
+    border: 2px solid var(--pf-line);
+    border-radius: 12px;
+    background: var(--pf-soft);
+    color: var(--pf-ink);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .verify-modal .otp-input:focus {
+    border-color: var(--pf-green);
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.12);
+  }
+  .verify-modal .verify-submit {
+    width: 100%;
+    min-height: 52px;
+    border: 0;
+    border-radius: 10px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--pf-green), var(--pf-mint));
+    font-weight: 900;
+    font-size: 1rem;
+    box-shadow: 0 12px 28px rgba(25, 135, 84, 0.22);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .verify-modal .verify-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px rgba(25, 135, 84, 0.28);
+  }
+  .verify-modal .verify-submit:disabled {
+    opacity: 0.6;
+    transform: none;
+    cursor: not-allowed;
+  }
+  .verify-error {
+    color: #dc3545;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: center;
+    min-height: 20px;
+  }
+  .verify-success-msg {
+    text-align: center;
+    padding: 20px;
+  }
+  .verify-success-msg i {
+    font-size: 3rem;
+    color: var(--pf-green);
+    display: block;
+    margin-bottom: 12px;
+  }
+  .verify-success-msg h4 {
+    font-weight: 900;
+    color: var(--pf-ink);
+  }
+
   @media (max-width: 991px) {
     .profile-hero-inner, .profile-grid { grid-template-columns: 1fr; }
     .profile-actions { justify-content: flex-start; }
@@ -373,6 +512,184 @@
       </div>
     </section>
 
+    {% if not profile_obj.is_selected_method_verified %}
+    <div class="verify-banner">
+      <div class="verify-banner-inner">
+        <div class="verify-banner-icon">
+          <i class="bi bi-shield-exclamation"></i>
+        </div>
+        <div class="verify-banner-text">
+          <strong>Account Not Verified</strong>
+          <span>Please verify your {{ profile_obj.get_verification_method_display|lower }} to activate your account.</span>
+        </div>
+        <button type="button" class="pf-btn pf-btn-primary verify-btn-trigger" data-bs-toggle="modal" data-bs-target="#verifyAccountModal">
+          <i class="bi bi-patch-check"></i> Verify Account
+        </button>
+      </div>
+    </div>
+    {% else %}
+    <div class="verify-banner verify-banner--success">
+      <div class="verify-banner-inner">
+        <div class="verify-banner-icon verify-banner-icon--success">
+          <i class="bi bi-patch-check-fill"></i>
+        </div>
+        <div class="verify-banner-text">
+          <strong>Account Verified</strong>
+          <span>Your account has been verified via {{ profile_obj.get_verification_method_display|lower }}.</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Verification Status Section -->
+    <section class="panel verification-status-panel">
+      <div class="panel-body">
+        <h2 class="section-heading"><i class="bi bi-shield-check"></i> Verification Status</h2>
+        <div class="verification-status-grid">
+          <div class="verification-status-item">
+            <div class="vs-icon vs-icon--email">
+              <i class="bi bi-envelope-fill"></i>
+            </div>
+            <div class="vs-details">
+              <span class="vs-label">Email Address</span>
+              <span class="vs-value">{{ user.email|default:"Not set" }}</span>
+              {% if profile_obj.is_email_verified %}
+                <span class="vs-badge vs-badge--verified">
+                  <i class="bi bi-check-circle-fill"></i> Verified
+                </span>
+              {% else %}
+                <span class="vs-badge vs-badge--unverified">
+                  <i class="bi bi-x-circle-fill"></i> Not Verified
+                </span>
+              {% endif %}
+            </div>
+            {% if not profile_obj.is_email_verified and user.email %}
+            <button type="button" class="pf-btn pf-btn-primary vs-verify-btn" data-method="email" data-bs-toggle="modal" data-bs-target="#verifyAccountModal">
+              <i class="bi bi-envelope-check"></i> Verify Email
+            </button>
+            {% endif %}
+          </div>
+
+          <div class="verification-status-item">
+            <div class="vs-icon vs-icon--phone">
+              <i class="bi bi-phone-fill"></i>
+            </div>
+            <div class="vs-details">
+              <span class="vs-label">Phone Number</span>
+              <span class="vs-value">{{ profile_obj.phone_number|default:"Not set" }}</span>
+              {% if profile_obj.is_phone_verified %}
+                <span class="vs-badge vs-badge--verified">
+                  <i class="bi bi-check-circle-fill"></i> Verified
+                </span>
+              {% else %}
+                <span class="vs-badge vs-badge--unverified">
+                  <i class="bi bi-x-circle-fill"></i> Not Verified
+                </span>
+              {% endif %}
+            </div>
+            {% if not profile_obj.is_phone_verified and profile_obj.phone_number %}
+            <button type="button" class="pf-btn pf-btn-primary vs-verify-btn" data-method="phone" data-bs-toggle="modal" data-bs-target="#verifyAccountModal">
+              <i class="bi bi-phone-vibrate"></i> Verify Phone
+            </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <style>
+      .verification-status-panel {
+        margin-top: 24px;
+      }
+      .verification-status-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+      .verification-status-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 18px;
+        border: 1px solid var(--pf-line);
+        border-radius: 10px;
+        background: var(--pf-soft);
+      }
+      .vs-icon {
+        width: 46px;
+        height: 46px;
+        flex: 0 0 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 1.3rem;
+      }
+      .vs-icon--email {
+        color: #1e40af;
+        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      }
+      .vs-icon--phone {
+        color: #065f46;
+        background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+      }
+      .vs-details {
+        flex: 1;
+        min-width: 0;
+      }
+      .vs-label {
+        display: block;
+        font-size: 0.75rem;
+        font-weight: 850;
+        color: var(--pf-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .vs-value {
+        display: block;
+        font-weight: 800;
+        color: var(--pf-ink);
+        font-size: 0.88rem;
+        overflow-wrap: anywhere;
+        margin: 2px 0 6px;
+      }
+      .vs-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 800;
+      }
+      .vs-badge--verified {
+        color: #065f46;
+        background: #d1fae5;
+      }
+      .vs-badge--unverified {
+        color: #991b1b;
+        background: #fee2e2;
+      }
+      .vs-verify-btn {
+        min-height: 38px;
+        padding: 8px 14px;
+        font-size: 0.78rem;
+        white-space: nowrap;
+        flex: 0 0 auto;
+      }
+      @media (max-width: 768px) {
+        .verification-status-grid {
+          grid-template-columns: 1fr;
+        }
+        .verification-status-item {
+          flex-wrap: wrap;
+        }
+        .vs-verify-btn {
+          width: 100%;
+        }
+      }
+    </style>
+
     <!-- Main Content Grid -->
     <div class="profile-grid">
       <main class="panel">
@@ -398,7 +715,14 @@
               <span class="info-icon"><i class="bi bi-envelope"></i></span>
               <div>
                 <span class="info-label">Email</span>
-                <span class="info-value">{{ user.email|default:"Not set" }}</span>
+                <span class="info-value">
+                  {{ user.email|default:"Not set" }}
+                  {% if profile_obj.is_email_verified %}
+                    <span class="badge bg-success ms-1"><i class="bi bi-check-circle-fill"></i> Verified</span>
+                  {% else %}
+                    <span class="badge bg-secondary ms-1">Not verified</span>
+                  {% endif %}
+                </span>
               </div>
             </div>
             <div class="info-item">
@@ -406,7 +730,14 @@
               <div>
                 <span class="info-label">Phone</span>
                 {% if profile.phone_number %}
-                <span class="info-value">{{ profile.phone_number }}</span>
+                <span class="info-value">
+                  {{ profile.phone_number }}
+                  {% if profile_obj.is_phone_verified %}
+                    <span class="badge bg-success ms-1"><i class="bi bi-check-circle-fill"></i> Verified</span>
+                  {% else %}
+                    <span class="badge bg-secondary ms-1">Not verified</span>
+                  {% endif %}
+                </span>
                 {% else %}
                 <span class="info-value">
                   <a href="{% url 'store:edit_profile' %}" style="color: var(--pf-green); text-decoration: none; font-weight: 900;">
@@ -414,6 +745,24 @@
                   </a>
                 </span>
                 {% endif %}
+              </div>
+            </div>
+            <div class="info-item">
+              <span class="info-icon"><i class="bi bi-shield-check"></i></span>
+              <div>
+                <span class="info-label">Verification Method</span>
+                <span class="info-value">
+                  {% if profile_obj.verification_method == 'email' %}
+                    <i class="bi bi-envelope-check text-success me-1"></i> Email Address
+                  {% elif profile_obj.verification_method == 'phone' %}
+                    <i class="bi bi-phone text-success me-1"></i> Phone Number
+                  {% else %}
+                    Not set
+                  {% endif %}
+                  {% if profile_obj.verified_at %}
+                    <small class="text-muted ms-1">({{ profile_obj.verified_at|date:"d M Y" }})</small>
+                  {% endif %}
+                </span>
               </div>
             </div>
             <div class="info-item">
@@ -464,7 +813,12 @@
                   <span class="status-badge {{ order.status }}">{{ order.get_status_display }}</span>
                 </div>
                 <div class="order-price my-2">Rs. {{ order.total_amount }}</div>
-                <small class="text-muted"><i class="bi bi-calendar3"></i> {{ order.created_at|date:"d M Y" }}</small>
+                <div class="d-flex justify-content-between align-items-center">
+                  <small class="text-muted"><i class="bi bi-calendar3"></i> {{ order.created_at|date:"d M Y" }}</small>
+                  <a href="{% url 'store:track_order' order.id %}" class="btn btn-sm btn-outline-success" title="Track Order">
+                    <i class="bi bi-geo-alt"></i> Track
+                  </a>
+                </div>
               </article>
               {% endfor %}
             </div>
@@ -538,4 +892,276 @@
     </div>
   </div>
 </div>
+
+<!-- Verify Account Modal -->
+<div class="modal fade verify-modal" id="verifyAccountModal" tabindex="-1" aria-labelledby="verifyModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="verifyModalLabel">
+          <i class="bi bi-shield-check me-2"></i>Verify Your Account
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="verifyModalBody">
+        <div class="text-center mb-4">
+          <p class="text-muted mb-0">
+            Choose how you want to verify your account. An OTP will be sent to your selected method.
+          </p>
+        </div>
+
+        <div class="d-flex gap-3 mb-4">
+          <label class="verify-method-option flex-fill" id="vm-email-label">
+            <input type="radio" name="verify_method" value="email" class="form-check-input" {% if profile_obj.verification_method == 'email' %}checked{% endif %}>
+            <div class="verify-method-inner">
+              <i class="bi bi-envelope-check"></i>
+              <span>Email</span>
+              <small class="text-muted d-block">{{ user.email|default:"Not set" }}</small>
+            </div>
+          </label>
+          <label class="verify-method-option flex-fill" id="vm-phone-label">
+            <input type="radio" name="verify_method" value="phone" class="form-check-input" {% if profile_obj.verification_method == 'phone' %}checked{% endif %}>
+            <div class="verify-method-inner">
+              <i class="bi bi-phone"></i>
+              <span>Phone</span>
+              <small class="text-muted d-block">{{ profile.phone_number|default:"Not set" }}</small>
+            </div>
+          </label>
+        </div>
+
+        <button type="button" class="verify-submit" id="sendOtpBtn">
+          <i class="bi bi-send me-2"></i>Send OTP
+        </button>
+        <div class="verify-error mt-2" id="verifyError"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .verify-method-option {
+    cursor: pointer;
+  }
+  .verify-method-option input {
+    position: absolute;
+    opacity: 0;
+  }
+  .verify-method-inner {
+    padding: 16px 12px;
+    border: 2px solid var(--pf-line);
+    border-radius: 12px;
+    text-align: center;
+    transition: all 0.2s;
+    background: var(--pf-soft);
+  }
+  .verify-method-option input:checked + .verify-method-inner {
+    border-color: var(--pf-green);
+    background: rgba(25, 135, 84, 0.06);
+    box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
+  }
+  .verify-method-inner i {
+    font-size: 1.5rem;
+    color: var(--pf-green);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .verify-method-inner span {
+    font-weight: 800;
+    font-size: 0.9rem;
+    display: block;
+    color: var(--pf-ink);
+  }
+  .verify-method-inner small {
+    font-size: 0.75rem;
+    margin-top: 2px;
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const sendBtn = document.getElementById('sendOtpBtn');
+  const modalBody = document.getElementById('verifyModalBody');
+  const errorEl = document.getElementById('verifyError');
+  const verifyModal = document.getElementById('verifyAccountModal');
+
+  // Auto-open modal if arriving from popup (#verify hash)
+  if (verifyModal && (window.location.hash === '#verify' || window.location.hash === '#verify-email' || window.location.hash === '#verify-phone')) {
+    var hash = window.location.hash;
+    if (hash === '#verify-email') {
+      var emailRadio = document.querySelector('input[name="verify_method"][value="email"]');
+      if (emailRadio) emailRadio.checked = true;
+    } else if (hash === '#verify-phone') {
+      var phoneRadio = document.querySelector('input[name="verify_method"][value="phone"]');
+      if (phoneRadio) phoneRadio.checked = true;
+    }
+    var bsModal = new bootstrap.Modal(verifyModal);
+    bsModal.show();
+    history.replaceState(null, '', window.location.pathname);
+  }
+
+  // Pre-select method when opened from Verification Status buttons
+  document.querySelectorAll('.vs-verify-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const method = this.getAttribute('data-method');
+      const radio = document.querySelector('input[name="verify_method"][value="' + method + '"]');
+      if (radio) radio.checked = true;
+    });
+  });
+
+  function getCookie(name) {
+    let v = null;
+    if (document.cookie) {
+      document.cookie.split(';').forEach(c => {
+        c = c.trim();
+        if (c.startsWith(name + '=')) v = decodeURIComponent(c.substring(name.length + 1));
+      });
+    }
+    return v;
+  }
+
+  function postJSON(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    }).then(r => r.json().then(data => ({ ok: r.ok, status: r.status, data })));
+  }
+
+  sendBtn?.addEventListener('click', function() {
+    const method = document.querySelector('input[name="verify_method"]:checked')?.value || 'email';
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+    errorEl.textContent = '';
+
+    postJSON('{% url "store:profile_send_otp" %}', { method })
+      .then(({ ok, data }) => {
+        if (ok) {
+          showOtpInput(method);
+        } else {
+          errorEl.textContent = data.error || 'Failed to send OTP.';
+          sendBtn.disabled = false;
+          sendBtn.innerHTML = '<i class="bi bi-send me-2"></i>Send OTP';
+        }
+      })
+      .catch(() => {
+        errorEl.textContent = 'Network error. Please try again.';
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="bi bi-send me-2"></i>Send OTP';
+      });
+  });
+
+  function showOtpInput(method) {
+    const methodLabel = method === 'email' ? 'email' : 'phone number';
+    modalBody.innerHTML = `
+      <div class="text-center mb-4">
+        <i class="bi bi-${method === 'email' ? 'envelope-check' : 'phone'}" style="font-size:2.5rem;color:var(--pf-green);"></i>
+        <p class="text-muted mt-2 mb-0">
+          A 6-digit code has been sent to your <strong>${methodLabel}</strong>.
+          Enter it below to verify your account.
+        </p>
+      </div>
+      <div class="mb-3">
+        <input type="text" class="otp-input" id="otpInput" maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="000000" autocomplete="one-time-code">
+      </div>
+      <button type="button" class="verify-submit" id="verifyOtpBtn">
+        <i class="bi bi-check-circle me-2"></i>Verify OTP
+      </button>
+      <div class="verify-error mt-2" id="verifyError2"></div>
+      <div class="d-flex justify-content-between mt-3">
+        <button type="button" class="btn btn-sm btn-outline-success" id="resendOtpBtn">
+          <i class="bi bi-arrow-clockwise me-1"></i>Resend OTP
+        </button>
+        <span class="text-muted small align-self-center" id="resendCooldown"></span>
+      </div>
+    `;
+    document.getElementById('otpInput')?.focus();
+
+    const verifyBtn = document.getElementById('verifyOtpBtn');
+    const resendBtn = document.getElementById('resendOtpBtn');
+    const errorEl2 = document.getElementById('verifyError2');
+
+    verifyBtn?.addEventListener('click', function() {
+      const otp = document.getElementById('otpInput')?.value?.trim();
+      if (!otp || otp.length !== 6) {
+        errorEl2.textContent = 'Please enter the 6-digit OTP.';
+        return;
+      }
+      verifyBtn.disabled = true;
+      verifyBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
+      errorEl2.textContent = '';
+
+      postJSON('{% url "store:profile_verify_otp" %}', { otp })
+        .then(({ ok, data }) => {
+          if (ok) {
+            showSuccess(data.message);
+          } else {
+            errorEl2.textContent = data.error || 'Verification failed.';
+            verifyBtn.disabled = false;
+            verifyBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Verify OTP';
+          }
+        })
+        .catch(() => {
+          errorEl2.textContent = 'Network error. Please try again.';
+          verifyBtn.disabled = false;
+          verifyBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Verify OTP';
+        });
+    });
+
+    resendBtn?.addEventListener('click', function() {
+      resendBtn.disabled = true;
+      const cooldown = document.getElementById('resendCooldown');
+      postJSON('{% url "store:profile_send_otp" %}', { method })
+        .then(({ ok, data }) => {
+          if (ok) {
+            if (cooldown) cooldown.textContent = 'OTP resent!';
+            startResendCooldown(30, cooldown, resendBtn);
+          } else {
+            if (cooldown) cooldown.textContent = data.error || 'Failed.';
+            resendBtn.disabled = false;
+          }
+        })
+        .catch(() => {
+          if (cooldown) cooldown.textContent = 'Network error.';
+          resendBtn.disabled = false;
+        });
+    });
+  }
+
+  function startResendCooldown(seconds, el, btn) {
+    let left = seconds;
+    if (el) el.textContent = `Resend in ${left}s`;
+    const timer = setInterval(() => {
+      left--;
+      if (el) el.textContent = `Resend in ${left}s`;
+      if (left <= 0) {
+        clearInterval(timer);
+        if (el) el.textContent = '';
+        if (btn) btn.disabled = false;
+      }
+    }, 1000);
+  }
+
+  function showSuccess(message) {
+    modalBody.innerHTML = `
+      <div class="verify-success-msg">
+        <i class="bi bi-patch-check-fill"></i>
+        <h4>Account Verified!</h4>
+        <p class="text-muted">${message}</p>
+        <button type="button" class="verify-submit mt-3" data-bs-dismiss="modal">
+          <i class="bi bi-check-lg me-2"></i>Done
+        </button>
+      </div>
+    `;
+    // After modal closes, reload to update UI
+    verifyModal.addEventListener('hidden.bs.modal', function() {
+      location.reload();
+    }, { once: true });
+  }
+});
+</script>
 {% endblock %}

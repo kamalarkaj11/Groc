@@ -75,5 +75,26 @@ urlpatterns = [
     # About & Contact
     path('about/', views.about, name='about'),
     path('contact/', views.contact, name='contact'),
+
+    # Order Tracking
+    path('my-orders/', views.my_orders, name='my_orders'),
+    path('profile/orders/', views.my_orders, name='profile_orders'),
+    path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('track-order/<int:order_id>/', views.track_order, name='track_order'),
+    path('api/orders/status/<int:order_id>/', views.api_order_status, name='api_order_status'),
+
+    # Profile Verification
+    path('profile/send-otp/', views.profile_send_otp, name='profile_send_otp'),
+    path('profile/verify-otp/', views.profile_verify_otp, name='profile_verify_otp'),
+
+    # Notifications
+    path('notifications/', views.notifications_page, name='notifications'),
+    path('api/notifications/', views.api_notification_list, name='api_notification_list'),
+    path('api/notifications/unread-count/', views.api_notification_unread_count, name='api_notification_unread_count'),
+    path('api/notifications/mark-read/', views.api_notification_mark_read, name='api_notification_mark_read'),
+    path('api/notifications/mark-unread/', views.api_notification_mark_unread, name='api_notification_mark_unread'),
+    path('api/notifications/delete/', views.api_notification_delete, name='api_notification_delete'),
+    path('api/notifications/mark-all-read/', views.api_notification_mark_all_read, name='api_notification_mark_all_read'),
+    path('api/notifications/clear-all/', views.api_notification_clear_all, name='api_notification_clear_all'),
 ]
 

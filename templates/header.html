@@ -1747,6 +1747,391 @@
   @media (prefers-reduced-motion: reduce) {
     .site-header, .site-header *, .nav-wrap.open { animation: none !important; transition-duration: 0.01ms !important; }
   }
+
+  /* ============================
+     NOTIFICATION CENTER
+     ============================ */
+
+  .notification-center {
+    position: relative;
+    flex: 0 0 auto;
+  }
+
+  .notification-bell {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    color: var(--header-green-deep);
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.1), rgba(32, 201, 151, 0.12));
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .notification-bell--hidden {
+    display: none;
+  }
+
+  .notification-bell:hover {
+    background: rgba(25, 135, 84, 0.16);
+    box-shadow: 0 12px 22px rgba(22, 131, 76, 0.14);
+    transform: translateY(-2px);
+  }
+
+  .notification-bell:hover i {
+    animation: bellRing 0.5s ease;
+  }
+
+  @keyframes bellRing {
+    0% { transform: rotate(0); }
+    15% { transform: rotate(14deg); }
+    30% { transform: rotate(-12deg); }
+    45% { transform: rotate(8deg); }
+    60% { transform: rotate(-6deg); }
+    75% { transform: rotate(3deg); }
+    100% { transform: rotate(0); }
+  }
+
+  .notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 5px;
+    border: 2px solid #fff;
+    border-radius: 999px;
+    color: #fff;
+    background: linear-gradient(135deg, #dc3545, #f97316);
+    font-size: 0.7rem;
+    font-weight: 900;
+    line-height: 1;
+    animation: countPulse 2s ease-in-out infinite;
+  }
+
+  .notification-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 380px;
+    max-height: 520px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--header-line);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,252,249,0.98));
+    box-shadow: var(--header-shadow);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.96);
+    transform-origin: top right;
+    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
+    z-index: 1300;
+    overflow: hidden;
+  }
+
+  .notification-dropdown::before {
+    content: "";
+    position: absolute;
+    top: -7px;
+    right: 22px;
+    width: 14px;
+    height: 14px;
+    border-left: 1px solid var(--header-line);
+    border-top: 1px solid var(--header-line);
+    background: rgba(255,255,255,0.99);
+    transform: rotate(45deg);
+  }
+
+  .notification-center.open .notification-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+  }
+
+  .notification-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(22,131,76,0.1);
+  }
+
+  .notification-header-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: var(--header-green-deep);
+  }
+
+  .notification-header-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .notification-action-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    color: var(--header-muted);
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: color 0.2s, background 0.2s;
+  }
+
+  .notification-action-btn:hover {
+    color: var(--header-green-deep);
+    background: rgba(22,131,76,0.1);
+  }
+
+  .notification-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: 380px;
+    scroll-behavior: smooth;
+  }
+
+  .notification-list::-webkit-scrollbar { width: 5px; }
+  .notification-list::-webkit-scrollbar-track { background: rgba(22,131,76,0.04); }
+  .notification-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--header-green), var(--header-mint));
+    border-radius: 999px;
+  }
+
+  .notification-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(22,131,76,0.06);
+    transition: background 0.15s ease;
+    position: relative;
+    cursor: default;
+  }
+
+  .notification-item:hover {
+    background: rgba(22,131,76,0.04);
+  }
+
+  .notification-item--unread {
+    background: rgba(22,131,76,0.03);
+  }
+
+  .notification-item--unread::before {
+    content: "";
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--header-green);
+  }
+
+  .notification-type-icon {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .notification-type-icon--auth {
+    color: #6366f1;
+    background: rgba(99,102,241,0.1);
+  }
+  .notification-type-icon--order {
+    color: #059669;
+    background: rgba(5,150,105,0.1);
+  }
+  .notification-type-icon--profile {
+    color: #d97706;
+    background: rgba(217,119,6,0.1);
+  }
+  .notification-type-icon--system {
+    color: #6b7280;
+    background: rgba(107,114,128,0.1);
+  }
+
+  .notification-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .notification-title {
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: var(--header-ink);
+    margin: 0 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .notification-message {
+    font-size: 0.78rem;
+    color: var(--header-muted);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .notification-time {
+    font-size: 0.7rem;
+    color: var(--header-muted);
+    margin-top: 4px;
+    font-weight: 600;
+  }
+
+  .notification-item-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .notification-item:hover .notification-item-actions {
+    opacity: 1;
+  }
+
+  .notification-item-btn {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 6px;
+    color: var(--header-muted);
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.72rem;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .notification-item-btn:hover {
+    color: var(--header-green-deep);
+    background: rgba(22,131,76,0.1);
+  }
+
+  .notification-item-btn--delete:hover {
+    color: #dc3545;
+    background: rgba(220,53,69,0.1);
+  }
+
+  .notification-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--header-muted);
+  }
+
+  .notification-empty i {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 8px;
+    color: var(--header-green);
+    opacity: 0.4;
+  }
+
+  .notification-empty p {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .notification-loading {
+    padding: 30px 20px;
+    text-align: center;
+    color: var(--header-muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+
+  .notification-spin {
+    animation: notifSpin 0.8s linear infinite;
+  }
+
+  @keyframes notifSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  .notification-footer {
+    padding: 12px 16px;
+    border-top: 1px solid rgba(22,131,76,0.1);
+    text-align: center;
+  }
+
+  .notification-footer-link {
+    color: var(--header-green);
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .notification-footer-link:hover {
+    color: var(--header-green-deep);
+  }
+
+  /* Mobile notification */
+  @media (max-width: 900px) {
+    .notification-center {
+      display: flex;
+      justify-content: center;
+    }
+    .notification-bell {
+      width: 42px;
+      height: 42px;
+      font-size: 1.1rem;
+    }
+    .notification-dropdown {
+      position: fixed;
+      top: 80px;
+      left: 8px;
+      right: 8px;
+      width: auto;
+      max-height: calc(100vh - 100px);
+      border-radius: 12px;
+    }
+    .notification-dropdown::before {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .notification-bell {
+      width: 38px;
+      height: 38px;
+      font-size: 1rem;
+    }
+    .notification-badge {
+      min-width: 18px;
+      height: 18px;
+      font-size: 0.6rem;
+      top: -2px;
+      right: -2px;
+    }
+  }
 </style>
 
 <header class="site-header" id="siteHeader">
@@ -1922,6 +2307,38 @@
           <span class="cart-count" id="cart-count-desktop">{{ cart_item_count|default:0 }}</span>
         </a>
 
+        {% if user.is_authenticated %}
+        <div class="notification-center" id="notificationCenter">
+          <button class="notification-bell" type="button" id="notificationBellBtn" aria-label="Notifications" aria-expanded="false">
+            <i class="bi bi-bell-fill"></i>
+            <span class="notification-badge" id="notificationBadge" {% if unread_notification_count == 0 %}style="display:none"{% endif %}>{{ unread_notification_count }}</span>
+          </button>
+          <div class="notification-dropdown" id="notificationDropdown">
+            <div class="notification-header">
+              <h4 class="notification-header-title">Notifications</h4>
+              <div class="notification-header-actions">
+                <button type="button" class="notification-action-btn" id="notifMarkAllRead" title="Mark all as read">
+                  <i class="bi bi-check2-all"></i>
+                </button>
+                <button type="button" class="notification-action-btn" id="notifClearAll" title="Clear all">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
+            </div>
+            <div class="notification-list" id="notificationList">
+              <div class="notification-loading">
+                <i class="bi bi-arrow-repeat notification-spin"></i> Loading...
+              </div>
+            </div>
+            <div class="notification-footer">
+              <a href="{% url 'store:notifications' %}" class="notification-footer-link">
+                View all notifications <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
         <div class="account-menu" id="accountMenu">
           {% if user.is_authenticated %}
           <button class="account-trigger" type="button" aria-expanded="false" aria-controls="profileDropdown">
@@ -1931,6 +2348,7 @@
           </button>
           <ul class="account-dropdown" id="profileDropdown">
             <li><a href="{% url 'store:profile' %}" class="dropdown-link-custom"><i class="bi bi-person"></i> Profile</a></li>
+            <li><a href="{% url 'store:profile_orders' %}" class="dropdown-link-custom"><i class="bi bi-bag-check"></i> My Orders</a></li>
             {% if request.user.is_superuser %}
             <li><a href="{% url 'api_settings:api_settings_page' %}" class="dropdown-link-custom"><i class="bi bi-gear"></i> API Settings</a></li>
             {% endif %}
@@ -2335,5 +2753,186 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   });
+
+  // ── Notification Center ──
+  const notifCenter = document.getElementById('notificationCenter');
+  const notifBellBtn = document.getElementById('notificationBellBtn');
+  const notifDropdown = document.getElementById('notificationDropdown');
+  const notifList = document.getElementById('notificationList');
+  const notifBadge = document.getElementById('notificationBadge');
+  const notifMarkAllBtn = document.getElementById('notifMarkAllRead');
+  const notifClearAllBtn = document.getElementById('notifClearAll');
+
+  let notifLoaded = false;
+
+  // Only initialize notification center for authenticated users
+  if (notifCenter) {
+    function getNotifCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function getNotifTypeIcon(type) {
+    const map = {
+      auth: 'bi-shield-lock',
+      order: 'bi-bag-check',
+      profile: 'bi-person-gear',
+      system: 'bi-info-circle',
+    };
+    return map[type] || 'bi-bell';
+  }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str || '';
+    return d.innerHTML;
+  }
+
+  function renderNotificationItem(n) {
+    const unreadClass = n.is_read ? '' : ' notification-item--unread';
+    const toggleIcon = n.is_read ? 'bi-envelope' : 'bi-envelope-open';
+    const toggleTitle = n.is_read ? 'Mark as unread' : 'Mark as read';
+    return `
+      <div class="notification-item${unreadClass}" data-id="${n.id}" data-read="${n.is_read}">
+        <div class="notification-type-icon notification-type-icon--${n.type}">
+          <i class="bi ${getNotifTypeIcon(n.type)}"></i>
+        </div>
+        <div class="notification-body">
+          <p class="notification-title">${escapeHtml(n.title)}</p>
+          <p class="notification-message">${escapeHtml(n.message)}</p>
+          <span class="notification-time">${escapeHtml(n.time_ago)}</span>
+        </div>
+        <div class="notification-item-actions">
+          <button type="button" class="notification-item-btn notif-toggle-read" title="${toggleTitle}">
+            <i class="bi ${toggleIcon}"></i>
+          </button>
+          <button type="button" class="notification-item-btn notification-item-btn--delete notif-delete" title="Delete">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  function updateBellVisibility(unreadCount) {
+    if (notifBadge) {
+      notifBadge.textContent = unreadCount || 0;
+      notifBadge.style.display = unreadCount > 0 ? '' : 'none';
+    }
+  }
+
+  function loadNotifications() {
+    fetch('/api/notifications/')
+      .then(r => r.ok ? r.json() : { notifications: [], unread_count: 0, total_count: 0 })
+      .then(data => {
+        if (!notifList) return;
+        if (data.notifications.length === 0) {
+          notifList.innerHTML = `
+            <div class="notification-empty">
+              <i class="bi bi-bell-slash"></i>
+              <p>No notifications yet</p>
+            </div>
+          `;
+        } else {
+          notifList.innerHTML = data.notifications.map(renderNotificationItem).join('');
+        }
+        updateBellVisibility(data.unread_count);
+        notifLoaded = true;
+      })
+      .catch(() => {});
+  }
+
+  function pollUnreadCount() {
+    fetch('/api/notifications/unread-count/')
+      .then(r => r.ok ? r.json() : { unread_count: 0, total_count: 0 })
+      .then(data => {
+        const prev = parseInt(notifBadge?.textContent || '0', 10);
+        updateBellVisibility(data.unread_count);
+        if (data.unread_count > prev && notifLoaded) {
+          loadNotifications();
+        }
+      })
+      .catch(() => {});
+  }
+
+  function notifPost(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getNotifCookie('csrftoken'),
+        'Content-Type': 'application/json',
+      },
+      body: body ? JSON.stringify(body) : '{}',
+    }).then(r => r.ok ? r.json() : {});
+  }
+
+  notifBellBtn?.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const isOpen = notifCenter.classList.toggle('open');
+    notifBellBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    if (isOpen && !notifLoaded) {
+      loadNotifications();
+    } else if (isOpen) {
+      loadNotifications();
+    }
+  });
+
+  notifList?.addEventListener('click', function (e) {
+    const toggleBtn = e.target.closest('.notif-toggle-read');
+    const deleteBtn = e.target.closest('.notif-delete');
+    const item = e.target.closest('.notification-item');
+
+    if (toggleBtn && item) {
+      const id = item.dataset.id;
+      const isRead = item.dataset.read === 'true';
+      const url = isRead ? '/api/notifications/mark-unread/' : '/api/notifications/mark-read/';
+      notifPost(url, { id: id }).then(() => loadNotifications());
+    }
+
+    if (deleteBtn && item) {
+      const id = item.dataset.id;
+      notifPost('/api/notifications/delete/', { id: id }).then(() => loadNotifications());
+    }
+  });
+
+  notifMarkAllBtn?.addEventListener('click', function () {
+    notifPost('/api/notifications/mark-all-read/').then(() => loadNotifications());
+  });
+
+  notifClearAllBtn?.addEventListener('click', function () {
+    notifPost('/api/notifications/clear-all/').then(() => {
+      loadNotifications();
+    });
+  });
+
+  // Close notification dropdown on outside click
+  document.addEventListener('click', function (e) {
+    if (notifCenter && !notifCenter.contains(e.target)) {
+      notifCenter.classList.remove('open');
+      notifBellBtn?.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && notifCenter) {
+      notifCenter.classList.remove('open');
+      notifBellBtn?.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // Poll for new notifications every 30 seconds (authenticated users only)
+  setInterval(pollUnreadCount, 30000);
+  }
 });
 </script>

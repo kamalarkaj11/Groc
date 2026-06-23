@@ -1,7 +1,7 @@
 from django.core.cache import cache
 from django.db.models import Count, Q
 from django.http import HttpRequest
-from .models import CartItem, Category, Subcategory, SubSubCategory
+from .models import CartItem, Category, Subcategory, SubSubCategory, Notification
 
 CATEGORIES_CACHE_KEY = 'global_categories_context'
 CATEGORIES_CACHE_TTL = 300  # 5 minutes
@@ -14,6 +14,17 @@ def cart_context(request: HttpRequest) -> dict:
     else:
         count = 0
     return {'cart_item_count': count}
+
+
+def notification_context(request: HttpRequest) -> dict:
+    """Context processor to add unread notification count to all templates."""
+    if request.user.is_authenticated:
+        unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+        total_count = Notification.objects.filter(user=request.user).count()
+    else:
+        unread_count = 0
+        total_count = 0
+    return {'unread_notification_count': unread_count, 'total_notification_count': total_count}
 
 
 def categories_context(request: HttpRequest) -> dict:

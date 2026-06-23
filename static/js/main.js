@@ -13,21 +13,9 @@ function updateCartSummary() {
 }
 
 function showToast(message, type = 'success') {
-  const toast = document.createElement('div');
-  toast.className = `toast-notification ${type}`;
-  toast.textContent = message;
-  document.body.appendChild(toast);
-
-  requestAnimationFrame(() => {
-    toast.classList.add('show');
-  });
-
-  setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => {
-      if (toast.parentNode) toast.parentNode.removeChild(toast);
-    }, 350);
-  }, 3500);
+  // All notifications are now centralized in the notification bell.
+  // Toast display has been removed — check the bell for updates.
+  console.log(`[Notification] ${message}`);
 }
 
 // Cart AJAX functions
@@ -129,3 +117,51 @@ document.getElementById('searchInput')?.addEventListener('input', function() {
 
 // Summary update intervals
 setInterval(updateCartSummary, 30000);
+
+// AJAX Add to Cart - prevent redirect and stay on current page
+document.addEventListener('DOMContentLoaded', function() {
+  const addToCartForms = document.querySelectorAll('form[action*="add_to_cart"]');
+  
+  addToCartForms.forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const btn = form.querySelector('button[type="submit"]');
+      const originalText = btn ? btn.innerHTML : 'Add to Cart';
+      
+      if (btn) {
+        btn.innerHTML = '<span class="loading me-2"></span>Adding...';
+        btn.disabled = true;
+      }
+      
+      const formData = new FormData(form);
+      
+      fetch(form.action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: formData,
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          showToast(data.message || 'Product added to cart successfully!', 'success');
+          updateCartSummary();
+        } else {
+          showToast(data.error || 'Failed to add product to cart.', 'danger');
+        }
+      })
+      .catch(err => {
+        console.error('Add to cart failed:', err);
+        showToast('Something went wrong. Please try again.', 'danger');
+      })
+      .finally(() => {
+        if (btn) {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      });
+    });
+  });
+});

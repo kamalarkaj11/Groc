@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm, Password
 from django.contrib.auth.models import User
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from .models import Profile, UserProfile, IndianState, Order, OTP, Category, Subcategory
+from .models import Profile, UserProfile, IndianState, Order, OTP, Category, Subcategory, ContactMessage
 
 class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(
@@ -20,10 +20,17 @@ class CustomUserCreationForm(UserCreationForm):
     phone_number = forms.CharField(max_length=15, required=True, label='Phone Number')
     address = forms.CharField(widget=forms.Textarea, required=False, label='Address')
     state = forms.ChoiceField(choices=IndianState.choices, required=False, label='State')
+    verification_method = forms.ChoiceField(
+        choices=Profile.VERIFICATION_METHOD_CHOICES,
+        required=True,
+        label='Verify Account Using',
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        initial='email',
+    )
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'username', 'email', 'password1', 'password2', 'age', 'phone_number', 'address', 'state')
+        fields = ('first_name', 'last_name', 'username', 'email', 'password1', 'password2', 'age', 'phone_number', 'address', 'state', 'verification_method')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -396,4 +403,79 @@ class ProductAdminForm(forms.ModelForm):
                 )
             except (ValueError, TypeError):
                 pass
+
+
+class ContactForm(forms.ModelForm):
+    class Meta:
+        model = ContactMessage
+        fields = ['name', 'email', 'phone', 'subject', 'message']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'name',
+                'autocomplete': 'name',
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'email',
+                'autocomplete': 'email',
+            }),
+            'phone': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'phone',
+                'autocomplete': 'tel',
+            }),
+            'subject': forms.TextInput(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'subject',
+            }),
+            'message': forms.Textarea(attrs={
+                'class': 'form-control', 'placeholder': ' ', 'id': 'message',
+                'rows': 5,
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.form_id = 'contactForm'
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name', '').strip()
+        if not name:
+            raise forms.ValidationError('Full name is required.')
+        if len(name) < 2:
+            raise forms.ValidationError('Name must be at least 2 characters.')
+        return name
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        if not email:
+            raise forms.ValidationError('Email address is required.')
+        import re
+        if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+            raise forms.ValidationError('Please enter a valid email address.')
+        return email
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone', '').strip()
+        if phone:
+            import re
+            digits = re.sub(r'\D', '', phone)
+            if len(digits) < 7 or len(digits) > 15:
+                raise forms.ValidationError('Please enter a valid phone number.')
+        return phone
+
+    def clean_subject(self):
+        subject = self.cleaned_data.get('subject', '').strip()
+        if not subject:
+            raise forms.ValidationError('Subject is required.')
+        if len(subject) < 3:
+            raise forms.ValidationError('Subject must be at least 3 characters.')
+        return subject
+
+    def clean_message(self):
+        message = self.cleaned_data.get('message', '').strip()
+        if not message:
+            raise forms.ValidationError('Message is required.')
+        if len(message) < 10:
+            raise forms.ValidationError('Message must be at least 10 characters.')
+        return message
 

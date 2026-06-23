@@ -13,7 +13,11 @@
                     <i class="bi bi-envelope-check display-3 text-success mb-4"></i>
                     <h2 class="fw-bold text-success mb-2">Verify your email</h2>
                     <p class="text-muted lead mb-1">We have sent a 6-digit code to <strong>{{ user_email }}</strong></p>
+                    {% if verification_method == 'email' %}
+                    <p class="text-muted">Enter that code below to <strong>activate your account</strong>.</p>
+                    {% else %}
                     <p class="text-muted">Enter that code below to continue.</p>
+                    {% endif %}
                 </div>
 
                 {% if email_delivery_failed %}
@@ -31,7 +35,7 @@
                     <div class="d-grid mb-4">
                         <button type="submit" class="btn btn-success btn-lg fw-bold py-3 fs-5" id="verify-btn">
                             <span class="spinner-border spinner-border-sm d-none me-2" id="verify-spinner"></span>
-                            Verify Email OTP
+                            {% if verification_method == 'email' %}Verify & Activate Account{% else %}Verify Email OTP{% endif %}
                         </button>
                     </div>
                 </form>

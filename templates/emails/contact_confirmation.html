@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You for Contacting {{ website_name }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f4f6f8;
+            padding: 0;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        .header {
+            background: linear-gradient(135deg, #16A34A, #22c55e);
+            padding: 36px 30px 30px;
+            text-align: center;
+            color: white;
+        }
+        .header .logo {
+            margin-bottom: 12px;
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        .header p {
+            font-size: 15px;
+            opacity: 0.92;
+        }
+        .badge {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 5px 18px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+        }
+        .content { padding: 28px 30px; }
+        .greeting { font-size: 16px; margin-bottom: 16px; }
+        .greeting strong { color: #16A34A; }
+
+        .thank-you-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 24px 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .thank-you-box h3 {
+            color: #16A34A;
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        .thank-you-box p {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        .info-block {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .info-block .info-card {
+            flex: 1;
+            min-width: 140px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+        .info-block .info-card .info-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888;
+            margin-bottom: 2px;
+        }
+        .info-block .info-card .info-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #222;
+        }
+
+        .support-section {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-top: 20px;
+        }
+        .support-section h4 {
+            color: #856404;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        .support-section p {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.8;
+        }
+        .support-section a { color: #16A34A; text-decoration: none; }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #eee;
+        }
+        .footer a { color: #16A34A; text-decoration: none; }
+
+        @media (max-width: 480px) {
+            .container { margin: 10px; border-radius: 8px; }
+            .header { padding: 24px 18px 20px; }
+            .header h1 { font-size: 20px; }
+            .content { padding: 20px 16px; }
+            .info-block .info-card { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <img src="https://img.icons8.com/color/96/null/grocery-store.png"
+                     alt="{{ website_name }}"
+                     style="max-width: 120px; height: auto;"
+                     width="120">
+            </div>
+            <h1>Thank You for Contacting Us!</h1>
+            <p>We have received your message</p>
+            <span class="badge">Response within 24 hours</span>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Hello <strong>{{ contact.name }}</strong>,</p>
+            <p style="margin-bottom: 18px; font-size: 15px; color: #444;">
+                Thank you for reaching out to <strong>{{ website_name }}</strong>.
+                We have successfully received your message and our support team will review it shortly.
+            </p>
+
+            <div class="thank-you-box">
+                <h3>Message Received Successfully!</h3>
+                <p>
+                    Our team typically responds within 24 hours. We appreciate your patience
+                    and will get back to you as soon as possible.
+                </p>
+            </div>
+
+            <div class="info-block">
+                <div class="info-card">
+                    <div class="info-label">Subject</div>
+                    <div class="info-value">{{ contact.subject }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Submitted</div>
+                    <div class="info-value">{{ contact.created_at|date:"d M Y, h:i A" }}</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Response Time</div>
+                    <div class="info-value">Within 24 hrs</div>
+                </div>
+            </div>
+
+            <p style="font-size: 13px; color: #888; margin: 16px 0;">
+                If you have any urgent concerns, please contact us directly using the information below.
+            </p>
+
+            <div class="support-section">
+                <h4>Need Immediate Assistance?</h4>
+                <p>
+                    <strong>{{ website_name }} Customer Support</strong><br>
+                    Email: <a href="mailto:{{ support_email }}">{{ support_email }}</a><br>
+                    Phone: {{ support_phone }}<br>
+                    Hours: Mon–Sat, 9:00 AM – 8:00 PM (IST)
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; {% now "Y" %} {{ website_name }}. Fresh groceries delivered to your door.</p>
+            <p style="margin-top: 4px;">
+                <a href="#">Privacy Policy</a> &bull;
+                <a href="#">Terms of Service</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

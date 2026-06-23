@@ -1,20 +1,51 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}About Us - GroceryHub{% endblock %}
+{% block title %}GrocHub About Us | Fresh Groceries Delivered Fast{% endblock %}
+{% block extra_css %}
+<meta name="description" content="Learn about GrocHub's mission, vision, values, and commitment to delivering fresh groceries with convenience and reliability.">
+<meta property="og:title" content="GrocHub About Us | Fresh Groceries Delivered Fast">
+<meta property="og:description" content="Learn about GrocHub's mission, vision, values, and commitment to delivering fresh groceries with convenience and reliability.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "GrocHub",
+  "description": "Fresh groceries delivered to your doorstep with reliability and convenience.",
+  "url": "{% url 'store:home' %}",
+  "foundingDate": "2024",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+1-800-GROCERY",
+    "contactType": "customer service",
+    "availableLanguage": ["English"]
+  },
+  "sameAs": [
+    "https://facebook.com/grochub",
+    "https://twitter.com/grochub",
+    "https://instagram.com/grochub"
+  ]
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <style>
   :root {
-    --ab-green: #198754;
-    --ab-mint: #20c997;
-    --ab-yellow: #ffc857;
-    --ab-orange: #ff8a3d;
-    --ab-ink: #18251f;
-    --ab-muted: #66736c;
-    --ab-soft: #f4fbf7;
-    --ab-line: rgba(25, 135, 84, 0.16);
-    --ab-shadow: 0 18px 45px rgba(18, 55, 38, 0.12);
+    --gh-green: #16A34A;
+    --gh-green-dark: #14532D;
+    --gh-orange: #F97316;
+    --gh-ink: #0f172a;
+    --gh-muted: #64748b;
+    --gh-soft: #f0fdf4;
+    --gh-line: rgba(22, 163, 74, 0.15);
+    --gh-shadow: 0 20px 60px rgba(20, 83, 45, 0.12);
+    --gh-shadow-sm: 0 8px 30px rgba(20, 83, 45, 0.08);
+    --gh-radius: 16px;
+    --gh-radius-sm: 10px;
+    --gh-transition: 0.4s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   main.container {
@@ -26,36 +57,24 @@
   }
 
   .about-page {
-    color: var(--ab-ink);
-    background:
-      radial-gradient(circle at top left, rgba(255, 200, 87, 0.16), transparent 30rem),
-      linear-gradient(180deg, #ffffff 0%, #f7fbf8 55%, #ffffff 100%);
+    color: var(--gh-ink);
+    background: linear-gradient(180deg, #ffffff 0%, var(--gh-soft) 50%, #ffffff 100%);
     overflow: hidden;
   }
 
-  .ab-container {
-    width: min(1140px, calc(100% - 32px));
+  .gh-container {
+    width: min(1140px, calc(100% - 48px));
     margin: 0 auto;
   }
 
-  .about-hero {
-    padding: 58px 0 52px;
+  .section-pad {
+    padding: 90px 0;
   }
 
-  .hero-panel {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 420px;
-    gap: 34px;
-    align-items: center;
-    overflow: hidden;
-    border: 1px solid var(--ab-line);
-    border-radius: 8px;
-    padding: clamp(28px, 5vw, 54px);
-    color: #fff;
-    background:
-      linear-gradient(135deg, rgba(13, 76, 45, 0.94), rgba(28, 147, 94, 0.84)),
-      url("https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1800&q=85") center/cover;
-    box-shadow: var(--ab-shadow);
+  .section-head {
+    max-width: 720px;
+    margin: 0 auto 52px;
+    text-align: center;
   }
 
   .eyebrow {
@@ -63,505 +82,1338 @@
     align-items: center;
     gap: 8px;
     margin-bottom: 16px;
-    padding: 8px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
+    padding: 8px 18px;
     border-radius: 999px;
-    color: #fff;
-    background: rgba(255, 255, 255, 0.14);
     font-size: 0.78rem;
     font-weight: 850;
     letter-spacing: 0.08em;
     text-transform: uppercase;
+    color: var(--gh-green);
+    border: 1px solid var(--gh-line);
+    background: linear-gradient(135deg, rgba(22, 163, 74, 0.08), rgba(22, 163, 74, 0.03));
   }
 
-  .eyebrow.dark {
-    color: var(--ab-green);
-    border-color: var(--ab-line);
-    background: rgba(25, 135, 84, 0.08);
+  .section-title {
+    margin: 16px 0 14px;
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-weight: 950;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+  }
+
+  .section-title span {
+    background: linear-gradient(135deg, var(--gh-green), var(--gh-orange));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .section-copy {
+    color: var(--gh-muted);
+    font-size: 1.1rem;
+    line-height: 1.75;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  /* ===== ANIMATIONS ===== */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .fade-in {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+  .fade-in.visible {
+    opacity: 1;
+  }
+  .scale-in {
+    opacity: 0;
+    transform: scale(0.92);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .scale-in.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  [data-delay="100"] { transition-delay: 0.1s; }
+  [data-delay="200"] { transition-delay: 0.2s; }
+  [data-delay="300"] { transition-delay: 0.3s; }
+  [data-delay="400"] { transition-delay: 0.4s; }
+  [data-delay="500"] { transition-delay: 0.5s; }
+
+  /* ===== HERO ===== */
+  .hero-section {
+    padding: 40px 0 0;
+    position: relative;
+  }
+
+  .hero-bg-decoration {
+    position: absolute;
+    top: -40%;
+    right: -20%;
+    width: 800px;
+    height: 800px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(22, 163, 74, 0.08), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero-bg-decoration-2 {
+    position: absolute;
+    bottom: -30%;
+    left: -15%;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.06), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    align-items: center;
+    position: relative;
+    z-index: 1;
   }
 
   .hero-title {
-    max-width: 760px;
-    margin: 0;
-    font-size: clamp(2.75rem, 6vw, 5.4rem);
+    font-size: clamp(2.5rem, 5.5vw, 4.5rem);
     font-weight: 950;
-    line-height: 0.96;
-    letter-spacing: 0;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    margin: 0;
+  }
+
+  .hero-title span {
+    background: linear-gradient(135deg, var(--gh-green), #22c55e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .hero-copy {
-    max-width: 650px;
-    margin: 20px 0 0;
-    color: rgba(255, 255, 255, 0.88);
     font-size: 1.15rem;
     line-height: 1.75;
+    color: var(--gh-muted);
+    margin: 20px 0 0;
+    max-width: 540px;
   }
 
   .hero-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin-top: 30px;
+    gap: 14px;
+    margin-top: 32px;
   }
 
-  .ab-btn {
+  .gh-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 9px;
-    min-height: 48px;
-    border-radius: 8px;
-    padding: 12px 18px;
-    font-weight: 900;
+    gap: 10px;
+    min-height: 52px;
+    border-radius: var(--gh-radius-sm);
+    padding: 14px 28px;
+    font-weight: 850;
+    font-size: 0.95rem;
     text-decoration: none;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  }
-
-  .ab-btn-primary {
-    color: #183523;
-    background: var(--ab-yellow);
-  }
-
-  .ab-btn-light {
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.46);
-    background: rgba(255, 255, 255, 0.14);
-  }
-
-  .ab-btn-primary:hover {
-    color: #183523;
-    background: #ffd775;
-  }
-
-  .ab-btn-light:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.22);
-  }
-
-  .ab-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--ab-shadow);
-  }
-
-  .hero-card {
-    border: 1px solid rgba(255, 255, 255, 0.24);
-    border-radius: 8px;
-    padding: 18px;
-    background: rgba(255, 255, 255, 0.14);
-    backdrop-filter: blur(12px);
-  }
-
-  .hero-card img,
-  .hero-card video {
-    width: 100%;
-    height: 270px;
-    display: block;
-    object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 16px;
-  }
-
-  .hero-card strong {
-    display: block;
-    color: #fff;
-    font-size: 1.1rem;
-  }
-
-  .hero-card span {
-    color: rgba(255, 255, 255, 0.76);
-  }
-
-  .stats-strip {
-    margin-top: -24px;
+    border: none;
+    cursor: pointer;
+    transition: var(--gh-transition);
     position: relative;
-    z-index: 2;
+    overflow: hidden;
+  }
+
+  .gh-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .gh-btn-primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--gh-green), #22c55e);
+    box-shadow: 0 8px 30px rgba(22, 163, 74, 0.3);
+  }
+
+  .gh-btn-primary::before {
+    background: linear-gradient(135deg, var(--gh-green-dark), var(--gh-green));
+  }
+
+  .gh-btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(22, 163, 74, 0.4);
+    color: #fff;
+  }
+
+  .gh-btn-primary:hover::before {
+    opacity: 1;
+  }
+
+  .gh-btn-primary span {
+    position: relative;
+    z-index: 1;
+  }
+
+  .gh-btn-secondary {
+    color: var(--gh-green-dark);
+    border: 2px solid var(--gh-line);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+  }
+
+  .gh-btn-secondary:hover {
+    border-color: var(--gh-green);
+    background: rgba(22, 163, 74, 0.06);
+    transform: translateY(-3px);
+    box-shadow: var(--gh-shadow-sm);
+    color: var(--gh-green-dark);
+  }
+
+  .hero-visual {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-visual-inner {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    aspect-ratio: 1;
+  }
+
+  .hero-circle {
+    position: absolute;
+    border-radius: 50%;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .hero-circle:nth-child(1) {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--gh-green), #4ade80);
+    top: 5%;
+    left: 10%;
+    animation-delay: 0s;
+  }
+
+  .hero-circle:nth-child(2) {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--gh-orange), #fb923c);
+    top: 60%;
+    left: 75%;
+    animation-delay: 1.5s;
+  }
+
+  .hero-circle:nth-child(3) {
+    width: 35px;
+    height: 35px;
+    background: linear-gradient(135deg, #a855f7, #c084fc);
+    top: 30%;
+    left: 80%;
+    animation-delay: 3s;
+  }
+
+  .hero-card-main {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 30px;
+    background: linear-gradient(135deg, rgba(22, 163, 74, 0.06), rgba(249, 115, 22, 0.04));
+    border: 1px solid var(--gh-line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(20, 83, 45, 0.1);
+  }
+
+  .hero-card-main::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 40%, rgba(22, 163, 74, 0.08), transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(249, 115, 22, 0.06), transparent 40%);
+  }
+
+  .hero-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 30px;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+  }
+
+  .hero-icon-item {
+    aspect-ratio: 1;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 2.5rem;
+    color: #fff;
+    transition: var(--gh-transition);
+  }
+
+  .hero-icon-item:nth-child(1) {
+    background: linear-gradient(135deg, var(--gh-green), #4ade80);
+    box-shadow: 0 10px 30px rgba(22, 163, 74, 0.25);
+  }
+  .hero-icon-item:nth-child(2) {
+    background: linear-gradient(135deg, var(--gh-orange), #fb923c);
+    box-shadow: 0 10px 30px rgba(249, 115, 22, 0.25);
+    transform: translateY(-10px);
+  }
+  .hero-icon-item:nth-child(3) {
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.25);
+    transform: translateY(10px);
+  }
+  .hero-icon-item:nth-child(4) {
+    background: linear-gradient(135deg, var(--gh-green-dark), #166534);
+    box-shadow: 0 10px 30px rgba(20, 83, 45, 0.25);
+  }
+
+  .hero-icon-item span {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .hero-icon-item:hover {
+    transform: scale(1.08) translateY(-5px);
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+
+  /* ===== STATS BAR ===== */
+  .stats-bar {
+    padding: 60px 0 20px;
+    position: relative;
+    z-index: 1;
   }
 
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    overflow: hidden;
-    border: 1px solid var(--ab-line);
-    border-radius: 8px;
+    gap: 0;
+    border-radius: var(--gh-radius);
     background: #fff;
-    box-shadow: var(--ab-shadow);
+    border: 1px solid var(--gh-line);
+    box-shadow: var(--gh-shadow);
+    overflow: hidden;
   }
 
   .stat-item {
-    padding: 26px 22px;
-    border-right: 1px solid var(--ab-line);
+    padding: 32px 24px;
+    text-align: center;
+    border-right: 1px solid var(--gh-line);
+    position: relative;
   }
 
   .stat-item:last-child {
     border-right: 0;
   }
 
+  .stat-icon {
+    font-size: 1.8rem;
+    color: var(--gh-green);
+    margin-bottom: 10px;
+  }
+
   .stat-value {
     display: block;
-    color: var(--ab-green);
-    font-size: 2.2rem;
+    font-size: 2.5rem;
     font-weight: 950;
     line-height: 1;
+    background: linear-gradient(135deg, var(--gh-green), #22c55e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .stat-label {
-    color: var(--ab-muted);
-    font-weight: 800;
+    display: block;
+    margin-top: 8px;
+    color: var(--gh-muted);
+    font-weight: 700;
+    font-size: 0.92rem;
   }
 
-  .section-pad {
-    padding: 82px 0;
-  }
-
-  .section-head {
-    max-width: 760px;
-    margin-bottom: 34px;
-  }
-
-  .section-title {
-    margin: 14px 0 12px;
-    font-size: clamp(2rem, 4vw, 3.25rem);
-    font-weight: 950;
-    line-height: 1.06;
-    letter-spacing: 0;
-  }
-
-  .section-copy {
-    color: var(--ab-muted);
-    font-size: 1.08rem;
-    line-height: 1.75;
+  /* ===== OUR STORY ===== */
+  .story-section {
+    position: relative;
   }
 
   .story-grid {
     display: grid;
-    grid-template-columns: 0.9fr 1fr;
-    gap: 42px;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
     align-items: center;
   }
 
-  .story-image {
+  .story-visual {
+    position: relative;
+  }
+
+  .story-image-wrap {
+    border-radius: var(--gh-radius);
     overflow: hidden;
-    border: 1px solid var(--ab-line);
-    border-radius: 8px;
-    background: #fff;
-    box-shadow: var(--ab-shadow);
+    box-shadow: var(--gh-shadow);
+    position: relative;
   }
 
-  .story-image img {
+  .story-image-wrap img {
     width: 100%;
-    height: 520px;
+    height: 500px;
     object-fit: cover;
+    display: block;
+    transition: transform 0.6s ease;
   }
 
-  .story-points {
+  .story-image-wrap:hover img {
+    transform: scale(1.04);
+  }
+
+  .story-image-badge {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: var(--gh-radius-sm);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--gh-green-dark);
+  }
+
+  .story-image-badge i {
+    font-size: 1.3rem;
+    color: var(--gh-green);
+  }
+
+  .story-content .section-copy {
+    margin: 0;
+  }
+
+  .story-features {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 14px;
-    margin-top: 26px;
+    margin-top: 28px;
   }
 
-  .point-card,
-  .mission-card,
-  .team-card,
-  .timeline-item {
-    border: 1px solid var(--ab-line);
-    border-radius: 8px;
-    background: #fff;
-    box-shadow: 0 10px 25px rgba(24, 37, 31, 0.06);
-  }
-
-  .point-card {
+  .story-feature {
     display: flex;
+    align-items: center;
     gap: 12px;
-    padding: 16px;
+    padding: 14px 16px;
+    border-radius: var(--gh-radius-sm);
+    border: 1px solid var(--gh-line);
+    background: rgba(255, 255, 255, 0.7);
+    font-weight: 700;
+    font-size: 0.92rem;
+    transition: var(--gh-transition);
   }
 
-  .icon-box {
-    width: 46px;
-    height: 46px;
+  .story-feature:hover {
+    border-color: var(--gh-green);
+    background: rgba(22, 163, 74, 0.04);
+    transform: translateX(4px);
+  }
+
+  .story-feature i {
+    width: 32px;
+    height: 32px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 auto;
     border-radius: 8px;
-    color: #183523;
-    background: var(--ab-yellow);
-    font-size: 1.25rem;
+    background: linear-gradient(135deg, var(--gh-green), #22c55e);
+    color: #fff;
+    font-size: 0.85rem;
+    flex-shrink: 0;
   }
 
-  .mission-band {
-    background: var(--ab-soft);
+  /* ===== MISSION & VISION ===== */
+  .mv-section {
+    background: var(--gh-soft);
   }
 
-  .mission-grid {
+  .mv-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
   }
 
-  .mission-card {
-    padding: 26px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .mission-card:hover,
-  .team-card:hover,
-  .timeline-item:hover {
-    transform: translateY(-7px);
-    box-shadow: var(--ab-shadow);
-  }
-
-  .mission-card h3,
-  .team-card h3 {
-    margin: 18px 0 10px;
-    font-size: 1.18rem;
-    font-weight: 950;
-  }
-
-  .mission-card p,
-  .team-card p,
-  .timeline-item p {
-    color: var(--ab-muted);
-    line-height: 1.65;
-  }
-
-  .timeline-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-  }
-
-  .timeline-item {
-    padding: 22px;
-  }
-
-  .timeline-year {
-    display: inline-flex;
-    margin-bottom: 14px;
-    padding: 7px 11px;
-    border-radius: 999px;
-    color: var(--ab-green);
-    background: rgba(25, 135, 84, 0.08);
-    font-weight: 950;
-  }
-
-  .team-band {
+  .mv-card {
+    padding: 44px 38px;
+    border-radius: var(--gh-radius);
     background: #fff;
-  }
-
-  .team-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
-  }
-
-  .team-card {
+    border: 1px solid var(--gh-line);
+    box-shadow: 0 10px 40px rgba(20, 83, 45, 0.06);
+    transition: var(--gh-transition);
+    position: relative;
     overflow: hidden;
   }
 
-  .team-card img,
+  .mv-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    border-radius: var(--gh-radius) var(--gh-radius) 0 0;
+  }
+
+  .mv-card:nth-child(1)::before {
+    background: linear-gradient(90deg, var(--gh-green), #4ade80);
+  }
+  .mv-card:nth-child(2)::before {
+    background: linear-gradient(90deg, var(--gh-orange), #fb923c);
+  }
+
+  .mv-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--gh-shadow);
+  }
+
+  .mv-icon {
+    width: 60px;
+    height: 60px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    font-size: 1.6rem;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+
+  .mv-card:nth-child(1) .mv-icon {
+    background: linear-gradient(135deg, var(--gh-green), #4ade80);
+    box-shadow: 0 8px 24px rgba(22, 163, 74, 0.25);
+  }
+  .mv-card:nth-child(2) .mv-icon {
+    background: linear-gradient(135deg, var(--gh-orange), #fb923c);
+    box-shadow: 0 8px 24px rgba(249, 115, 22, 0.25);
+  }
+
+  .mv-card h3 {
+    font-size: 1.5rem;
+    font-weight: 950;
+    margin: 0 0 14px;
+  }
+
+  .mv-card p {
+    color: var(--gh-muted);
+    line-height: 1.75;
+    margin: 0;
+    font-size: 1.02rem;
+  }
+
+  /* ===== WHY CHOOSE ===== */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+
+  .feature-card {
+    padding: 34px 28px;
+    border-radius: var(--gh-radius);
+    background: #fff;
+    border: 1px solid var(--gh-line);
+    box-shadow: 0 8px 30px rgba(20, 83, 45, 0.04);
+    transition: var(--gh-transition);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gh-green), var(--gh-orange));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+
+  .feature-card:hover::after {
+    transform: scaleX(1);
+  }
+
+  .feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--gh-shadow);
+  }
+
+  .feature-icon {
+    width: 56px;
+    height: 56px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    font-size: 1.4rem;
+    color: #fff;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, var(--gh-green), #22c55e);
+    box-shadow: 0 8px 24px rgba(22, 163, 74, 0.2);
+    transition: var(--gh-transition);
+  }
+
+  .feature-card:hover .feature-icon {
+    transform: scale(1.1) rotate(-5deg);
+  }
+
+  .feature-card h3 {
+    font-size: 1.12rem;
+    font-weight: 950;
+    margin: 0 0 10px;
+  }
+
+  .feature-card p {
+    color: var(--gh-muted);
+    line-height: 1.7;
+    margin: 0;
+    font-size: 0.94rem;
+  }
+
+  /* ===== HOW IT WORKS ===== */
+  .how-section {
+    background: var(--gh-soft);
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    position: relative;
+  }
+
+  .steps-grid::before {
+    content: '';
+    position: absolute;
+    top: 44px;
+    left: calc(12.5% + 24px);
+    right: calc(12.5% + 24px);
+    height: 3px;
+    background: linear-gradient(90deg, var(--gh-line), var(--gh-green), var(--gh-line));
+    z-index: 0;
+    border-radius: 2px;
+  }
+
+  .step-item {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step-number {
+    width: 60px;
+    height: 60px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    font-weight: 950;
+    color: #fff;
+    background: linear-gradient(135deg, var(--gh-green), #22c55e);
+    box-shadow: 0 8px 24px rgba(22, 163, 74, 0.25);
+    margin-bottom: 20px;
+    transition: var(--gh-transition);
+  }
+
+  .step-item:hover .step-number {
+    transform: scale(1.12);
+    box-shadow: 0 12px 36px rgba(22, 163, 74, 0.35);
+  }
+
+  .step-item h4 {
+    font-size: 1.08rem;
+    font-weight: 950;
+    margin: 0 0 10px;
+  }
+
+  .step-item p {
+    color: var(--gh-muted);
+    font-size: 0.92rem;
+    line-height: 1.65;
+    margin: 0;
+    max-width: 220px;
+    margin: 0 auto;
+  }
+
+  /* ===== TESTIMONIALS ===== */
+  .testimonial-section {
+    position: relative;
+  }
+
+  .testimonial-carousel {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .testimonial-card {
+    padding: 40px 36px;
+    border-radius: var(--gh-radius);
+    background: #fff;
+    border: 1px solid var(--gh-line);
+    box-shadow: 0 10px 40px rgba(20, 83, 45, 0.06);
+    text-align: center;
+    margin: 10px;
+  }
+
+  .testimonial-stars {
+    color: #f59e0b;
+    font-size: 1.2rem;
+    margin-bottom: 18px;
+    letter-spacing: 2px;
+  }
+
+  .testimonial-text {
+    font-size: 1.1rem;
+    line-height: 1.75;
+    color: var(--gh-ink);
+    font-style: italic;
+    margin: 0 0 24px;
+    position: relative;
+  }
+
+  .testimonial-text::before {
+    content: '\201C';
+    font-size: 3rem;
+    color: var(--gh-green);
+    opacity: 0.2;
+    position: absolute;
+    top: -20px;
+    left: -10px;
+    font-family: serif;
+    line-height: 1;
+  }
+
+  .testimonial-author {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+
+  .testimonial-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--gh-line);
+  }
+
+  .testimonial-avatar-placeholder {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--gh-green), #22c55e);
+    color: #fff;
+    font-weight: 950;
+    font-size: 1.1rem;
+  }
+
+  .testimonial-name {
+    font-weight: 850;
+    font-size: 0.95rem;
+    display: block;
+  }
+
+  .testimonial-role {
+    color: var(--gh-muted);
+    font-size: 0.82rem;
+  }
+
+  .carousel-control-prev,
+  .carousel-control-next {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid var(--gh-line);
+    box-shadow: var(--gh-shadow-sm);
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 1;
+    color: var(--gh-ink);
+  }
+
+  .carousel-control-prev { left: -60px; }
+  .carousel-control-next { right: -60px; }
+
+  .carousel-control-prev:hover,
+  .carousel-control-next:hover {
+    background: var(--gh-green);
+    border-color: var(--gh-green);
+    color: #fff;
+  }
+
+  .carousel-indicators {
+    position: static;
+    margin: 30px 0 0;
+    gap: 8px;
+  }
+
+  .carousel-indicators button {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid var(--gh-line);
+    background: var(--gh-line);
+    opacity: 1;
+  }
+
+  .carousel-indicators button.active {
+    background: var(--gh-green);
+    border-color: var(--gh-green);
+    width: 30px;
+    border-radius: 5px;
+  }
+
+  /* ===== VALUES ===== */
+  .values-section {
+    background: var(--gh-soft);
+  }
+
+  .values-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+
+  .value-card {
+    padding: 32px 26px;
+    border-radius: var(--gh-radius);
+    background: #fff;
+    border: 1px solid var(--gh-line);
+    box-shadow: 0 8px 30px rgba(20, 83, 45, 0.04);
+    transition: var(--gh-transition);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .value-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gh-green), #4ade80);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+
+  .value-card:hover::before {
+    transform: scaleX(1);
+  }
+
+  .value-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--gh-shadow);
+  }
+
+  .value-icon {
+    width: 52px;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    font-size: 1.3rem;
+    color: #fff;
+    margin-bottom: 16px;
+    transition: var(--gh-transition);
+  }
+
+  .value-card:nth-child(1) .value-icon { background: linear-gradient(135deg, var(--gh-green), #4ade80); }
+  .value-card:nth-child(2) .value-icon { background: linear-gradient(135deg, #06b6d4, #22d3ee); }
+  .value-card:nth-child(3) .value-icon { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+  .value-card:nth-child(4) .value-icon { background: linear-gradient(135deg, var(--gh-orange), #fb923c); }
+  .value-card:nth-child(5) .value-icon { background: linear-gradient(135deg, #ec4899, #f472b6); }
+  .value-card:nth-child(6) .value-icon { background: linear-gradient(135deg, var(--gh-green-dark), #166534); }
+
+  .value-card:hover .value-icon {
+    transform: scale(1.12) rotate(8deg);
+  }
+
+  .value-card h4 {
+    font-size: 1.05rem;
+    font-weight: 950;
+    margin: 0 0 8px;
+  }
+
+  .value-card p {
+    color: var(--gh-muted);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  /* ===== TEAM ===== */
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+
+  .team-card {
+    border-radius: var(--gh-radius);
+    background: #fff;
+    border: 1px solid var(--gh-line);
+    box-shadow: 0 8px 30px rgba(20, 83, 45, 0.04);
+    overflow: hidden;
+    transition: var(--gh-transition);
+  }
+
+  .team-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--gh-shadow);
+  }
+
+  .team-image-wrap {
+    height: 280px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .team-image-wrap img,
   .team-avatar-alt {
     width: 100%;
-    height: 260px;
+    height: 100%;
     object-fit: cover;
-    background: var(--ab-soft);
+    transition: transform 0.6s ease;
+  }
+
+  .team-card:hover .team-image-wrap img {
+    transform: scale(1.06);
   }
 
   .team-avatar-alt {
-    display: grid;
-    place-items: center;
-    color: var(--ab-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 4rem;
+    color: var(--gh-green);
+    background: linear-gradient(135deg, var(--gh-soft), #dcfce7);
+  }
+
+  .team-social {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .team-social a {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--gh-green-dark);
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: var(--gh-transition);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .team-social a:hover {
+    background: var(--gh-green);
+    color: #fff;
+    transform: translateY(-2px);
   }
 
   .team-body {
-    padding: 22px;
+    padding: 24px 22px;
+  }
+
+  .team-body h3 {
+    font-size: 1.15rem;
+    font-weight: 950;
+    margin: 0;
   }
 
   .team-role {
-    color: var(--ab-green);
-    font-weight: 900;
+    color: var(--gh-green);
+    font-weight: 800;
+    font-size: 0.85rem;
+    margin: 4px 0 10px;
+    display: block;
   }
 
+  .team-body p {
+    color: var(--gh-muted);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  /* ===== CTA ===== */
   .cta-section {
-    padding: 72px 0;
+    padding: 0 0 90px;
   }
 
   .cta-panel {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 24px;
-    align-items: center;
-    border-radius: 8px;
-    padding: clamp(26px, 5vw, 46px);
+    border-radius: var(--gh-radius);
+    padding: 70px 50px;
+    text-align: center;
     color: #fff;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--gh-green-dark) 0%, #166534 50%, var(--gh-green) 100%);
+    box-shadow: 0 30px 80px rgba(20, 83, 45, 0.3);
+  }
+
+  .cta-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
     background:
-      linear-gradient(135deg, rgba(13, 76, 45, 0.95), rgba(25, 135, 84, 0.9)),
-      url("https://images.unsplash.com/photo-1573246123716-6b1782bfc499?auto=format&fit=crop&w=1500&q=85") center/cover;
-    box-shadow: var(--ab-shadow);
+      radial-gradient(circle at 20% 80%, rgba(249, 115, 22, 0.15), transparent 40%),
+      radial-gradient(circle at 80% 20%, rgba(74, 222, 128, 0.1), transparent 40%);
+  }
+
+  .cta-decoration {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .cta-decoration:nth-child(1) {
+    width: 300px;
+    height: 300px;
+    top: -100px;
+    right: -80px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.06), transparent 70%);
+  }
+
+  .cta-decoration:nth-child(2) {
+    width: 200px;
+    height: 200px;
+    bottom: -60px;
+    left: -60px;
+    background: radial-gradient(circle, rgba(249, 115, 22, 0.1), transparent 70%);
   }
 
   .cta-panel h2 {
-    margin: 0 0 10px;
-    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-size: clamp(1.8rem, 4vw, 3rem);
     font-weight: 950;
+    margin: 0 0 14px;
+    position: relative;
+    z-index: 1;
   }
 
   .cta-panel p {
-    margin: 0;
-    color: rgba(255, 255, 255, 0.82);
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 32px;
+    position: relative;
+    z-index: 1;
   }
 
-  @media (max-width: 991px) {
+  .cta-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
 
-    .hero-panel,
-    .story-grid,
-    .cta-panel {
+  .gh-btn-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 52px;
+    border-radius: var(--gh-radius-sm);
+    padding: 14px 32px;
+    font-weight: 850;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: var(--gh-transition);
+  }
+
+  .gh-btn-cta-primary {
+    color: var(--gh-green-dark);
+    background: #fff;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  }
+
+  .gh-btn-cta-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    color: var(--gh-green-dark);
+  }
+
+  .gh-btn-cta-secondary {
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+  }
+
+  .gh-btn-cta-secondary:hover {
+    border-color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-3px);
+    color: #fff;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 991px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    .hero-visual {
+      order: -1;
+    }
+
+    .hero-visual-inner {
+      max-width: 400px;
+    }
+
+    .story-grid {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+
+    .story-image-wrap img {
+      height: 360px;
+    }
+
+    .mv-grid {
       grid-template-columns: 1fr;
     }
 
-    .stats-grid,
-    .mission-grid,
-    .timeline-grid,
+    .features-grid,
+    .values-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .steps-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 30px;
+    }
+
+    .steps-grid::before {
+      display: none;
+    }
+
     .team-grid {
       grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stat-item:nth-child(2) {
+      border-right: 0;
+    }
+    .stat-item:nth-child(3),
+    .stat-item:nth-child(4) {
+      border-top: 1px solid var(--gh-line);
+    }
+
+    .carousel-control-prev,
+    .carousel-control-next {
+      display: none;
+    }
+
+    .cta-panel {
+      padding: 50px 30px;
     }
   }
 
   @media (max-width: 575px) {
-    .ab-container {
-      width: min(100% - 24px, 1140px);
+    .gh-container {
+      width: calc(100% - 28px);
     }
 
-    .about-hero {
-      padding-top: 34px;
+    .section-pad {
+      padding: 60px 0;
     }
 
-    .stats-grid,
-    .story-points,
-    .mission-grid,
-    .timeline-grid,
-    .team-grid {
-      grid-template-columns: 1fr;
+    .hero-section {
+      padding-top: 20px;
     }
 
-    .stat-item {
-      border-right: 0;
-      border-bottom: 1px solid var(--ab-line);
+    .hero-card-main {
+      border-radius: 20px;
     }
 
-    .stat-item:last-child {
-      border-bottom: 0;
+    .hero-icon-grid {
+      gap: 12px;
+      padding: 20px;
     }
 
-    .story-image img,
-    .team-card img,
-    .team-avatar-alt {
-      height: 320px;
+    .hero-icon-item {
+      font-size: 1.8rem;
+    }
+
+    .hero-icon-item span {
+      font-size: 0.65rem;
     }
 
     .hero-actions {
       flex-direction: column;
     }
 
-    .ab-btn {
+    .gh-btn {
+      width: 100%;
+      min-height: 48px;
+    }
+
+    .features-grid,
+    .values-grid,
+    .steps-grid,
+    .team-grid,
+    .mv-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+    .stat-item {
+      border-right: 0;
+      border-bottom: 1px solid var(--gh-line);
+    }
+    .stat-item:last-child {
+      border-bottom: 0;
+    }
+
+    .story-features {
+      grid-template-columns: 1fr;
+    }
+
+    .story-image-wrap img {
+      height: 260px;
+    }
+
+    .testimonial-card {
+      padding: 28px 22px;
+    }
+
+    .team-image-wrap {
+      height: 240px;
+    }
+
+    .cta-panel {
+      padding: 40px 24px;
+      border-radius: var(--gh-radius-sm);
+    }
+
+    .cta-actions {
+      flex-direction: column;
+    }
+
+    .gh-btn-cta {
       width: 100%;
     }
+
   }
 </style>
 
 <div class="about-page">
-  <section class="about-hero">
-    <div class="ab-container">
-      <div class="hero-panel">
-        <div>
-          <span class="eyebrow"><i class="bi bi-basket2-fill"></i> About GroceryHub</span>
-          <h1 class="hero-title">Fresh groceries, fair prices, and people-first delivery.</h1>
-          <p class="hero-copy">We connect everyday households with fresh produce, quality staples, and reliable grocery
-            delivery so good food is easier to bring home.</p>
+  <!-- ===== SECTION 1: HERO ===== -->
+  <section class="hero-section">
+    <div class="hero-bg-decoration"></div>
+    <div class="hero-bg-decoration-2"></div>
+    <div class="gh-container">
+      <div class="hero-grid">
+        <div class="fade-up visible">
+          <span class="eyebrow"><i class="bi bi-basket2-fill"></i> About GrocHub</span>
+          <h1 class="hero-title">Fresh Groceries Delivered to Your <span>Doorstep</span></h1>
+          <p class="hero-copy">GrocHub makes grocery shopping faster, easier, and more convenient with fresh products, secure payments, and reliable delivery.</p>
           <div class="hero-actions">
-            <a href="#story" class="ab-btn ab-btn-primary">Our Story <i class="bi bi-arrow-down"></i></a>
-            <a href="{% url 'store:product_list' %}" class="ab-btn ab-btn-light">Shop Fresh</a>
+            <a href="{% url 'store:product_list' %}" class="gh-btn gh-btn-primary"><span>Shop Now <i class="bi bi-arrow-right"></i></span></a>
+            <a href="{% url 'store:product_list' %}" class="gh-btn gh-btn-secondary">Explore Products <i class="bi bi-grid"></i></a>
           </div>
         </div>
 
-        <aside class="hero-card">
-          <video class="hero-bg-video" autoplay muted loop playsinline preload="metadata">
-            <source src="{% static 'videos/about.mp4' %}" type="video/mp4">
-          </video>
-          <strong>Quality checked before every delivery</strong>
-          <span>Freshness, careful packing, and quick support are part of every order.</span>
-        </aside>
-      </div>
-    </div>
-  </section>
-
-  <section class="stats-strip">
-    <div class="ab-container">
-      <div class="stats-grid">
-        <div class="stat-item">
-          <span class="stat-value">50k+</span>
-          <span class="stat-label">Happy customers</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-value">500+</span>
-          <span class="stat-label">Fresh products</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-value">100+</span>
-          <span class="stat-label">Local farm partners</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-value">24h</span>
-          <span class="stat-label">Fresh delivery cycle</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="story" class="section-pad">
-    <div class="ab-container story-grid">
-      <div class="story-image">
-        <img src="https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?auto=format&fit=crop&w=1000&q=85"
-          alt="Grocery store produce aisle">
-      </div>
-
-      <div>
-      <span class="eyebrow dark"><i class="bi bi-bookmark-heart"></i> Our Story</span>
-        <h2 class="section-title">Built to make fresh food simpler to access.</h2>
-        <p class="section-copy">GroceryHub started with a simple idea: grocery shopping should feel dependable, fast,
-          and fresh. We work with trusted suppliers and local farms to bring daily essentials closer to families,
-          professionals, and anyone who wants a better way to stock the kitchen.</p>
-        <p class="section-copy">Every order is handled with attention, from choosing the produce to packing it safely
-          for delivery. That care is what turns a grocery app into a service people can rely on.</p>
-
-        <div class="story-points">
-          <div class="point-card">
-            <span class="icon-box"><i class="bi bi-geo-alt"></i></span>
-            <div>
-              <strong>Local sourcing</strong>
-              <div class="text-muted small">Fresh picks from trusted partners.</div>
-            </div>
-          </div>
-          <div class="point-card">
-            <span class="icon-box"><i class="bi bi-truck"></i></span>
-            <div>
-              <strong>Quick delivery</strong>
-              <div class="text-muted small">Essentials reach your door fast.</div>
-            </div>
-          </div>
-          <div class="point-card">
-            <span class="icon-box"><i class="bi bi-shield-check"></i></span>
-            <div>
-              <strong>Quality promise</strong>
-              <div class="text-muted small">Careful checks before dispatch.</div>
-            </div>
-          </div>
-          <div class="point-card">
-            <span class="icon-box"><i class="bi bi-tags"></i></span>
-            <div>
-              <strong>Fair pricing</strong>
-              <div class="text-muted small">Useful deals on daily products.</div>
+        <div class="hero-visual fade-up visible" data-delay="200">
+          <div class="hero-visual-inner">
+            <div class="hero-circle"></div>
+            <div class="hero-circle"></div>
+            <div class="hero-circle"></div>
+            <div class="hero-card-main">
+              <div class="hero-icon-grid">
+                <div class="hero-icon-item">
+                  <i class="bi bi-basket3"></i>
+                  <span>Groceries</span>
+                </div>
+                <div class="hero-icon-item">
+                  <i class="bi bi-apple"></i>
+                  <span>Fresh</span>
+                </div>
+                <div class="hero-icon-item">
+                  <i class="bi bi-truck"></i>
+                  <span>Delivery</span>
+                </div>
+                <div class="hero-icon-item">
+                  <i class="bi bi-cart4"></i>
+                  <span>Shop</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -569,119 +1421,427 @@
     </div>
   </section>
 
-  <section id="features" class="section-pad mission-band">
-    <div class="ab-container">
-      <div class="section-head">
-        <span class="eyebrow dark"><i class="bi bi-stars"></i> What We Stand For</span>
-        <h2 class="section-title">A grocery experience designed around trust.</h2>
-        <p class="section-copy">We focus on the details that matter most: fresh inventory, clean packing, reliable
-          delivery, and support that listens.</p>
-      </div>
-
-      <div class="mission-grid">
-        <article class="mission-card">
-          <span class="icon-box"><i class="bi bi-award"></i></span>
-          <h3>Freshness First</h3>
-          <p>We prioritize fresh produce and daily essentials that meet quality expectations before they reach your
-            cart.</p>
-        </article>
-        <article class="mission-card">
-          <span class="icon-box"><i class="bi bi-people"></i></span>
-          <h3>Community Driven</h3>
-          <p>Our supply network supports local partners and keeps everyday groceries accessible for more households.</p>
-        </article>
-        <article class="mission-card">
-          <span class="icon-box"><i class="bi bi-lightning-charge"></i></span>
-          <h3>Fast and Dependable</h3>
-          <p>From order placement to doorstep delivery, we keep the flow simple, transparent, and dependable.</p>
-        </article>
+  <!-- ===== STATS BAR ===== -->
+  <section class="stats-bar">
+    <div class="gh-container">
+      <div class="stats-grid fade-up">
+        <div class="stat-item">
+          <div class="stat-icon"><i class="bi bi-emoji-smile"></i></div>
+          <span class="stat-value" data-count="10000">0+</span>
+          <span class="stat-label">Happy Customers</span>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
+          <span class="stat-value" data-count="5000">0+</span>
+          <span class="stat-label">Products Available</span>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon"><i class="bi bi-geo-alt"></i></div>
+          <span class="stat-value" data-count="100">0+</span>
+          <span class="stat-label">Delivery Locations</span>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon"><i class="bi bi-patch-check"></i></div>
+          <span class="stat-value" data-count="99">0%</span>
+          <span class="stat-label">Customer Satisfaction</span>
+        </div>
       </div>
     </div>
   </section>
 
+  <!-- ===== SECTION 2: OUR STORY ===== -->
+  <section class="story-section section-pad">
+    <div class="gh-container">
+      <div class="story-grid">
+        <div class="story-visual fade-up">
+          <div class="story-image-wrap">
+            <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1000&q=85" alt="Fresh groceries at GrocHub" loading="lazy">
+            <div class="story-image-badge">
+              <i class="bi bi-star-fill"></i>
+              <span>Since 2024</span>
+            </div>
+          </div>
+        </div>
+        <div class="story-content fade-up" data-delay="200">
+          <span class="eyebrow"><i class="bi bi-bookmark-heart"></i> Our Story</span>
+          <h2 class="section-title" style="text-align:left;">Built to make <span>fresh food</span> simple again.</h2>
+          <p class="section-copy" style="text-align:left;max-width:none;">GrocHub was born from a simple realization: grocery shopping shouldn't be a hassle. We saw how busy families, professionals, and students struggled to find time for quality grocery shopping. Long queues, heavy bags, and the constant worry about freshness — we knew there had to be a better way.</p>
+          <p class="section-copy" style="text-align:left;max-width:none;margin-top:16px;">That's why we created GrocHub — a platform that combines the convenience of online shopping with the trust of a local grocery store. We work directly with trusted farms and suppliers to bring you the freshest produce, pantry staples, and daily essentials, delivered right to your doorstep with care.</p>
+          <div class="story-features">
+            <div class="story-feature">
+              <i class="bi bi-check-lg"></i>
+              Farm-fresh produce
+            </div>
+            <div class="story-feature">
+              <i class="bi bi-check-lg"></i>
+              Quality-checked orders
+            </div>
+            <div class="story-feature">
+              <i class="bi bi-check-lg"></i>
+              Same-day delivery
+            </div>
+            <div class="story-feature">
+              <i class="bi bi-check-lg"></i>
+              100% satisfaction
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 3: MISSION & VISION ===== -->
+  <section class="mv-section section-pad">
+    <div class="gh-container">
+      <div class="section-head fade-up">
+        <span class="eyebrow"><i class="bi bi-stars"></i> Mission &amp; Vision</span>
+        <h2 class="section-title">What drives us <span>every day</span></h2>
+        <p class="section-copy">Our mission and vision define who we are and where we're headed as a company.</p>
+      </div>
+      <div class="mv-grid">
+        <div class="mv-card fade-up">
+          <div class="mv-icon"><i class="bi bi-bullseye"></i></div>
+          <h3>Our Mission</h3>
+          <p>To provide fresh groceries quickly, conveniently, and affordably while delivering an exceptional customer experience that makes every order feel personal and reliable.</p>
+        </div>
+        <div class="mv-card fade-up" data-delay="200">
+          <div class="mv-icon"><i class="bi bi-eye"></i></div>
+          <h3>Our Vision</h3>
+          <p>To become the most trusted online grocery marketplace by combining technology, quality products, and customer satisfaction into a seamless shopping experience for every household.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 4: WHY CHOOSE GROCHUB ===== -->
   <section class="section-pad">
-    <div class="ab-container">
-      <div class="section-head">
-        <span class="eyebrow dark"><i class="bi bi-signpost"></i> How It Works</span>
-        <h2 class="section-title">From source to doorstep in four careful steps.</h2>
+    <div class="gh-container">
+      <div class="section-head fade-up">
+        <span class="eyebrow"><i class="bi bi-hand-thumbs-up"></i> Why Choose Us</span>
+        <h2 class="section-title">Why customers love <span>GrocHub</span></h2>
+        <p class="section-copy">We focus on the details that matter most to make your grocery experience effortless.</p>
       </div>
-
-      <div class="timeline-grid">
-        <article class="timeline-item">
-          <span class="timeline-year">Step 1</span>
-          <h3 class="h5 fw-bold">Select</h3>
-          <p>Fresh products are chosen from trusted suppliers and local farms.</p>
-        </article>
-        <article class="timeline-item">
-          <span class="timeline-year">Step 2</span>
-          <h3 class="h5 fw-bold">Check</h3>
-          <p>Items are inspected for quality, freshness, and safe handling.</p>
-        </article>
-        <article class="timeline-item">
-          <span class="timeline-year">Step 3</span>
-          <h3 class="h5 fw-bold">Pack</h3>
-          <p>Your order is packed neatly to keep groceries protected.</p>
-        </article>
-        <article class="timeline-item">
-          <span class="timeline-year">Step 4</span>
-          <h3 class="h5 fw-bold">Deliver</h3>
-          <p>Groceries are sent quickly so your kitchen stays stocked.</p>
-        </article>
+      <div class="features-grid">
+        <div class="feature-card fade-up">
+          <div class="feature-icon"><i class="bi bi-leaf"></i></div>
+          <h3>Fresh Products</h3>
+          <p>Only high-quality and fresh groceries sourced directly from trusted farms and suppliers.</p>
+        </div>
+        <div class="feature-card fade-up" data-delay="100">
+          <div class="feature-icon"><i class="bi bi-lightning-charge"></i></div>
+          <h3>Fast Delivery</h3>
+          <p>Quick and reliable doorstep delivery so your groceries arrive when you need them.</p>
+        </div>
+        <div class="feature-card fade-up" data-delay="200">
+          <div class="feature-icon"><i class="bi bi-shield-check"></i></div>
+          <h3>Secure Payments</h3>
+          <p>Safe and trusted payment methods to protect every transaction you make.</p>
+        </div>
+        <div class="feature-card fade-up" data-delay="300">
+          <div class="feature-icon"><i class="bi bi-tags"></i></div>
+          <h3>Best Prices</h3>
+          <p>Competitive pricing and exclusive offers to help you save on every order.</p>
+        </div>
+        <div class="feature-card fade-up" data-delay="400">
+          <div class="feature-icon"><i class="bi bi-phone"></i></div>
+          <h3>Easy Ordering</h3>
+          <p>Simple and user-friendly shopping experience across all your devices.</p>
+        </div>
+        <div class="feature-card fade-up" data-delay="500">
+          <div class="feature-icon"><i class="bi bi-headset"></i></div>
+          <h3>Customer Support</h3>
+          <p>Dedicated assistance whenever you need help with your orders or questions.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="section-pad team-band">
-    <div class="ab-container">
-      <div class="section-head">
-        <span class="eyebrow dark"><i class="bi bi-person-hearts"></i> Our Team</span>
-        <h2 class="section-title">People behind every fresh delivery.</h2>
-        <p class="section-copy">Our team brings together product sourcing, operations, technology, and customer care.
-        </p>
-      </div>
+  <!-- ===== SECTION 5: STATISTICS (animated above already) ===== -->
 
+  <!-- ===== SECTION 6: HOW GROCHUB WORKS ===== -->
+  <section class="how-section section-pad">
+    <div class="gh-container">
+      <div class="section-head fade-up">
+        <span class="eyebrow"><i class="bi bi-signpost"></i> How It Works</span>
+        <h2 class="section-title">Fresh groceries in <span>4 easy steps</span></h2>
+        <p class="section-copy">Getting fresh groceries has never been simpler. Just four steps from your cart to your doorstep.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-item fade-up">
+          <div class="step-number">1</div>
+          <h4>Browse Products</h4>
+          <p>Explore thousands of fresh products and daily essentials from our online store.</p>
+        </div>
+        <div class="step-item fade-up" data-delay="100">
+          <div class="step-number">2</div>
+          <h4>Add Items to Cart</h4>
+          <p>Select your favorite items and add them to your cart with a single tap.</p>
+        </div>
+        <div class="step-item fade-up" data-delay="200">
+          <div class="step-number">3</div>
+          <h4>Secure Checkout</h4>
+          <p>Complete your purchase safely with our encrypted payment system.</p>
+        </div>
+        <div class="step-item fade-up" data-delay="300">
+          <div class="step-number">4</div>
+          <h4>Fast Home Delivery</h4>
+          <p>Relax as we deliver your fresh groceries right to your doorstep.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 7: TESTIMONIALS ===== -->
+  <section class="testimonial-section section-pad">
+    <div class="gh-container">
+      <div class="section-head fade-up">
+        <span class="eyebrow"><i class="bi bi-chat-quote"></i> Testimonials</span>
+        <h2 class="section-title">What our <span>customers say</span></h2>
+        <p class="section-copy">Hear from the people who trust GrocHub for their daily grocery needs.</p>
+      </div>
+      <div id="testimonialCarousel" class="carousel slide testimonial-carousel fade-up" data-bs-ride="carousel" data-bs-interval="5000">
+        <div class="carousel-inner">
+          <div class="carousel-item active">
+            <div class="testimonial-card">
+              <div class="testimonial-stars">
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+              </div>
+              <p class="testimonial-text">GrocHub always delivers fresh groceries on time. The quality of produce is outstanding and the delivery team is incredibly professional. Highly recommend!</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar-placeholder">SM</div>
+                <div>
+                  <span class="testimonial-name">Sarah Mitchell</span>
+                  <span class="testimonial-role">Regular Customer</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <div class="testimonial-card">
+              <div class="testimonial-stars">
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+              </div>
+              <p class="testimonial-text">Excellent service and affordable prices. I've been using GrocHub for months and have never been disappointed. The secure payment system gives me peace of mind.</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar-placeholder">JR</div>
+                <div>
+                  <span class="testimonial-name">James Rodriguez</span>
+                  <span class="testimonial-role">Verified Buyer</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <div class="testimonial-card">
+              <div class="testimonial-stars">
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-fill"></i>
+                <i class="bi bi-star-half"></i>
+              </div>
+              <p class="testimonial-text">The convenience of having fresh groceries delivered to my door is amazing. The app is so easy to use and customer support is always helpful when I need them.</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar-placeholder">AL</div>
+                <div>
+                  <span class="testimonial-name">Aisha Lee</span>
+                  <span class="testimonial-role">Busy Professional</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="prev">
+          <i class="bi bi-chevron-left"></i>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="next">
+          <i class="bi bi-chevron-right"></i>
+          <span class="visually-hidden">Next</span>
+        </button>
+        <div class="carousel-indicators">
+          <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Testimonial 1"></button>
+          <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="1" aria-label="Testimonial 2"></button>
+          <button type="button" data-bs-target="#testimonialCarousel" data-bs-slide-to="2" aria-label="Testimonial 3"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 8: OUR VALUES ===== -->
+  <section class="values-section section-pad">
+    <div class="gh-container">
+      <div class="section-head fade-up">
+        <span class="eyebrow"><i class="bi bi-gem"></i> Our Values</span>
+        <h2 class="section-title">The principles that <span>guide us</span></h2>
+        <p class="section-copy">Every decision we make is driven by our core values and commitment to excellence.</p>
+      </div>
+      <div class="values-grid">
+        <div class="value-card fade-up">
+          <div class="value-icon"><i class="bi bi-award"></i></div>
+          <h4>Quality</h4>
+          <p>We never compromise on the quality of our products, ensuring every item meets high standards.</p>
+        </div>
+        <div class="value-card fade-up" data-delay="100">
+          <div class="value-icon"><i class="bi bi-droplet"></i></div>
+          <h4>Freshness</h4>
+          <p>From farm to table, we maintain the freshness of every product throughout the journey.</p>
+        </div>
+        <div class="value-card fade-up" data-delay="200">
+          <div class="value-icon"><i class="bi bi-shield"></i></div>
+          <h4>Trust</h4>
+          <p>Building lasting trust through transparent practices and reliable service every day.</p>
+        </div>
+        <div class="value-card fade-up" data-delay="300">
+          <div class="value-icon"><i class="bi bi-people"></i></div>
+          <h4>Customer First</h4>
+          <p>Our customers are at the heart of everything we do, from product selection to support.</p>
+        </div>
+        <div class="value-card fade-up" data-delay="400">
+          <div class="value-icon"><i class="bi bi-lightbulb"></i></div>
+          <h4>Innovation</h4>
+          <p>Constantly improving our platform and services to deliver a better shopping experience.</p>
+        </div>
+        <div class="value-card fade-up" data-delay="500">
+          <div class="value-icon"><i class="bi bi-check-circle"></i></div>
+          <h4>Reliability</h4>
+          <p>Dependable delivery and consistent service you can count on, every single order.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SECTION 9: MEET OUR TEAM ===== -->
+  <section class="section-pad">
+    <div class="gh-container">
+      <div class="section-head fade-up">
+        <span class="eyebrow"><i class="bi bi-person-hearts"></i> Our Team</span>
+        <h2 class="section-title">Meet the people behind <span>GrocHub</span></h2>
+        <p class="section-copy">A passionate team dedicated to transforming the way you shop for groceries.</p>
+      </div>
       <div class="team-grid">
-        <article class="team-card">
-          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=85"
-            alt="Sarah Chen">
+        <div class="team-card fade-up">
+          <div class="team-image-wrap">
+            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=85" alt="Sarah Chen" loading="lazy">
+            <div class="team-social">
+              <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+              <a href="#" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+            </div>
+          </div>
           <div class="team-body">
             <h3>Sarah Chen</h3>
-            <div class="team-role">Founder and CEO</div>
-            <p>Leads the vision for reliable, fresh, and affordable grocery delivery.</p>
+            <span class="team-role">Founder &amp; CEO</span>
+            <p>Leads the vision for reliable, fresh, and affordable grocery delivery that puts customers first.</p>
           </div>
-        </article>
-        <article class="team-card">
-          <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=85"
-            alt="Raj Patel">
+        </div>
+        <div class="team-card fade-up" data-delay="150">
+          <div class="team-image-wrap">
+            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=85" alt="Raj Patel" loading="lazy">
+            <div class="team-social">
+              <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+              <a href="#" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+            </div>
+          </div>
           <div class="team-body">
             <h3>Raj Patel</h3>
-            <div class="team-role">Head of Farm Partners</div>
-            <p>Works closely with suppliers to keep fresh products moving daily.</p>
+            <span class="team-role">Head of Supply Chain</span>
+            <p>Works closely with farms and suppliers to maintain a steady flow of fresh products.</p>
           </div>
-        </article>
-        <article class="team-card">
-          <div class="team-avatar-alt"><i class="bi bi-person-badge-fill"></i></div>
+        </div>
+        <div class="team-card fade-up" data-delay="300">
+          <div class="team-image-wrap">
+            <div class="team-avatar-alt"><i class="bi bi-person-badge-fill"></i></div>
+            <div class="team-social">
+              <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+              <a href="#" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+            </div>
+          </div>
           <div class="team-body">
             <h3>Aisha Khan</h3>
-            <div class="team-role">Customer Experience</div>
-            <p>Ensures every customer gets helpful support and a smooth order experience.</p>
+            <span class="team-role">Customer Experience Lead</span>
+            <p>Ensures every customer gets helpful support and a smooth, delightful order experience.</p>
           </div>
-        </article>
+        </div>
       </div>
     </div>
   </section>
 
+  <!-- ===== SECTION 10: CTA ===== -->
   <section class="cta-section">
-    <div class="ab-container">
-      <div class="cta-panel">
-        <div>
-          <h2>Ready to fill your cart with fresh picks?</h2>
-          <p>Explore products, compare essentials, and order groceries in minutes.</p>
+    <div class="gh-container">
+      <div class="cta-panel fade-up">
+        <div class="cta-decoration"></div>
+        <div class="cta-decoration"></div>
+        <h2>Ready to Experience Smarter Grocery Shopping?</h2>
+        <p>Join thousands of happy customers and get fresh groceries delivered to your doorstep.</p>
+        <div class="cta-actions">
+          <a href="{% url 'store:product_list' %}" class="gh-btn-cta gh-btn-cta-primary">Start Shopping <i class="bi bi-arrow-right"></i></a>
+          <a href="{% url 'store:product_list' %}" class="gh-btn-cta gh-btn-cta-secondary">Browse Categories <i class="bi bi-grid"></i></a>
         </div>
-        <a href="{% url 'store:product_list' %}" class="ab-btn ab-btn-primary">Start Shopping <i
-            class="bi bi-arrow-right"></i></a>
       </div>
     </div>
   </section>
+
 </div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== SCROLL-TRIGGERED ANIMATIONS =====
+  var animateElements = document.querySelectorAll('.fade-up, .fade-in, .scale-in');
+
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  });
+
+  animateElements.forEach(function(el) {
+    observer.observe(el);
+  });
+
+  // ===== ANIMATED COUNTER =====
+  var statValues = document.querySelectorAll('.stat-value[data-count]');
+  var counterObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var el = entry.target;
+        var target = parseInt(el.getAttribute('data-count'), 10);
+        var suffix = el.textContent.replace(/[\d+]/g, '').trim();
+        var current = 0;
+        var increment = Math.ceil(target / 60);
+        var timer = setInterval(function() {
+          current += increment;
+          if (current >= target) {
+            current = target;
+            clearInterval(timer);
+          }
+          el.textContent = current.toLocaleString() + suffix;
+        }, 25);
+        counterObserver.unobserve(el);
+      }
+    });
+  }, { threshold: 0.5 });
+
+  statValues.forEach(function(el) {
+    counterObserver.observe(el);
+  });
+
+})();
+</script>
 {% endblock %}

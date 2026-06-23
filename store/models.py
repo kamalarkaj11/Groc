@@ -6,15 +6,35 @@ from django.utils import timezone
 from datetime import timedelta
 
 class Profile(models.Model):
+    VERIFICATION_METHOD_CHOICES = [
+        ('email', 'Email Address'),
+        ('phone', 'Phone Number'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='phone_profile')
     # Registered phone numbers are stored in E.164 format and must be unique.
     phone_number = models.CharField(max_length=15, unique=True)
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
+    verification_method = models.CharField(
+        max_length=10,
+        choices=VERIFICATION_METHOD_CHOICES,
+        default='email',
+        help_text="Which contact method was chosen for signup verification.",
+    )
+    verified_at = models.DateTimeField(null=True, blank=True, help_text="When the selected verification was completed.")
+    profile_verified_at = models.DateTimeField(null=True, blank=True, help_text="When the user completed profile-level verification.")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.user.username} ({self.phone_number})"
+
+    @property
+    def is_selected_method_verified(self):
+        """Check if the verification method chosen during registration is verified."""
+        if self.verification_method == 'phone':
+            return self.is_phone_verified
+        return self.is_email_verified
 
 
 class PhoneOTP(models.Model):
@@ -62,7 +82,7 @@ class IndianState(models.TextChoices):
     LADAKH = 'LA', 'Ladakh'
     MADHYA_PRADESH = 'MP', 'Madhya Pradesh'
     MANIPUR = 'MN', 'Manipur'
-    MEGHALAYA = 'ML', 'Meghalaya'
+    MEGHALAYA = 'MG', 'Meghalaya'
     MIZORAM = 'MZ', 'Mizoram'
     NAGALAND = 'NL', 'Nagaland'
     ODISHA = 'OR', 'Odisha'
@@ -438,17 +458,42 @@ class CartItem(models.Model):
 
 
 class Order(models.Model):
-    STATUS_CHOICES = [
+    ORDER_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('packed', 'Packed'),
+        ('out_for_delivery', 'Out For Delivery'),
+        ('delivered', 'Delivered'),
+        ('cancelled', 'Cancelled'),
+        ('failed', 'Failed'),
+    ]
+    
+    PAYMENT_STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('paid', 'Paid'),
-        ('confirmed', 'Confirmed'),
         ('failed', 'Failed'),
-        ('delivered', 'Delivered'),
+        ('refunded', 'Refunded'),
     ]
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    PAYMENT_METHOD_CHOICES = [
+        ('stripe', 'Stripe (Card)'),
+        ('cod', 'Cash on Delivery'),
+        ('razorpay', 'Razorpay'),
+        ('phonepe', 'PhonePe'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    order_id = models.CharField(max_length=20, unique=True, blank=True, null=True, help_text="Auto-generated friendly order ID like GH-1001")
     stripe_session_id = models.CharField(max_length=255, blank=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='stripe')
+    transaction_id = models.CharField(max_length=255, blank=True, help_text="Payment gateway transaction ID")
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     # Shipping and location fields
     address = models.TextField(blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
@@ -458,7 +503,10 @@ class Order(models.Model):
     state = models.CharField(max_length=2, choices=IndianState.choices, blank=True)
     pincode = models.CharField(max_length=10, blank=True)
     phone = models.CharField(max_length=15, blank=True)
+    delivery_notes = models.TextField(blank=True)
+    expected_delivery_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # Notification delivery status
     email_sent = models.BooleanField(default=False, help_text="Whether confirmation email has been sent")
@@ -466,8 +514,25 @@ class Order(models.Model):
     notification_sent = models.BooleanField(default=False, help_text="Whether all notifications have been sent")
     notification_sent_at = models.DateTimeField(null=True, blank=True, help_text="When notifications were sent")
 
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['payment_status']),
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['order_id']),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.order_id:
+            # Generate a friendly order ID like GH-1001
+            last_order = Order.objects.order_by('-id').first()
+            next_id = (last_order.id + 1) if last_order else 1
+            self.order_id = f"GH{next_id:04d}"
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"Order {self.id} - {self.user.username}"
+        return f"Order {self.order_id or self.id} - {self.user.username}"
 
 class OrderAddress(models.Model):
     order = models.OneToOneField('Order', on_delete=models.CASCADE, related_name='shipping_address')
@@ -523,6 +588,28 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product.title} x{self.quantity}"
+
+
+class OrderStatusHistory(models.Model):
+    """Maintains a complete audit trail of all order status changes."""
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='status_history')
+    previous_status = models.CharField(max_length=20, blank=True, help_text="Previous status before the change")
+    new_status = models.CharField(max_length=20, help_text="New status after the change")
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_status_changes')
+    changed_by_name = models.CharField(max_length=100, blank=True, help_text="Name of the person who made the change")
+    notes = models.TextField(blank=True, help_text="Optional notes about why the status changed")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Order Status History'
+        verbose_name_plural = 'Order Status Histories'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['order', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"Order {self.order.order_id or self.order.id}: {self.previous_status} → {self.new_status}"
 
 
 class NotificationLog(models.Model):
@@ -583,3 +670,187 @@ class NotificationLog(models.Model):
     @property
     def has_any_error(self):
         return self.email_status == 'failed' or self.sms_status == 'failed'
+
+
+# ============================================================
+# Order Tracking / Delivery Tracking Models
+# ============================================================
+
+class OrderTracking(models.Model):
+    """Tracks the delivery status and location of an order."""
+
+    TRACKING_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('packed', 'Packed'),
+        ('shipped', 'Shipped'),
+        ('out_for_delivery', 'Out For Delivery'),
+        ('delivered', 'Delivered'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='tracking')
+    status = models.CharField(
+        max_length=20,
+        choices=TRACKING_STATUS_CHOICES,
+        default='pending',
+    )
+    tracking_number = models.CharField(max_length=100, blank=True, help_text="Courier tracking number")
+    delivery_partner = models.CharField(max_length=100, blank=True, help_text="Courier partner name (e.g., Delhivery, Blue Dart)")
+    current_location = models.CharField(max_length=255, blank=True, help_text="Current location of the package")
+    notes = models.TextField(blank=True, help_text="Internal delivery notes")
+    estimated_delivery_date = models.DateField(null=True, blank=True, help_text="Expected delivery date")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Order Tracking'
+        verbose_name_plural = 'Order Tracking'
+        indexes = [
+            models.Index(fields=['status']),
+            models.Index(fields=['tracking_number']),
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._previous_status = self.status
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            try:
+                old = OrderTracking.objects.get(pk=self.pk)
+                self._previous_status = old.status
+            except OrderTracking.DoesNotExist:
+                self._previous_status = self.status
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Tracking for Order #{self.order_id} - {self.get_status_display()}"
+
+    def get_progress_percentage(self):
+        """Return the progress percentage for the current status."""
+        progress_map = {
+            'pending': 10,
+            'confirmed': 25,
+            'packed': 50,
+            'shipped': 75,
+            'out_for_delivery': 90,
+            'delivered': 100,
+            'cancelled': 0,
+        }
+        return progress_map.get(self.status, 0)
+
+    def get_status_order(self):
+        """Return the numeric order of the current status for comparison."""
+        status_order = {
+            'pending': 0,
+            'confirmed': 1,
+            'packed': 2,
+            'shipped': 3,
+            'out_for_delivery': 4,
+            'delivered': 5,
+            'cancelled': -1,
+        }
+        return status_order.get(self.status, 0)
+
+    def is_status_completed(self, status_key):
+        """Check if a given status is completed based on current status."""
+        if self.status == 'cancelled':
+            return False
+        status_order = {
+            'pending': 0,
+            'confirmed': 1,
+            'packed': 2,
+            'shipped': 3,
+            'out_for_delivery': 4,
+            'delivered': 5,
+        }
+        current = status_order.get(self.status, 0)
+        target = status_order.get(status_key, 0)
+        return target < current
+
+    def is_current_status(self, status_key):
+        """Check if a given status is the current active status."""
+        return self.status == status_key
+
+
+class OrderTrackingHistory(models.Model):
+    """Stores the history of status changes for an order's tracking."""
+
+    tracking = models.ForeignKey(
+        OrderTracking, on_delete=models.CASCADE, related_name='history'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=OrderTracking.TRACKING_STATUS_CHOICES,
+    )
+    description = models.TextField(blank=True, help_text="Description of this status update")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Order Tracking History'
+        verbose_name_plural = 'Order Tracking Histories'
+        ordering = ['created_at']
+        indexes = [
+            models.Index(fields=['tracking', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"#{self.tracking.order_id} - {self.get_status_display()} @ {self.created_at.strftime('%d %b %Y %I:%M %p')}"
+
+
+class Notification(models.Model):
+    NOTIFICATION_TYPE_CHOICES = [
+        ('auth', 'Authentication'),
+        ('order', 'Order'),
+        ('profile', 'Profile'),
+        ('system', 'System'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPE_CHOICES, default='system')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', 'is_read', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"[{self.get_notification_type_display()}] {self.title} - {self.user.username}"
+
+
+class ContactMessage(models.Model):
+    STATUS_CHOICES = [
+        ('new', 'New'),
+        ('read', 'Read'),
+        ('replied', 'Replied'),
+    ]
+
+    name = models.CharField(max_length=100, verbose_name='Full Name')
+    email = models.EmailField(verbose_name='Email Address')
+    phone = models.CharField(max_length=20, blank=True, verbose_name='Phone Number')
+    subject = models.CharField(max_length=200, verbose_name='Subject')
+    message = models.TextField(verbose_name='Message')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='new', verbose_name='Status')
+    ip_address = models.GenericIPAddressField(blank=True, null=True, verbose_name='IP Address')
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Submitted At')
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Contact Message'
+        verbose_name_plural = 'Contact Messages'
+
+    def __str__(self):
+        return f"{self.name} - {self.subject}"
+
+    def save(self, *args, **kwargs):
+        if self.status == 'read' and not self.is_read:
+            self.is_read = True
+        elif self.status == 'new' and self.is_read:
+            self.is_read = False
+        super().save(*args, **kwargs)

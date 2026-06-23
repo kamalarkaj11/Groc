@@ -3,10 +3,14 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.utils.html import format_html
 from django.urls import reverse
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.utils import timezone
 from .models import (
     Profile, PhoneOTP, Review, UserProfile, Category,
     Subcategory, SubSubCategory, Product, CartItem, Order, OrderItem, OrderAddress, OTP,
-    NotificationLog, NewsletterSubscriber
+    NotificationLog, NewsletterSubscriber, OrderTracking, OrderTrackingHistory, Notification,
+    ContactMessage, OrderStatusHistory
 )
 
 
@@ -219,9 +223,40 @@ class ReviewAdmin(admin.ModelAdmin):
 
 admin.site.register(CartItem)
 admin.site.register(OTP)
-admin.site.register(Profile)
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = [
+        'user', 'phone_number', 'is_email_verified', 'is_phone_verified',
+        'verification_method', 'verified_at', 'profile_verified_at', 'created_at',
+    ]
+    list_filter = ['verification_method', 'is_email_verified', 'is_phone_verified']
+    search_fields = ['user__username', 'user__email', 'phone_number']
+    readonly_fields = ['created_at']
+
+
 admin.site.register(PhoneOTP)
 admin.site.register(NewsletterSubscriber)
+
+
+# ---------- Order Status History Inline ----------
+
+class OrderStatusHistoryInline(admin.TabularInline):
+    """Inline display of order status history."""
+    model = OrderStatusHistory
+    extra = 0
+    readonly_fields = ['previous_status', 'new_status', 'changed_by_name', 'notes', 'created_at']
+    fields = ['previous_status', 'new_status', 'changed_by_name', 'notes', 'created_at']
+    ordering = ['-created_at']
+    can_delete = False
+    max_num = 0
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 # ---------- Order Admin ----------
@@ -281,41 +316,54 @@ class NotificationLogInline(admin.TabularInline):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = [
-        'id', 'customer_name', 'customer_email', 'customer_phone',
-        'total_amount', 'status', 'notification_status_badge', 'delivery_city', 'created_at',
+        'order_id_display', 'customer_name', 'customer_email', 'customer_phone',
+        'payment_method_display', 'payment_status_badge', 'total_amount',
+        'status_badge', 'notification_status_badge', 'delivery_city', 'created_at',
     ]
-    list_filter = ['status', 'created_at', 'state']
+    list_filter = ['status', 'payment_status', 'payment_method', 'created_at', 'state']
     list_select_related = ['user']
     search_fields = [
-        'user__username', 'user__first_name', 'user__last_name',
+        'order_id', 'user__username', 'user__first_name', 'user__last_name',
         'user__email', 'phone', 'address',
         'shipping_address__full_name', 'shipping_address__email',
         'shipping_address__phone',
     ]
     readonly_fields = [
-        'user', 'stripe_session_id', 'total_amount', 'created_at',
-        'customer_name_display', 'customer_email_display', 'customer_phone_display',
-        'delivery_address_display', 'notification_details',
+        'user', 'stripe_session_id', 'total_amount', 'subtotal', 'tax_amount',
+        'discount_amount', 'shipping_charge', 'created_at', 'updated_at',
+        'order_id_display', 'customer_name_display', 'customer_email_display',
+        'customer_phone_display', 'delivery_address_display', 'notification_details',
     ]
     date_hierarchy = 'created_at'
-    inlines = [OrderAddressInline, OrderItemInline, NotificationLogInline]
+    inlines = [OrderAddressInline, OrderItemInline, OrderStatusHistoryInline, NotificationLogInline]
+    
+    actions = ['mark_as_confirmed', 'mark_as_packed', 'mark_as_out_for_delivery', 'mark_as_delivered', 'mark_as_cancelled']
 
     fieldsets = (
         ('Order Info', {
-            'fields': ('user', 'status', 'total_amount', 'stripe_session_id', 'created_at'),
+            'fields': ('order_id_display', 'user', 'status', 'created_at', 'updated_at'),
+        }),
+        ('Payment Info', {
+            'fields': ('payment_method', 'payment_status', 'transaction_id', 'stripe_session_id',
+                       'subtotal', 'tax_amount', 'discount_amount', 'shipping_charge', 'total_amount'),
         }),
         ('Customer Details', {
             'fields': ('customer_name_display', 'customer_email_display', 'customer_phone_display'),
         }),
         ('Delivery Info', {
             'fields': ('address', 'address_line1', 'city', 'state', 'pincode', 'phone',
-                       'delivery_address_display'),
+                       'delivery_notes', 'expected_delivery_date', 'delivery_address_display'),
         }),
         ('Notification Status', {
             'fields': ('notification_details',),
             'classes': ('collapse',),
         }),
     )
+
+    def order_id_display(self, obj):
+        return obj.order_id or f"#{obj.id}"
+    order_id_display.short_description = 'Order ID'
+    order_id_display.admin_order_field = 'order_id'
 
     def customer_name(self, obj):
         shipping = getattr(obj, 'shipping_address', None)
@@ -338,6 +386,41 @@ class OrderAdmin(admin.ModelAdmin):
             return shipping.phone
         return obj.phone or '-'
     customer_phone.short_description = 'Phone'
+
+    def payment_method_display(self, obj):
+        return obj.get_payment_method_display() if obj.payment_method else '-'
+    payment_method_display.short_description = 'Payment'
+
+    def payment_status_badge(self, obj):
+        colors = {
+            'pending': '#f59e0b',
+            'paid': '#10b981',
+            'failed': '#ef4444',
+            'refunded': '#6366f1',
+        }
+        color = colors.get(obj.payment_status, '#6b7280')
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color, obj.get_payment_status_display().upper(),
+        )
+    payment_status_badge.short_description = 'Payment Status'
+
+    def status_badge(self, obj):
+        colors = {
+            'pending': '#f59e0b',
+            'confirmed': '#3b82f6',
+            'packed': '#6366f1',
+            'out_for_delivery': '#06b6d4',
+            'delivered': '#10b981',
+            'cancelled': '#ef4444',
+            'failed': '#dc2626',
+        }
+        color = colors.get(obj.status, '#6b7280')
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color, obj.get_status_display().upper(),
+        )
+    status_badge.short_description = 'Status'
 
     def delivery_city(self, obj):
         return obj.city or '-'
@@ -419,6 +502,203 @@ class OrderAdmin(admin.ModelAdmin):
         return super().get_queryset(request).select_related(
             'user', 'shipping_address'
         )
+
+    def save_model(self, request, obj, form, change):
+        """Override save to create status history entry when status changes."""
+        if change:
+            try:
+                old_obj = Order.objects.get(pk=obj.pk)
+                old_status = old_obj.status
+                if old_status != obj.status:
+                    # Create status history entry
+                    changed_by_name = request.user.get_full_name() or request.user.username
+                    OrderStatusHistory.objects.create(
+                        order=obj,
+                        previous_status=old_status,
+                        new_status=obj.status,
+                        changed_by=request.user if request.user.is_staff else None,
+                        changed_by_name=changed_by_name,
+                        notes=f"Status changed from {old_status} to {obj.status} by admin",
+                    )
+                    
+                    # Send notification to user about status change
+                    self._send_status_notification(obj, old_status)
+            except Order.DoesNotExist:
+                pass
+        super().save_model(request, obj, form, change)
+
+    def _send_status_notification(self, order, old_status):
+        """Send notification to user when order status changes."""
+        try:
+            from .models import Notification
+            status_messages = {
+                'confirmed': f'Your order {order.order_id} has been confirmed. We\'re preparing your items!',
+                'packed': f'Your order {order.order_id} has been packed and is ready for delivery.',
+                'out_for_delivery': f'Your order {order.order_id} is out for delivery! Get ready to receive your groceries.',
+                'delivered': f'Your order {order.order_id} has been delivered successfully. Enjoy your groceries! 🎉',
+                'cancelled': f'Your order {order.order_id} has been cancelled. Please contact support for more information.',
+            }
+            
+            if order.status in status_messages:
+                message = status_messages[order.status]
+                title = f"Order {order.get_status_display()}"
+                
+                # Create notification
+                Notification.objects.create(
+                    user=order.user,
+                    title=title,
+                    message=message,
+                    notification_type='order',
+                )
+        except Exception:
+            pass
+
+    def mark_as_confirmed(self, request, queryset):
+        for order in queryset:
+            if order.status == 'pending':
+                old_status = order.status
+                order.status = 'confirmed'
+                order.save()
+                changed_by_name = request.user.get_full_name() or request.user.username
+                OrderStatusHistory.objects.create(
+                    order=order,
+                    previous_status=old_status,
+                    new_status='confirmed',
+                    changed_by=request.user,
+                    changed_by_name=changed_by_name,
+                )
+        self.message_user(request, "Selected orders marked as confirmed.")
+    mark_as_confirmed.short_description = "Mark selected as Confirmed"
+
+    def mark_as_packed(self, request, queryset):
+        for order in queryset:
+            old_status = order.status
+            order.status = 'packed'
+            order.save()
+            changed_by_name = request.user.get_full_name() or request.user.username
+            OrderStatusHistory.objects.create(
+                order=order,
+                previous_status=old_status,
+                new_status='packed',
+                changed_by=request.user,
+                changed_by_name=changed_by_name,
+            )
+        self.message_user(request, "Selected orders marked as packed.")
+    mark_as_packed.short_description = "Mark selected as Packed"
+
+    def mark_as_out_for_delivery(self, request, queryset):
+        for order in queryset:
+            old_status = order.status
+            order.status = 'out_for_delivery'
+            order.save()
+            changed_by_name = request.user.get_full_name() or request.user.username
+            OrderStatusHistory.objects.create(
+                order=order,
+                previous_status=old_status,
+                new_status='out_for_delivery',
+                changed_by=request.user,
+                changed_by_name=changed_by_name,
+            )
+        self.message_user(request, "Selected orders marked as out for delivery.")
+    mark_as_out_for_delivery.short_description = "Mark selected as Out for Delivery"
+
+    def mark_as_delivered(self, request, queryset):
+        for order in queryset:
+            old_status = order.status
+            order.status = 'delivered'
+            order.payment_status = 'paid'
+            order.save()
+            changed_by_name = request.user.get_full_name() or request.user.username
+            OrderStatusHistory.objects.create(
+                order=order,
+                previous_status=old_status,
+                new_status='delivered',
+                changed_by=request.user,
+                changed_by_name=changed_by_name,
+            )
+        self.message_user(request, "Selected orders marked as delivered.")
+    mark_as_delivered.short_description = "Mark selected as Delivered"
+
+    def mark_as_cancelled(self, request, queryset):
+        for order in queryset:
+            old_status = order.status
+            order.status = 'cancelled'
+            order.save()
+            changed_by_name = request.user.get_full_name() or request.user.username
+            OrderStatusHistory.objects.create(
+                order=order,
+                previous_status=old_status,
+                new_status='cancelled',
+                changed_by=request.user,
+                changed_by_name=changed_by_name,
+            )
+        self.message_user(request, "Selected orders marked as cancelled.")
+    mark_as_cancelled.short_description = "Mark selected as Cancelled"
+
+
+# ---------- OrderStatusHistory Admin ----------
+
+@admin.register(OrderStatusHistory)
+class OrderStatusHistoryAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 'order_link', 'previous_status_colored', 'new_status_colored',
+        'changed_by_name', 'created_at',
+    ]
+    list_filter = ['new_status', 'created_at']
+    search_fields = ['order__order_id', 'order__id', 'changed_by_name', 'notes']
+    list_select_related = ['order', 'changed_by']
+    date_hierarchy = 'created_at'
+    readonly_fields = ['order', 'previous_status', 'new_status', 'changed_by', 'changed_by_name', 'notes', 'created_at']
+    ordering = ['-created_at']
+
+    def order_link(self, obj):
+        url = reverse('admin:store_order_change', args=[obj.order.id])
+        return format_html('<a href="{}">Order {}</a>', url, obj.order.order_id or f"#{obj.order.id}")
+    order_link.short_description = 'Order'
+    order_link.admin_order_field = 'order__id'
+
+    def previous_status_colored(self, obj):
+        colors = {
+            'pending': '#f59e0b',
+            'confirmed': '#3b82f6',
+            'packed': '#6366f1',
+            'out_for_delivery': '#06b6d4',
+            'delivered': '#10b981',
+            'cancelled': '#ef4444',
+            'failed': '#dc2626',
+        }
+        color = colors.get(obj.previous_status, '#6b7280')
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color, obj.get_previous_status_display().upper() if obj.previous_status else 'N/A',
+        )
+    previous_status_colored.short_description = 'Previous'
+
+    def new_status_colored(self, obj):
+        colors = {
+            'pending': '#f59e0b',
+            'confirmed': '#3b82f6',
+            'packed': '#6366f1',
+            'out_for_delivery': '#06b6d4',
+            'delivered': '#10b981',
+            'cancelled': '#ef4444',
+            'failed': '#dc2626',
+        }
+        color = colors.get(obj.new_status, '#6b7280')
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color, obj.get_new_status_display().upper(),
+        )
+    new_status_colored.short_description = 'New'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 # ---------- NotificationLog Admin ----------
@@ -522,3 +802,260 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
+
+
+# ---------- Order Tracking Admin ----------
+
+class OrderTrackingHistoryInline(admin.TabularInline):
+    """Inline display of tracking history."""
+    model = OrderTrackingHistory
+    extra = 0
+    readonly_fields = ['status', 'description', 'created_at']
+    fields = ['status', 'description', 'created_at']
+    ordering = ['created_at']
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(OrderTracking)
+class OrderTrackingAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 'order_link', 'customer_name', 'status_badge', 'tracking_number',
+        'delivery_partner', 'estimated_delivery_date', 'current_location_short', 'updated_at',
+    ]
+    list_filter = ['status', 'delivery_partner', 'updated_at']
+    search_fields = [
+        'order__id', 'order__user__username', 'order__user__first_name',
+        'order__user__last_name', 'tracking_number', 'delivery_partner',
+    ]
+    list_select_related = ['order__user', 'order__shipping_address']
+    date_hierarchy = 'updated_at'
+    inlines = [OrderTrackingHistoryInline]
+
+    fieldsets = (
+        ('Order Information', {
+            'fields': ('order', 'order_status_display'),
+            'description': 'Linked order and its current payment/fulfillment status.',
+        }),
+        ('Delivery Status', {
+            'fields': ('status', 'notes'),
+        }),
+        ('Tracking Details', {
+            'fields': ('tracking_number', 'delivery_partner', 'current_location'),
+        }),
+        ('Schedule', {
+            'fields': ('estimated_delivery_date', 'updated_at'),
+        }),
+    )
+
+    readonly_fields = ['order', 'order_status_display', 'updated_at']
+
+    def order_link(self, obj):
+        url = reverse('admin:store_order_change', args=[obj.order.id])
+        return format_html('<a href="{}">Order #{}</a>', url, obj.order.id)
+    order_link.short_description = 'Order'
+    order_link.admin_order_field = 'order__id'
+
+    def customer_name(self, obj):
+        shipping = getattr(obj.order, 'shipping_address', None)
+        if shipping:
+            return shipping.full_name
+        return obj.order.user.get_full_name() or obj.order.user.username
+    customer_name.short_description = 'Customer'
+    customer_name.admin_order_field = 'order__user__first_name'
+
+    def status_badge(self, obj):
+        colors = {
+            'pending': '#f59e0b',
+            'confirmed': '#3b82f6',
+            'packed': '#6366f1',
+            'shipped': '#06b6d4',
+            'out_for_delivery': '#f59e0b',
+            'delivered': '#10b981',
+            'cancelled': '#ef4444',
+        }
+        color = colors.get(obj.status, '#6b7280')
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color, obj.get_status_display().upper(),
+        )
+    status_badge.short_description = 'Status'
+
+    def current_location_short(self, obj):
+        if obj.current_location:
+            return obj.current_location[:50] + ('...' if len(obj.current_location) > 50 else '')
+        return '-'
+    current_location_short.short_description = 'Location'
+
+    def order_status_display(self, obj):
+        """Display the linked order's payment/fulfillment status."""
+        return format_html(
+            '<span style="font-weight: 500;">{}</span>',
+            obj.order.get_status_display(),
+        )
+    order_status_display.short_description = 'Order Payment Status'
+
+    def save_model(self, request, obj, form, change):
+        """Override save to create a history entry when status changes."""
+        if change:
+            # Get the old status from the database
+            old_status = OrderTracking.objects.filter(pk=obj.pk).values_list('status', flat=True).first()
+            if old_status and old_status != obj.status:
+                # Create a history entry
+                description = f"Status updated to {obj.get_status_display()}"
+                if obj.notes:
+                    description = obj.notes
+                OrderTrackingHistory.objects.create(
+                    tracking=obj,
+                    status=obj.status,
+                    description=description,
+                )
+        else:
+            # New tracking record - create initial history entry
+            OrderTrackingHistory.objects.create(
+                tracking=obj,
+                status=obj.status,
+                description='Order placed successfully',
+            )
+        super().save_model(request, obj, form, change)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'order__user', 'order__shipping_address'
+        )
+
+
+@admin.register(OrderTrackingHistory)
+class OrderTrackingHistoryAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 'tracking_link', 'status_badge', 'description_short', 'created_at',
+    ]
+    list_filter = ['status', 'created_at']
+    search_fields = ['tracking__order__id', 'description']
+    list_select_related = ['tracking__order']
+    date_hierarchy = 'created_at'
+    readonly_fields = ['tracking', 'status', 'description', 'created_at']
+    ordering = ['-created_at']
+
+    def tracking_link(self, obj):
+        url = reverse('admin:store_ordertracking_change', args=[obj.tracking.id])
+        return format_html('<a href="{}">Tracking #{} (Order #{})</a>', url, obj.tracking.id, obj.tracking.order.id)
+    tracking_link.short_description = 'Tracking'
+    tracking_link.admin_order_field = 'tracking__id'
+
+    def status_badge(self, obj):
+        colors = {
+            'pending': '#f59e0b',
+            'confirmed': '#3b82f6',
+            'packed': '#6366f1',
+            'shipped': '#06b6d4',
+            'out_for_delivery': '#f59e0b',
+            'delivered': '#10b981',
+            'cancelled': '#ef4444',
+        }
+        color = colors.get(obj.status, '#6b7280')
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color, obj.get_status_display().upper(),
+        )
+    status_badge.short_description = 'Status'
+
+    def description_short(self, obj):
+        if obj.description:
+            return obj.description[:80] + ('...' if len(obj.description) > 80 else '')
+        return '-'
+    description_short.short_description = 'Description'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+# ---------- Notification Admin ----------
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = [
+        'id', 'user', 'title', 'notification_type', 'is_read', 'created_at',
+    ]
+    list_filter = ['notification_type', 'is_read', 'created_at']
+    search_fields = ['user__username', 'user__email', 'title', 'message']
+    list_select_related = ['user']
+    date_hierarchy = 'created_at'
+    list_editable = ['is_read']
+    actions = ['mark_as_read', 'mark_as_unread']
+
+    def is_read_badge(self, obj):
+        if obj.is_read:
+            return format_html('<span style="color: #198754;">&#10003; Read</span>')
+        return format_html('<span style="color: #dc3545; font-weight: bold;">&#9679; Unread</span>')
+    is_read_badge.short_description = 'Status'
+
+    def mark_as_read(self, request, queryset):
+        queryset.update(is_read=True)
+    mark_as_read.short_description = 'Mark selected as read'
+
+    def mark_as_unread(self, request, queryset):
+        queryset.update(is_read=False)
+    mark_as_unread.short_description = 'Mark selected as unread'
+
+
+# ---------- Contact Message Admin ----------
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display = ('name', 'email', 'phone', 'subject', 'created_at', 'colored_status')
+    list_filter = ('status', 'created_at')
+    search_fields = ('name', 'email', 'phone', 'subject', 'message')
+    readonly_fields = ('created_at', 'ip_address')
+    actions = ['mark_as_new', 'mark_as_read', 'mark_as_replied']
+    list_display_links = ('name', 'subject')
+    list_per_page = 25
+    date_hierarchy = 'created_at'
+
+    fieldsets = (
+        ('Customer Information', {
+            'fields': ('name', 'email', 'phone')
+        }),
+        ('Message Details', {
+            'fields': ('subject', 'message')
+        }),
+        ('Status & Metadata', {
+            'fields': ('status', 'ip_address', 'created_at')
+        }),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).defer('message')
+
+    def colored_status(self, obj):
+        colors = {
+            'new': '#16A34A',
+            'read': '#2563EB',
+            'replied': '#9333EA',
+        }
+        color = colors.get(obj.status, '#6B7280')
+        return format_html(
+            '<span style="color: {}; font-weight: 600;">{}</span>',
+            color, obj.get_status_display()
+        )
+    colored_status.short_description = 'Status'
+    colored_status.admin_order_field = 'status'
+
+    def mark_as_new(self, request, queryset):
+        queryset.update(status='new', is_read=False)
+    mark_as_new.short_description = 'Mark selected as New'
+
+    def mark_as_read(self, request, queryset):
+        queryset.update(status='read', is_read=True)
+    mark_as_read.short_description = 'Mark selected as Read'
+
+    def mark_as_replied(self, request, queryset):
+        queryset.update(status='replied', is_read=True)
+    mark_as_replied.short_description = 'Mark selected as Replied'

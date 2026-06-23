@@ -1,0 +1,511 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications - GrocHub{% endblock %}
+
+{% block extra_css %}
+<style>
+  .notif-page {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .notif-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .notif-page-title {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--header-green-deep, #0f5132);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .notif-page-title .badge {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #dc3545, #f97316);
+    color: #fff;
+    font-weight: 800;
+  }
+
+  .notif-page-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .notif-page-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid rgba(22,131,76,0.16);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--header-green-deep, #0f5132);
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+
+  .notif-page-btn:hover {
+    background: rgba(22,131,76,0.08);
+    border-color: rgba(22,131,76,0.3);
+    transform: translateY(-1px);
+  }
+
+  .notif-page-btn--danger:hover {
+    background: rgba(220,53,69,0.08);
+    border-color: rgba(220,53,69,0.3);
+    color: #dc3545;
+  }
+
+  .notif-filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .notif-search {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+
+  .notif-search input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border: 1px solid rgba(22,131,76,0.16);
+    border-radius: 999px;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .notif-search input:focus {
+    border-color: rgba(22,131,76,0.5);
+    box-shadow: 0 0 0 4px rgba(22,131,76,0.1);
+  }
+
+  .notif-search i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--header-muted, #69756f);
+  }
+
+  .notif-filter-select {
+    padding: 10px 14px;
+    border: 1px solid rgba(22,131,76,0.16);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    outline: none;
+    background: #fff;
+    color: var(--header-ink, #17251d);
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .notif-filter-select:focus {
+    border-color: rgba(22,131,76,0.5);
+  }
+
+  .notif-card {
+    display: flex;
+    gap: 14px;
+    padding: 16px;
+    border: 1px solid rgba(22,131,76,0.1);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    position: relative;
+  }
+
+  .notif-card:hover {
+    border-color: rgba(22,131,76,0.25);
+    box-shadow: 0 4px 16px rgba(22,131,76,0.08);
+  }
+
+  .notif-card--unread {
+    background: rgba(22,131,76,0.02);
+    border-left: 3px solid var(--header-green, #16834c);
+  }
+
+  .notif-card-icon {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .notif-card-icon--auth { color: #6366f1; background: rgba(99,102,241,0.1); }
+  .notif-card-icon--order { color: #059669; background: rgba(5,150,105,0.1); }
+  .notif-card-icon--profile { color: #d97706; background: rgba(217,119,6,0.1); }
+  .notif-card-icon--system { color: #6b7280; background: rgba(107,114,128,0.1); }
+
+  .notif-card-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .notif-card-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--header-ink, #17251d);
+    margin: 0 0 4px;
+  }
+
+  .notif-card-message {
+    font-size: 0.85rem;
+    color: var(--header-muted, #69756f);
+    margin: 0 0 6px;
+  }
+
+  .notif-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.75rem;
+    color: var(--header-muted, #69756f);
+    font-weight: 600;
+  }
+
+  .notif-card-type-badge {
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .notif-card-type-badge--auth { background: rgba(99,102,241,0.1); color: #6366f1; }
+  .notif-card-type-badge--order { background: rgba(5,150,105,0.1); color: #059669; }
+  .notif-card-type-badge--profile { background: rgba(217,119,6,0.1); color: #d97706; }
+  .notif-card-type-badge--system { background: rgba(107,114,128,0.1); color: #6b7280; }
+
+  .notif-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .notif-card-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    color: var(--header-muted, #69756f);
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+  }
+
+  .notif-card-btn:hover {
+    color: var(--header-green-deep, #0f5132);
+    background: rgba(22,131,76,0.1);
+  }
+
+  .notif-card-btn--delete:hover {
+    color: #dc3545;
+    background: rgba(220,53,69,0.1);
+  }
+
+  .notif-unread-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--header-green, #16834c);
+    margin-right: 4px;
+  }
+
+  .notif-read-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .notif-read-badge--unread {
+    background: rgba(22,131,76,0.1);
+    color: var(--header-green, #16834c);
+  }
+
+  .notif-read-badge--read {
+    background: rgba(107,114,128,0.1);
+    color: #6b7280;
+  }
+
+  .notif-empty-page {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--header-muted, #69756f);
+  }
+
+  .notif-empty-page i {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 12px;
+    color: var(--header-green, #16834c);
+    opacity: 0.3;
+  }
+
+  .notif-empty-page h3 {
+    margin: 0 0 6px;
+    font-weight: 900;
+    color: var(--header-ink, #17251d);
+  }
+
+  .notif-pagination {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+
+  .notif-pagination a,
+  .notif-pagination span {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: 1px solid rgba(22,131,76,0.16);
+    transition: all 0.15s;
+  }
+
+  .notif-pagination a {
+    color: var(--header-green-deep, #0f5132);
+    background: #fff;
+  }
+
+  .notif-pagination a:hover {
+    background: rgba(22,131,76,0.08);
+    border-color: rgba(22,131,76,0.3);
+  }
+
+  .notif-pagination .current {
+    background: linear-gradient(135deg, var(--header-green, #16834c), var(--header-mint, #22c7a9));
+    color: #fff;
+    border-color: transparent;
+  }
+
+  @media (max-width: 600px) {
+    .notif-page-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .notif-card {
+      padding: 12px;
+      gap: 10px;
+    }
+    .notif-card-icon {
+      width: 36px;
+      height: 36px;
+      font-size: 0.9rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notif-page">
+  <div class="notif-page-header">
+    <h1 class="notif-page-title">
+      <i class="bi bi-bell-fill"></i> Notifications
+      {% if unread_notification_count > 0 %}
+        <span class="badge">{{ unread_notification_count }}</span>
+      {% endif %}
+    </h1>
+    <div class="notif-page-actions">
+      <button type="button" class="notif-page-btn" id="pageMarkAllRead">
+        <i class="bi bi-check2-all"></i> Mark all read
+      </button>
+      <button type="button" class="notif-page-btn notif-page-btn--danger" id="pageClearAll">
+        <i class="bi bi-trash3"></i> Clear all
+      </button>
+    </div>
+  </div>
+
+  <form method="get" class="notif-filters" id="notifFilterForm">
+    <div class="notif-search">
+      <i class="bi bi-search"></i>
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Search notifications..." autocomplete="off">
+    </div>
+    <select name="type" class="notif-filter-select" onchange="this.form.submit()">
+      <option value="">All Types</option>
+      {% for value, label in type_choices %}
+        <option value="{{ value }}" {% if filter_type == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="read" class="notif-filter-select" onchange="this.form.submit()">
+      <option value="">All</option>
+      <option value="unread" {% if filter_read == 'unread' %}selected{% endif %}>Unread</option>
+      <option value="read" {% if filter_read == 'read' %}selected{% endif %}>Read</option>
+    </select>
+  </form>
+
+  {% if notifications %}
+    {% for n in notifications %}
+    <div class="notif-card {% if not n.is_read %}notif-card--unread{% endif %}" data-id="{{ n.id }}">
+      <div class="notif-card-icon notif-card-icon--{{ n.notification_type }}">
+        {% if n.notification_type == 'auth' %}
+          <i class="bi bi-shield-lock"></i>
+        {% elif n.notification_type == 'order' %}
+          <i class="bi bi-bag-check"></i>
+        {% elif n.notification_type == 'profile' %}
+          <i class="bi bi-person-gear"></i>
+        {% else %}
+          <i class="bi bi-info-circle"></i>
+        {% endif %}
+      </div>
+      <div class="notif-card-body">
+        <h3 class="notif-card-title">
+          {% if not n.is_read %}<span class="notif-unread-dot"></span>{% endif %}
+          {{ n.title }}
+        </h3>
+        <p class="notif-card-message">{{ n.message }}</p>
+        <div class="notif-card-meta">
+          <span class="notif-card-type-badge notif-card-type-badge--{{ n.notification_type }}">
+            {{ n.get_notification_type_display }}
+          </span>
+          <span>{{ n.created_at|date:"d M Y, h:i A" }}</span>
+          {% if n.is_read %}
+            <span class="notif-read-badge notif-read-badge--read">Read</span>
+          {% else %}
+            <span class="notif-read-badge notif-read-badge--unread">Unread</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="notif-card-actions">
+        <button type="button" class="notif-card-btn notif-toggle-read" title="{% if n.is_read %}Mark as unread{% else %}Mark as read{% endif %}" data-id="{{ n.id }}" data-read="{{ n.is_read|yesno:'true,false' }}">
+          <i class="bi {% if n.is_read %}bi-envelope{% else %}bi-envelope-open{% endif %}"></i>
+        </button>
+        <button type="button" class="notif-card-btn notif-card-btn--delete notif-delete-btn" title="Delete" data-id="{{ n.id }}">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+    {% endfor %}
+
+    {% if is_paginated %}
+    <div class="notif-pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_read %}&read={{ filter_read }}{% endif %}">&laquo; Prev</a>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <span class="current">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <a href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_read %}&read={{ filter_read }}{% endif %}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if filter_type %}&type={{ filter_type }}{% endif %}{% if filter_read %}&read={{ filter_read }}{% endif %}">Next &raquo;</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  {% else %}
+    <div class="notif-empty-page">
+      <i class="bi bi-bell-slash"></i>
+      <h3>No notifications</h3>
+      <p>
+        {% if search_query or filter_type or filter_read %}
+          No notifications match your filters. <a href="{% url 'store:notifications' %}">Clear filters</a>
+        {% else %}
+          You're all caught up! Notifications will appear here.
+        {% endif %}
+      </p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function notifPagePost(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCookie('csrftoken'),
+        'Content-Type': 'application/json',
+      },
+      body: body ? JSON.stringify(body) : '{}',
+    }).then(r => {
+      if (r.ok) {
+        window.location.reload();
+      }
+    });
+  }
+
+  document.getElementById('pageMarkAllRead')?.addEventListener('click', function() {
+    notifPagePost('/api/notifications/mark-all-read/');
+  });
+
+  document.getElementById('pageClearAll')?.addEventListener('click', function() {
+    if (confirm('Are you sure you want to delete all notifications?')) {
+      notifPagePost('/api/notifications/clear-all/');
+    }
+  });
+
+  document.querySelectorAll('.notif-toggle-read').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const id = this.dataset.id;
+      const isRead = this.dataset.read === 'true';
+      const url = isRead ? '/api/notifications/mark-unread/' : '/api/notifications/mark-read/';
+      notifPagePost(url, { id: id });
+    });
+  });
+
+  document.querySelectorAll('.notif-delete-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const id = this.dataset.id;
+      notifPagePost('/api/notifications/delete/', { id: id });
+    });
+  });
+});
+</script>
+{% endblock %}

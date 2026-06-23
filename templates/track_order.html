@@ -1,0 +1,723 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Track Order #{{ order.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --tracking-primary: #4f46e5;
+        --tracking-success: #10b981;
+        --tracking-warning: #f59e0b;
+        --tracking-danger: #ef4444;
+        --tracking-gray: #9ca3af;
+        --tracking-light: #f3f4f6;
+    }
+
+    /* Order Info Card */
+    .order-info-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    .order-info-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%;
+    }
+    .order-info-card::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%;
+    }
+    .order-info-card .order-id {
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    .order-info-card .order-id strong {
+        font-size: 1.4rem;
+        opacity: 1;
+    }
+    .order-info-card .info-item {
+        position: relative;
+        z-index: 1;
+    }
+    .order-info-card .info-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.75;
+    }
+    .order-info-card .info-value {
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    /* Status Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .status-badge.pending { background: #fef3c7; color: #92400e; }
+    .status-badge.confirmed { background: #dbeafe; color: #1e40af; }
+    .status-badge.packed { background: #e0e7ff; color: #3730a3; }
+    .status-badge.shipped { background: #e0f2fe; color: #075985; }
+    .status-badge.out-for-delivery { background: #fef3c7; color: #92400e; }
+    .status-badge.delivered { background: #d1fae5; color: #065f46; }
+    .status-badge.cancelled { background: #fee2e2; color: #991b1b; }
+
+    /* Progress Bar */
+    .tracking-progress {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+    }
+    .progress-track {
+        height: 14px;
+        background: #e5e7eb;
+        border-radius: 50px;
+        overflow: hidden;
+        position: relative;
+    }
+    .progress-track .progress-fill {
+        height: 100%;
+        border-radius: 50px;
+        background: linear-gradient(90deg, #4f46e5, #10b981);
+        transition: width 0.8s ease;
+        position: relative;
+    }
+    .progress-track .progress-fill::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 24px;
+        height: 24px;
+        background: white;
+        border: 3px solid #4f46e5;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+    }
+    .progress-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.75rem;
+    }
+    .progress-label .percentage {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--tracking-primary);
+    }
+    .progress-label .status-text {
+        font-size: 0.9rem;
+        color: #6b7280;
+    }
+
+    /* Timeline */
+    .tracking-timeline {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+    }
+    .timeline-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #1f2937;
+    }
+    .timeline {
+        position: relative;
+        padding-left: 2.5rem;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 11px;
+        top: 8px;
+        bottom: 8px;
+        width: 3px;
+        background: #e5e7eb;
+        border-radius: 50px;
+    }
+    .timeline.completed::before {
+        background: linear-gradient(180deg, #4f46e5, #10b981);
+    }
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.75rem;
+    }
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    .timeline-item .dot {
+        position: absolute;
+        left: -2.5rem;
+        top: 4px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #e5e7eb;
+        border: 3px solid #e5e7eb;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    .timeline-item .dot i {
+        font-size: 0.6rem;
+        color: white;
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    .timeline-item.completed .dot {
+        background: var(--tracking-success);
+        border-color: var(--tracking-success);
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+    }
+    .timeline-item.completed .dot i {
+        opacity: 1;
+    }
+    .timeline-item.current .dot {
+        background: var(--tracking-primary);
+        border-color: var(--tracking-primary);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2);
+        animation: pulse-dot 2s infinite;
+    }
+    .timeline-item.current .dot i {
+        opacity: 1;
+    }
+    .timeline-item.cancelled .dot {
+        background: var(--tracking-danger);
+        border-color: var(--tracking-danger);
+        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+    }
+    .timeline-item.cancelled .dot i {
+        opacity: 1;
+    }
+    @keyframes pulse-dot {
+        0% { box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2); }
+        50% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0.1); }
+        100% { box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2); }
+    }
+    .timeline-item .content {
+        padding-left: 0.75rem;
+    }
+    .timeline-item .content .status-name {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 0.95rem;
+    }
+    .timeline-item .content .status-time {
+        font-size: 0.8rem;
+        color: #9ca3af;
+        margin-top: 2px;
+    }
+    .timeline-item .content .status-desc {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+    .timeline-item.completed .content .status-name,
+    .timeline-item.current .content .status-name {
+        color: #111827;
+    }
+    .timeline-item:not(.completed):not(.current):not(.cancelled) .content .status-name {
+        color: #d1d5db;
+    }
+    .timeline-item:not(.completed):not(.current):not(.cancelled) .content .status-time {
+        visibility: hidden;
+    }
+
+    /* Delivery Info Card */
+    .delivery-info-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+        height: 100%;
+    }
+    .delivery-info-card .info-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+    .delivery-info-card .delivery-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #9ca3af;
+        margin-bottom: 4px;
+    }
+    .delivery-info-card .delivery-value {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    /* History Section */
+    .history-section {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 2px 20px rgba(0,0,0,0.05);
+    }
+    .history-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .history-item:last-child {
+        border-bottom: none;
+    }
+    .history-item .history-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1rem;
+    }
+    .history-item .history-status {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 0.9rem;
+    }
+    .history-item .history-time {
+        font-size: 0.8rem;
+        color: #9ca3af;
+    }
+    .history-item .history-desc {
+        font-size: 0.85rem;
+        color: #6b7280;
+    }
+
+    /* Cancelled Banner */
+    .cancelled-banner {
+        background: linear-gradient(135deg, #fee2e2, #fecaca);
+        border: 2px solid #fca5a5;
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+    .cancelled-banner i {
+        font-size: 3rem;
+        color: var(--tracking-danger);
+        margin-bottom: 0.75rem;
+    }
+    .cancelled-banner h4 {
+        color: #991b1b;
+        font-weight: 700;
+    }
+    .cancelled-banner p {
+        color: #7f1d1d;
+        margin-bottom: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .order-info-card {
+            padding: 1.25rem;
+        }
+        .tracking-timeline,
+        .delivery-info-card,
+        .history-section,
+        .tracking-progress {
+            padding: 1.25rem;
+        }
+        .timeline {
+            padding-left: 2rem;
+        }
+        .timeline-item .dot {
+            left: -2rem;
+            width: 20px;
+            height: 20px;
+        }
+        .progress-label .percentage {
+            font-size: 1.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'store:home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'store:my_orders' %}">My Orders</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Track Order #{{ order.id }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-12">
+            <!-- Order Info Card -->
+            <div class="order-info-card mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3 info-item mb-3 mb-md-0">
+                        <div class="order-id">Order <strong>#{{ order.id }}</strong></div>
+                        <div class="mt-1">
+                            {% if tracking.status == 'cancelled' %}
+                                <span class="status-badge cancelled">
+                                    <i class="bi bi-x-circle"></i> Cancelled
+                                </span>
+                            {% else %}
+                                <span class="status-badge {{ tracking.status }}">
+                                    {% if tracking.status == 'pending' %}<i class="bi bi-clock"></i>
+                                    {% elif tracking.status == 'confirmed' %}<i class="bi bi-check-circle"></i>
+                                    {% elif tracking.status == 'packed' %}<i class="bi bi-box-seam"></i>
+                                    {% elif tracking.status == 'shipped' %}<i class="bi bi-truck"></i>
+                                    {% elif tracking.status == 'out_for_delivery' %}<i class="bi bi-geo-alt"></i>
+                                    {% elif tracking.status == 'delivered' %}<i class="bi bi-check2-all"></i>
+                                    {% endif %}
+                                    {{ tracking.get_status_display }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-3 info-item mb-3 mb-md-0">
+                        <div class="info-label">Customer</div>
+                        <div class="info-value">{{ order.user.get_full_name|default:order.user.username }}</div>
+                    </div>
+                    <div class="col-md-2 info-item mb-3 mb-md-0">
+                        <div class="info-label">Order Date</div>
+                        <div class="info-value">{{ order.created_at|date:"d M Y" }}</div>
+                    </div>
+                    <div class="col-md-2 info-item mb-3 mb-md-0">
+                        <div class="info-label">Payment</div>
+                        <div class="info-value">
+                            {% if order.status == 'paid' or order.status == 'confirmed' or order.status == 'delivered' %}
+                                <span class="text-success"><i class="bi bi-check-circle-fill"></i> Paid</span>
+                            {% elif order.status == 'failed' %}
+                                <span class="text-danger"><i class="bi bi-x-circle-fill"></i> Failed</span>
+                            {% else %}
+                                <span class="text-warning"><i class="bi bi-clock-fill"></i> {{ order.get_status_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-2 info-item">
+                        <div class="info-label">Total</div>
+                        <div class="info-value">₹ {{ order.total_amount|floatformat:2 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancelled Banner -->
+    {% if tracking.status == 'cancelled' %}
+    <div class="cancelled-banner">
+        <i class="bi bi-x-octagon-fill"></i>
+        <h4>Order Cancelled</h4>
+        <p>This order has been cancelled. {% if tracking.notes %}{{ tracking.notes }}{% endif %}</p>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Left Column - Timeline & Progress -->
+        <div class="col-lg-8">
+            {% if tracking.status != 'cancelled' %}
+            <!-- Progress Bar -->
+            <div class="tracking-progress mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold">Delivery Progress</h5>
+                    <span class="badge bg-light text-dark px-3 py-2">
+                        {% if tracking.estimated_delivery_date %}
+                            Est. Delivery: {{ tracking.estimated_delivery_date|date:"d M Y" }}
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width: {{ tracking.get_progress_percentage }}%;"></div>
+                </div>
+                <div class="progress-label">
+                    <span class="status-text">
+                        {% if tracking.status == 'delivered' %}
+                            <i class="bi bi-check-circle-fill text-success"></i> Delivered successfully
+                        {% elif tracking.status == 'out_for_delivery' %}
+                            <i class="bi bi-truck text-warning"></i> Out for delivery
+                        {% elif tracking.status == 'shipped' %}
+                            <i class="bi bi-box-seam text-primary"></i> In transit
+                        {% else %}
+                            {{ tracking.get_status_display }}
+                        {% endif %}
+                    </span>
+                    <span class="percentage">{{ tracking.get_progress_percentage }}%</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Timeline -->
+            <div class="tracking-timeline mb-4">
+                <h5 class="timeline-title">
+                    <i class="bi bi-clock-history me-2"></i>Tracking Timeline
+                </h5>
+                <div class="timeline {% if tracking.status != 'cancelled' and tracking.status != 'pending' %}completed{% endif %}">
+                    {% for item in timeline_items %}
+                    <div class="timeline-item {{ item.css_class }}">
+                        <div class="dot">
+                            <i class="bi {{ item.icon }}"></i>
+                        </div>
+                        <div class="content">
+                            <div class="status-name">{{ item.label }}</div>
+                            {% with history_item=tracking.history|dictsortreversed:"created_at" %}
+                            {% for h in history_item %}
+                                {% if h.status == item.key %}
+                                <div class="status-time">{{ h.created_at|date:"d M Y h:i A" }}</div>
+                                    {% if h.description %}
+                                    <div class="status-desc">{{ h.description }}</div>
+                                    {% endif %}
+                                {% endif %}
+                            {% endfor %}
+                            {% endwith %}
+                            {% if tracking.is_current_status item.key and not tracking.is_status_completed item.key %}
+                                <div class="status-time">Current Status</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Status History -->
+            <div class="history-section mb-4">
+                <h5 class="fw-bold mb-4">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>Status History
+                </h5>
+                {% if history %}
+                    {% for item in history %}
+                    <div class="history-item">
+                        <div class="history-icon 
+                            {% if item.status == 'delivered' %}bg-success bg-opacity-10 text-success
+                            {% elif item.status == 'cancelled' %}bg-danger bg-opacity-10 text-danger
+                            {% elif item.status == 'shipped' or item.status == 'out_for_delivery' %}bg-primary bg-opacity-10 text-primary
+                            {% elif item.status == 'confirmed' or item.status == 'packed' %}bg-indigo bg-opacity-10 text-indigo
+                            {% else %}bg-secondary bg-opacity-10 text-secondary
+                            {% endif %}">
+                            {% if item.status == 'pending' %}<i class="bi bi-receipt"></i>
+                            {% elif item.status == 'confirmed' %}<i class="bi bi-check-circle"></i>
+                            {% elif item.status == 'packed' %}<i class="bi bi-box-seam"></i>
+                            {% elif item.status == 'shipped' %}<i class="bi bi-truck"></i>
+                            {% elif item.status == 'out_for_delivery' %}<i class="bi bi-geo-alt"></i>
+                            {% elif item.status == 'delivered' %}<i class="bi bi-check2-all"></i>
+                            {% elif item.status == 'cancelled' %}<i class="bi bi-x-circle"></i>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="history-status">{{ item.get_status_display }}</div>
+                                    {% if item.description %}
+                                    <div class="history-desc mt-1">{{ item.description }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="history-time text-end ms-3">
+                                    {{ item.created_at|date:"d M Y" }}<br>
+                                    {{ item.created_at|date:"h:i A" }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox fs-1 text-muted"></i>
+                        <p class="text-muted mt-2 mb-0">No status history available yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right Column - Delivery Info -->
+        <div class="col-lg-4">
+            <div class="delivery-info-card mb-4">
+                <h5 class="fw-bold mb-4">
+                    <i class="bi bi-truck me-2"></i>Delivery Information
+                </h5>
+                
+                <div class="mb-4">
+                    <div class="info-icon" style="background: rgba(79,70,229,0.1); color: var(--tracking-primary);">
+                        <i class="bi bi-info-circle"></i>
+                    </div>
+                    <div class="delivery-label">Current Status</div>
+                    <div class="delivery-value">
+                        {% if tracking.status == 'cancelled' %}
+                            <span class="text-danger">Cancelled</span>
+                        {% else %}
+                            {{ tracking.get_status_display }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <div class="info-icon" style="background: rgba(16,185,129,0.1); color: var(--tracking-success);">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <div class="delivery-label">Last Updated</div>
+                    <div class="delivery-value">{{ tracking.updated_at|date:"d M Y h:i A" }}</div>
+                </div>
+
+                {% if tracking.estimated_delivery_date %}
+                <div class="mb-4">
+                    <div class="info-icon" style="background: rgba(245,158,11,0.1); color: var(--tracking-warning);">
+                        <i class="bi bi-calendar-check"></i>
+                    </div>
+                    <div class="delivery-label">Expected Delivery</div>
+                    <div class="delivery-value">{{ tracking.estimated_delivery_date|date:"l, d F Y" }}</div>
+                </div>
+                {% endif %}
+
+                {% if tracking.delivery_partner %}
+                <div class="mb-4">
+                    <div class="info-icon" style="background: rgba(99,102,241,0.1); color: #6366f1;">
+                        <i class="bi bi-building"></i>
+                    </div>
+                    <div class="delivery-label">Delivery Partner</div>
+                    <div class="delivery-value">{{ tracking.delivery_partner }}</div>
+                </div>
+                {% endif %}
+
+                {% if tracking.tracking_number %}
+                <div class="mb-4">
+                    <div class="info-icon" style="background: rgba(236,72,153,0.1); color: #ec4899;">
+                        <i class="bi bi-upc-scan"></i>
+                    </div>
+                    <div class="delivery-label">Tracking Number</div>
+                    <div class="delivery-value" style="font-family: monospace;">{{ tracking.tracking_number }}</div>
+                </div>
+                {% endif %}
+
+                {% if tracking.current_location %}
+                <div class="mb-4">
+                    <div class="info-icon" style="background: rgba(59,130,246,0.1); color: #3b82f6;">
+                        <i class="bi bi-geo-alt"></i>
+                    </div>
+                    <div class="delivery-label">Current Location</div>
+                    <div class="delivery-value">{{ tracking.current_location }}</div>
+                </div>
+                {% endif %}
+
+                {% if tracking.notes %}
+                <div class="mb-0">
+                    <div class="info-icon" style="background: rgba(107,114,128,0.1); color: #6b7280;">
+                        <i class="bi bi-chat-dots"></i>
+                    </div>
+                    <div class="delivery-label">Notes</div>
+                    <div class="delivery-value">{{ tracking.notes }}</div>
+                </div>
+                {% endif %}
+
+                {% if not tracking.delivery_partner and not tracking.tracking_number and not tracking.estimated_delivery_date and not tracking.current_location %}
+                <div class="text-center py-4">
+                    <i class="bi bi-box-seam fs-1 text-muted"></i>
+                    <p class="text-muted mt-2 mb-0">Delivery information will appear here once the order is processed.</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Delivery Address Card -->
+            <div class="delivery-info-card mb-4">
+                <h5 class="fw-bold mb-4">
+                    <i class="bi bi-geo-alt me-2"></i>Delivery Address
+                </h5>
+                {% with address=order.shipping_address %}
+                {% if address %}
+                <div class="mb-0">
+                    <div class="delivery-value mb-1">{{ address.full_name }}</div>
+                    {% if address.phone %}
+                    <div class="delivery-value mb-1" style="font-weight: 400; font-size: 0.9rem;">
+                        <i class="bi bi-telephone me-1"></i>{{ address.phone }}
+                    </div>
+                    {% endif %}
+                    <div class="delivery-value" style="font-weight: 400; font-size: 0.9rem; color: #6b7280;">
+                        {{ address.address_line1 }}{% if address.address_line2 %}, {{ address.address_line2 }}{% endif %}<br>
+                        {% if address.city %}{{ address.city }}, {% endif %}{% if address.state %}{{ address.get_state_display }}{% endif %}<br>
+                        {% if address.postal_code %}{{ address.postal_code }}{% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="mb-0">
+                    <div class="delivery-value" style="font-weight: 400; font-size: 0.9rem; color: #6b7280;">
+                        {{ order.address|linebreaksbr }}
+                    </div>
+                </div>
+                {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Order Items Summary -->
+            <div class="delivery-info-card">
+                <h5 class="fw-bold mb-4">
+                    <i class="bi bi-bag me-2"></i>Order Items
+                </h5>
+                {% for item in order.items.all %}
+                <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                    {% if item.product.image %}
+                    <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}" 
+                         style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px;" 
+                         class="me-3">
+                    {% else %}
+                    <div class="me-3" style="width: 50px; height: 50px; background: #f3f4f6; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-box text-muted"></i>
+                    </div>
+                    {% endif %}
+                    <div class="flex-grow-1">
+                        <div class="delivery-value" style="font-size: 0.85rem;">{{ item.product.title }}</div>
+                        <div class="text-muted" style="font-size: 0.8rem;">Qty: {{ item.quantity }} × ₹ {{ item.price|floatformat:2 }}</div>
+                    </div>
+                    <div class="fw-bold" style="font-size: 0.85rem;">₹ {{ item.total_price|floatformat:2 }}</div>
+                </div>
+                {% endfor %}
+                <div class="d-flex justify-content-between pt-2">
+                    <span class="fw-bold">Total</span>
+                    <span class="fw-bold fs-5" style="color: var(--tracking-primary);">₹ {{ order.total_amount|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Orders -->
+    <div class="text-center mt-4">
+        <a href="{% url 'store:my_orders' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to My Orders
+        </a>
+    </div>
+</div>
+{% endblock %}

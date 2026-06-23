@@ -1,0 +1,558 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Orders - GroceryHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --mo-green: #198754;
+        --mo-mint: #20c997;
+        --mo-yellow: #ffc857;
+        --mo-ink: #18251f;
+        --mo-muted: #66736c;
+        --mo-soft: #f4fbf7;
+        --mo-line: rgba(25, 135, 84, 0.16);
+        --mo-shadow: 0 10px 30px rgba(18, 55, 38, 0.08);
+    }
+
+    .mo-page {
+        min-height: 70vh;
+        padding: 40px 0 60px;
+        background: linear-gradient(180deg, #ffffff 0%, #f7fbf8 50%, #ffffff 100%);
+    }
+
+    .mo-container {
+        width: min(1080px, calc(100% - 32px));
+        margin: 0 auto;
+    }
+
+    .mo-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .mo-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: var(--mo-ink);
+    }
+
+    .mo-header h1 i {
+        color: var(--mo-green);
+    }
+
+    .mo-header .mo-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 14px;
+        background: rgba(25, 135, 84, 0.1);
+        color: var(--mo-green);
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 800;
+    }
+
+    .mo-card {
+        border: 1px solid var(--mo-line);
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: var(--mo-shadow);
+        margin-bottom: 16px;
+        transition: transform 0.2s, box-shadow 0.2s;
+        overflow: hidden;
+    }
+
+    .mo-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 40px rgba(18, 55, 38, 0.12);
+    }
+
+    .mo-card-body {
+        padding: 20px 24px;
+    }
+
+    .mo-order-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .mo-order-id {
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: var(--mo-green);
+    }
+
+    .mo-order-date {
+        font-size: 0.85rem;
+        color: var(--mo-muted);
+        font-weight: 600;
+    }
+
+    .mo-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 14px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .mo-status-pill.pending { background: #fef3c7; color: #92400e; }
+    .mo-status-pill.paid, .mo-status-pill.confirmed { background: #d1fae5; color: #065f46; }
+    .mo-status-pill.failed { background: #fee2e2; color: #991b1b; }
+    .mo-status-pill.delivered { background: #dbeafe; color: #1e40af; }
+
+    .mo-tracking-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+
+    .mo-tracking-badge.t-pending { background: #fef3c7; color: #92400e; }
+    .mo-tracking-badge.t-confirmed { background: #dbeafe; color: #1e40af; }
+    .mo-tracking-badge.t-packed { background: #e0e7ff; color: #3730a3; }
+    .mo-tracking-badge.t-shipped { background: #e0f2fe; color: #075985; }
+    .mo-tracking-badge.t-out_for_delivery { background: #fef3c7; color: #92400e; }
+    .mo-tracking-badge.t-delivered { background: #d1fae5; color: #065f46; }
+    .mo-tracking-badge.t-cancelled { background: #fee2e2; color: #991b1b; }
+
+    .mo-items-row {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding: 8px 0;
+        margin-bottom: 16px;
+    }
+
+    .mo-item-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border: 1px solid var(--mo-line);
+        border-radius: 10px;
+        background: var(--mo-soft);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .mo-item-chip img {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        object-fit: cover;
+    }
+
+    .mo-item-chip .item-name {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--mo-ink);
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mo-item-chip .item-qty {
+        font-size: 0.75rem;
+        color: var(--mo-muted);
+        font-weight: 600;
+    }
+
+    .mo-card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 16px;
+        border-top: 1px solid var(--mo-line);
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .mo-total {
+        font-size: 1.2rem;
+        font-weight: 900;
+        color: var(--mo-ink);
+    }
+
+    .mo-total small {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--mo-muted);
+    }
+
+    .mo-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .mo-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .mo-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.1);
+    }
+
+    .mo-btn-track {
+        color: #fff;
+        background: linear-gradient(135deg, var(--mo-green), var(--mo-mint));
+    }
+
+    .mo-btn-track:hover { color: #fff; }
+
+    .mo-btn-view {
+        color: var(--mo-green);
+        border: 1px solid var(--mo-line);
+        background: var(--mo-soft);
+    }
+
+    .mo-btn-view:hover { color: var(--mo-green); }
+
+    .mo-btn-detail {
+        color: #fff;
+        background: linear-gradient(135deg, #3b82f6, #6366f1);
+    }
+
+    .mo-btn-detail:hover { color: #fff; }
+
+    /* Search & Filter Styles */
+    .mo-filters {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #fff;
+        border: 1px solid var(--mo-line);
+        border-radius: 12px;
+    }
+
+    .mo-filters input, .mo-filters select {
+        padding: 8px 14px;
+        border: 1px solid var(--mo-line);
+        border-radius: 8px;
+        font-size: 0.85rem;
+        color: var(--mo-ink);
+        background: var(--mo-soft);
+        outline: none;
+        min-height: 40px;
+    }
+
+    .mo-filters input:focus, .mo-filters select:focus {
+        border-color: var(--mo-green);
+        box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
+    }
+
+    .mo-filters .btn-filter {
+        padding: 8px 20px;
+        border: none;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--mo-green), var(--mo-mint));
+        color: #fff;
+        font-weight: 800;
+        font-size: 0.85rem;
+        cursor: pointer;
+        min-height: 40px;
+        transition: transform 0.15s;
+    }
+
+    .mo-filters .btn-filter:hover {
+        transform: translateY(-1px);
+    }
+
+    .mo-filters .btn-reset {
+        padding: 8px 16px;
+        border: 1px solid var(--mo-line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--mo-muted);
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        min-height: 40px;
+    }
+
+    .mo-order-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
+        font-size: 0.85rem;
+    }
+
+    .mo-order-details .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--mo-muted);
+    }
+
+    .mo-order-details .detail-item i {
+        color: var(--mo-green);
+        width: 16px;
+    }
+
+    .mo-progress-mini {
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+
+    .mo-progress-mini .fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--mo-green), var(--mo-mint));
+        transition: width 0.5s ease;
+    }
+
+    .mo-progress-mini .fill.cancelled {
+        background: #ef4444;
+    }
+
+    .mo-empty {
+        padding: 60px 20px;
+        text-align: center;
+        border: 2px dashed var(--mo-line);
+        border-radius: 16px;
+        background: #fff;
+    }
+
+    .mo-empty i { font-size: 3.5rem; color: var(--mo-green); }
+    .mo-empty h3 { margin-top: 16px; font-weight: 900; color: var(--mo-ink); }
+    .mo-empty p { color: var(--mo-muted); margin-bottom: 20px; }
+
+    .mo-pagination {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 28px;
+    }
+
+    .mo-pagination a, .mo-pagination span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-decoration: none;
+        border: 1px solid var(--mo-line);
+        color: var(--mo-ink);
+        background: #fff;
+        transition: all 0.15s;
+    }
+
+    .mo-pagination a:hover { background: var(--mo-soft); }
+    .mo-pagination .active {
+        background: var(--mo-green);
+        color: #fff;
+        border-color: var(--mo-green);
+    }
+
+    @media (max-width: 575px) {
+        .mo-card-body { padding: 16px; }
+        .mo-order-top { flex-direction: column; }
+        .mo-card-footer { flex-direction: column; align-items: stretch; }
+        .mo-actions { justify-content: stretch; }
+        .mo-actions .mo-btn { flex: 1; justify-content: center; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mo-page">
+    <div class="mo-container">
+
+        <div class="mo-header">
+            <h1><i class="bi bi-box-seam me-2"></i>My Orders</h1>
+            <span class="mo-count">{{ page_obj.paginator.count }} Order{{ page_obj.paginator.count|pluralize }}</span>
+        </div>
+
+        <nav aria-label="breadcrumb" class="mb-3">
+            <ol class="breadcrumb" style="font-size: 0.85rem;">
+                <li class="breadcrumb-item"><a href="{% url 'store:home' %}">Home</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'store:profile_dashboard' %}">My Account</a></li>
+                <li class="breadcrumb-item active">My Orders</li>
+            </ol>
+        </nav>
+
+        <!-- Search & Filter Bar -->
+        <form class="mo-filters" method="get">
+            <input type="text" name="q" placeholder="Search by Order ID..." value="{{ search_query }}" style="flex: 1; min-width: 150px;">
+            <select name="status">
+                <option value="">All Status</option>
+                {% for key, label in status_choices %}
+                <option value="{{ key }}" {% if status_filter == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="payment">
+                <option value="">All Payments</option>
+                {% for key, label in payment_status_choices %}
+                <option value="{{ key }}" {% if payment_filter == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <input type="date" name="date_from" value="{{ date_from }}" placeholder="From">
+            <input type="date" name="date_to" value="{{ date_to }}" placeholder="To">
+            <select name="sort">
+                {% for key, label in sort_choices %}
+                <option value="{{ key }}" {% if sort_by == key %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-filter"><i class="bi bi-funnel"></i> Filter</button>
+            <a href="{% url 'store:profile_orders' %}" class="btn-reset"><i class="bi bi-x-circle"></i> Reset</a>
+        </form>
+
+        {% if orders %}
+            {% for order in orders %}
+            <div class="mo-card">
+                <div class="mo-card-body">
+                    <div class="mo-order-top">
+                        <div>
+                            <div class="mo-order-id">Order #{{ order.id }}</div>
+                            <div class="mo-order-date">
+                                <i class="bi bi-calendar3 me-1"></i>{{ order.created_at|date:"d M Y, h:i A" }}
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="mo-status-pill {{ order.status }}">
+                                {% if order.status == 'paid' or order.status == 'confirmed' %}
+                                    <i class="bi bi-check-circle-fill"></i>
+                                {% elif order.status == 'failed' %}
+                                    <i class="bi bi-x-circle-fill"></i>
+                                {% elif order.status == 'delivered' %}
+                                    <i class="bi bi-bag-check-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-clock-fill"></i>
+                                {% endif %}
+                                {{ order.get_status_display }}
+                            </span>
+                            {% if order.tracking.all %}
+                                {% for t in order.tracking.all %}
+                                <span class="mo-tracking-badge t-{{ t.status }}">
+                                    {% if t.status == 'delivered' %}
+                                        <i class="bi bi-check2-all"></i> Delivered
+                                    {% elif t.status == 'cancelled' %}
+                                        <i class="bi bi-x-circle"></i> Cancelled
+                                    {% elif t.status == 'shipped' %}
+                                        <i class="bi bi-truck"></i> {{ t.get_status_display }}
+                                    {% elif t.status == 'out_for_delivery' %}
+                                        <i class="bi bi-geo-alt"></i> Out for Delivery
+                                    {% elif t.status == 'packed' %}
+                                        <i class="bi bi-box-seam"></i> Packed
+                                    {% elif t.status == 'confirmed' %}
+                                        <i class="bi bi-check-lg"></i> Confirmed
+                                    {% else %}
+                                        <i class="bi bi-clock"></i> {{ t.get_status_display }}
+                                    {% endif %}
+                                </span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if order.tracking.all %}
+                        {% for t in order.tracking.all %}
+                        <div class="mo-progress-mini">
+                            <div class="fill {% if t.status == 'cancelled' %}cancelled{% endif %}" style="width: {{ t.get_progress_percentage }}%;"></div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="mo-items-row">
+                        {% for item in order.items.all %}
+                        <div class="mo-item-chip">
+                            {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}">
+                            {% elif item.product.external_image_url %}
+                            <img src="{{ item.product.external_image_url }}" alt="{{ item.product.title }}">
+                            {% endif %}
+                            <div>
+                                <div class="item-name">{{ item.product.title }}</div>
+                                <div class="item-qty">x{{ item.quantity }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mo-card-footer">
+                        <div class="mo-total">
+                            Rs. {{ order.total_amount|floatformat:2 }}
+                            <small>&middot; {{ order.items.count }} item{{ order.items.count|pluralize }}</small>
+                        </div>
+                        <div class="mo-actions">
+                            <a href="{% url 'store:track_order' order.id %}" class="mo-btn mo-btn-track">
+                                <i class="bi bi-geo-alt"></i> Track Order
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+            {% if is_paginated %}
+            <div class="mo-pagination">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <span class="active">{{ num }}</span>
+                    {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+                    <a href="?page={{ num }}">{{ num }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        {% else %}
+            <div class="mo-empty">
+                <i class="bi bi-bag-heart"></i>
+                <h3>No orders yet</h3>
+                <p>Start shopping to see your orders here!</p>
+                <a href="{% url 'store:product_list' %}" class="mo-btn mo-btn-track">
+                    <i class="bi bi-shop"></i> Start Shopping
+                </a>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
