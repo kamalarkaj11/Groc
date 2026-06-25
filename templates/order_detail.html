@@ -535,6 +535,12 @@
             <a href="{% url 'store:track_order' order.id %}" class="btn btn-success" style="border-radius: 8px; font-weight: 800; padding: 10px 24px;">
                 <i class="bi bi-geo-alt me-1"></i> Track Order
             </a>
+            <a href="{% url 'store:order_invoice' order.id %}" class="btn btn-primary" style="border-radius: 8px; font-weight: 800; padding: 10px 24px;">
+                <i class="bi bi-eye me-1"></i> View Invoice
+            </a>
+            <a href="{% url 'store:order_invoice_pdf' order.id %}" class="btn btn-outline-primary" style="border-radius: 8px; font-weight: 800; padding: 10px 24px;">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Download Invoice
+            </a>
             <a href="{% url 'store:profile_orders' %}" class="btn btn-outline-secondary" style="border-radius: 8px; font-weight: 800; padding: 10px 24px;">
                 <i class="bi bi-arrow-left me-1"></i> Back to Orders
             </a>

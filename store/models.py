@@ -461,10 +461,13 @@ class Order(models.Model):
     ORDER_STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('confirmed', 'Confirmed'),
+        ('processing', 'Processing'),
         ('packed', 'Packed'),
+        ('shipped', 'Shipped'),
         ('out_for_delivery', 'Out For Delivery'),
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
+        ('returned', 'Returned'),
         ('failed', 'Failed'),
     ]
     
@@ -588,6 +591,34 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.product.title} x{self.quantity}"
+
+
+class InvoiceHistory(models.Model):
+    """Tracks invoice generation history for orders."""
+    INVOICE_TYPE_CHOICES = [
+        ('original', 'Original'),
+        ('regenerated', 'Regenerated'),
+    ]
+
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='invoice_history')
+    invoice_number = models.CharField(max_length=50, help_text="Auto-generated invoice number")
+    invoice_type = models.CharField(max_length=20, choices=INVOICE_TYPE_CHOICES, default='original', help_text="Type of invoice generation")
+    generated_by = models.CharField(max_length=100, blank=True, help_text="Who generated this invoice")
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    notes = models.TextField(blank=True, help_text="Optional notes about this invoice generation")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Invoice History'
+        verbose_name_plural = 'Invoice Histories'
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['order', '-created_at']),
+            models.Index(fields=['invoice_number']),
+        ]
+
+    def __str__(self):
+        return f"Invoice {self.invoice_number} - Order {self.order.order_id}"
 
 
 class OrderStatusHistory(models.Model):

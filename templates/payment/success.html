@@ -856,9 +856,9 @@
           <a href="{% url 'store:profile' %}" class="btn btn-outline-success btn-ripple">
             <i class="bi bi-box-seam"></i> View Orders
           </a>
-          <button type="button" class="btn btn-outline-secondary btn-ripple" onclick="window.print()">
+          <a href="{% url 'store:order_invoice_pdf' order.id %}" class="btn btn-outline-secondary btn-ripple">
             <i class="bi bi-file-earmark-pdf"></i> Download Invoice
-          </button>
+          </a>
         </div>
       </div>
 
@@ -1123,9 +1123,13 @@
                   <span>{{ product.weight|default:"Fresh pack" }}</span>
                   <strong>₹{{ product.get_price|floatformat:0 }}</strong>
                 </div>
-                <a href="{% url 'store:product_detail' product.slug %}" class="btn btn-success btn-sm w-100 btn-ripple">
-                  <i class="bi bi-cart-plus"></i> Add to Cart
-                </a>
+                <form method="post" action="{% url 'store:add_to_cart' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="product_id" value="{{ product.id }}">
+                  <button type="submit" class="btn btn-success btn-sm w-100 btn-ripple" data-add-to-cart="{{ product.id }}">
+                    <i class="bi bi-cart-plus"></i> Add to Cart
+                  </button>
+                </form>
               </div>
             </article>
           {% endfor %}
@@ -1146,9 +1150,13 @@
                   <span>{{ product.weight|default:"Fresh pack" }}</span>
                   <strong>₹{{ product.get_price|floatformat:0 }}</strong>
                 </div>
-                <a href="{% url 'store:product_detail' product.slug %}" class="btn btn-success btn-sm w-100 btn-ripple">
-                  <i class="bi bi-cart-plus"></i> Add to Cart
-                </a>
+                <form method="post" action="{% url 'store:add_to_cart' %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="product_id" value="{{ product.id }}">
+                  <button type="submit" class="btn btn-success btn-sm w-100 btn-ripple" data-add-to-cart="{{ product.id }}">
+                    <i class="bi bi-cart-plus"></i> Add to Cart
+                  </button>
+                </form>
               </div>
             </article>
           {% endfor %}
@@ -1169,9 +1177,9 @@
       <a href="{% url 'store:track_order' order.id %}" class="btn btn-success btn-ripple px-4">
         <i class="bi bi-geo-alt"></i> Track Order
       </a>
-      <button type="button" class="btn btn-outline-secondary btn-ripple px-4" onclick="window.print()">
+      <a href="{% url 'store:order_invoice_pdf' order.id %}" class="btn btn-outline-secondary btn-ripple px-4">
         <i class="bi bi-file-earmark-pdf-fill"></i> Download Invoice
-      </button>
+      </a>
     </div>
   </div>
 </section>

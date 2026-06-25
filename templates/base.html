@@ -25,14 +25,65 @@
     />
     <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}" />
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <style>
+      /* ── Page Layout Fix: Prevent Footer Overlapping ── */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      .page-wrapper {
+        display: flex;
+        flex-direction: column;
+        flex: 1 0 auto;
+        min-height: 100vh;
+      }
+
+      main.content-area {
+        flex: 1 0 auto;
+        width: 100%;
+        padding-bottom: 60px;
+      }
+
+      /* Ensure footer stays at the bottom and never overlaps content */
+      .site-footer {
+        flex-shrink: 0;
+        position: relative !important;
+        z-index: 1 !important;
+        margin-top: 0;
+      }
+
+      /* Responsive spacing for main content */
+      @media (max-width: 768px) {
+        main.content-area {
+          padding-bottom: 40px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        main.content-area {
+          padding-bottom: 30px;
+        }
+      }
+    </style>
     {% block extra_css %}{% endblock %}
   </head>
   <body>
     {% include 'header.html' %}
 
-    <main class="container my-4">{% block content %}{% endblock %}</main>
+    <div class="page-wrapper">
+      <main class="content-area container my-4">{% block content %}{% endblock %}</main>
 
-    {% include 'footer.html' %}
+      {% include 'footer.html' %}
+    </div>
+
     {% if user.is_authenticated %}
     {% with phone_profile=user.phone_profile %}
     {% if phone_profile %}
@@ -78,6 +129,93 @@
     </div>
 
     <style>
+      /* ── Toast Notification Container ── */
+      #toast-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 999999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+        max-width: 400px;
+        width: calc(100vw - 40px);
+      }
+
+      .toast-notification {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.92rem;
+        color: #fff;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.1);
+        pointer-events: auto;
+        cursor: pointer;
+        transform: translateX(120%);
+        opacity: 0;
+        transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+      }
+
+      .toast-notification.show {
+        transform: translateX(0);
+        opacity: 1;
+      }
+
+      .toast-notification.hide {
+        transform: translateX(120%);
+        opacity: 0;
+      }
+
+      .toast-notification i {
+        font-size: 1.4rem;
+        flex-shrink: 0;
+      }
+
+      .toast-notification span {
+        flex: 1;
+        line-height: 1.4;
+      }
+
+      .toast-success {
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+      }
+
+      .toast-error {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+      }
+
+      .toast-warning {
+        background: linear-gradient(135deg, #d97706, #f59e0b);
+      }
+
+      .toast-info {
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+      }
+
+      @media (max-width: 480px) {
+        #toast-container {
+          top: 16px;
+          right: 8px;
+          left: 8px;
+          width: auto;
+          max-width: none;
+        }
+        .toast-notification {
+          padding: 12px 16px;
+          font-size: 0.85rem;
+        }
+        .toast-notification i {
+          font-size: 1.2rem;
+        }
+      }
+
       .verify-popup {
         position: fixed;
         top: 24px;

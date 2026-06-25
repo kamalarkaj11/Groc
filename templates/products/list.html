@@ -1435,7 +1435,7 @@
                   name="product_id"
                   value="{{ product.id }}"
                 />
-                <button type="submit" class="btn-add">
+                <button type="submit" class="btn-add" data-add-to-cart="{{ product.id }}">
                   <i class="bi bi-cart-plus"></i> Add to Cart
                 </button>
               </form>
@@ -1629,17 +1629,5 @@
     });
   });
 
-  // Add to cart button animation
-  document.querySelectorAll('.btn-add').forEach(button => {
-    button.addEventListener('click', function(e) {
-      const originalText = this.innerHTML;
-      this.innerHTML = '<i class="bi bi-check-circle-fill"></i> Added!';
-      this.style.background = 'linear-gradient(135deg, #20c997, #198754)';
-      setTimeout(() => {
-        this.innerHTML = originalText;
-        this.style.background = '';
-      }, 2000);
-    });
-  });
 </script>
 {% endblock %}

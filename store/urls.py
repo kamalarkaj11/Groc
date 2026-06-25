@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import admin_views
 
 app_name = 'store'
 
@@ -86,6 +87,20 @@ urlpatterns = [
     # Profile Verification
     path('profile/send-otp/', views.profile_send_otp, name='profile_send_otp'),
     path('profile/verify-otp/', views.profile_verify_otp, name='profile_verify_otp'),
+
+    # Invoice URLs
+    path('orders/<int:order_id>/invoice/', views.order_invoice_view, name='order_invoice'),
+    path('orders/<int:order_id>/invoice/pdf/', views.order_invoice_pdf, name='order_invoice_pdf'),
+    path('orders/<int:order_id>/invoice/print/', views.order_invoice_print, name='order_invoice_print'),
+
+    # Admin Order Management (superuser/staff only)
+    path('admin/orders/', admin_views.admin_order_dashboard, name='admin_order_dashboard'),
+    path('admin/orders/<int:order_id>/', admin_views.admin_order_detail, name='admin_order_detail'),
+    path('admin/orders/bulk/update/', admin_views.admin_bulk_update_orders, name='admin_bulk_update_orders'),
+    path('admin/orders/export/csv/', admin_views.admin_export_orders, name='admin_export_orders'),
+    path('admin/orders/api/stats/', admin_views.admin_order_stats_api, name='admin_order_stats_api'),
+    path('admin/orders/<int:order_id>/invoice/regenerate/', views.admin_regenerate_invoice, name='admin_regenerate_invoice'),
+    path('admin/orders/<int:order_id>/invoice/history/', views.admin_invoice_history, name='admin_invoice_history'),
 
     # Notifications
     path('notifications/', views.notifications_page, name='notifications'),

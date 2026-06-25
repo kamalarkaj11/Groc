@@ -264,7 +264,7 @@
               <form method="post" action="{% url 'store:add_to_cart' %}">
                 {% csrf_token %}
                 <input type="hidden" name="product_id" value="{{ product.id }}">
-                <button type="submit" class="add-btn"><i class="bi bi-cart-plus"></i> Add</button>
+                <button type="submit" class="add-btn" data-add-to-cart="{{ product.id }}"><i class="bi bi-cart-plus"></i> Add</button>
               </form>
               {% endif %}
             </div>

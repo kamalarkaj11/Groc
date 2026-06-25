@@ -4,7 +4,6 @@ import logging
 import random
 from decimal import Decimal, InvalidOperation
 import urllib.request as urllib_request
-
 import phonenumbers
 import re
 import stripe
@@ -41,6 +40,7 @@ from .models import (Category, Subcategory, Order, OrderAddress, OrderItem, Prod
 from .notifications import send_order_notifications as trigger_order_notifications
 from .signals import create_otp, generate_and_send_otp, send_otp_email
 from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_products
+from . import invoice_utils
 
 logger = logging.getLogger(__name__)
 PHONE_OTP_RESEND_COOLDOWN_SECONDS = 30
@@ -662,9 +662,18 @@ def update_cart_batch(request):
             messages.warning(request, 'No valid quantities provided.')
     return redirect('store:cart')
 
-@login_required
 def add_to_cart(request):
     if request.method == 'POST':
+        # Return JSON error for unauthenticated AJAX requests instead of redirect
+        if not request.user.is_authenticated:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Please login to add items to your cart.',
+                    'login_required': True,
+                }, status=401)
+            messages.error(request, 'Please login to add items to your cart.')
+            return redirect('store:login')
         product_id = request.POST.get('product_id')
         try:
             quantity = max(int(request.POST.get('qty', 1)), 1)
@@ -679,8 +688,9 @@ def add_to_cart(request):
         if not created:
             cart_item.quantity += quantity
             cart_item.save()
-
-        if created:
+            message = 'Quantity updated in cart'
+        else:
+            message = 'Product added to cart successfully'
             Notification.objects.create(
                 user=request.user,
                 title='Product added to cart',
@@ -695,13 +705,11 @@ def add_to_cart(request):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'success': True,
-                'message': f'{product.title} added to cart!',
                 'cart_count': cart_count,
-                'product_title': product.title,
+                'message': message,
             })
         
-        messages.success(request, f'{product.title} added to cart!')
-        return redirect('store:cart')
+        return redirect(request.META.get('HTTP_REFERER', 'store:home'))
 
 
 def _product_image_url(product):
@@ -2339,6 +2347,159 @@ def load_subcategories(request):
     category_id = request.GET.get('category_id')
     subcategories = Subcategory.objects.filter(category_id=category_id).values('id', 'name', 'slug')
     return JsonResponse(list(subcategories), safe=False)
+
+
+# ============================================================
+# Invoice Views
+# ============================================================
+
+@login_required
+def order_invoice_view(request, order_id):
+    """
+    Display invoice for an order in the browser.
+    Users can only view their own invoices; superusers can view any.
+    """
+    from .models import InvoiceHistory
+    
+    order = get_object_or_404(Order, id=order_id)
+    
+    # Security: customers can only view their own invoices
+    if not request.user.is_staff and order.user != request.user:
+        messages.error(request, 'You do not have permission to access this invoice.')
+        return redirect('store:profile_dashboard')
+    
+    context = invoice_utils.get_invoice_context(order, request)
+    context['is_pdf'] = False
+    
+    # Log invoice view
+    InvoiceHistory.objects.create(
+        order=order,
+        invoice_number=context['invoice_number'],
+        invoice_type='original',
+        generated_by=request.user.get_full_name() or request.user.username,
+        ip_address=request.META.get('REMOTE_ADDR', ''),
+        notes='Invoice viewed in browser',
+    )
+    
+    return render(request, 'invoices/invoice_template.html', context)
+
+
+@login_required
+def order_invoice_pdf(request, order_id):
+    """
+    Generate and download PDF invoice for an order.
+    Users can only download their own invoices; superusers can download any.
+    """
+    from django.http import HttpResponse
+    from .models import InvoiceHistory
+    
+    order = get_object_or_404(Order, id=order_id)
+    
+    # Security: customers can only download their own invoices
+    if not request.user.is_staff and order.user != request.user:
+        messages.error(request, 'You do not have permission to download this invoice.')
+        return redirect('store:profile_dashboard')
+    
+    try:
+        pdf_bytes = invoice_utils.generate_invoice_pdf(order, request)
+        
+        # Log invoice download
+        invoice_context = invoice_utils.get_invoice_context(order, request)
+        InvoiceHistory.objects.create(
+            order=order,
+            invoice_number=invoice_context['invoice_number'],
+            invoice_type='original',
+            generated_by=request.user.get_full_name() or request.user.username,
+            ip_address=request.META.get('REMOTE_ADDR', ''),
+            notes='Invoice downloaded as PDF',
+        )
+        
+        # Create response
+        filename = f"Invoice-{order.order_id}.pdf"
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = len(pdf_bytes)
+        
+        logger.info(f"Invoice PDF downloaded for order {order.order_id} by {request.user.username}")
+        return response
+    
+    except Exception as e:
+        logger.error(f"Failed to generate invoice PDF for order {order.order_id}: {str(e)}")
+        messages.error(request, 'Failed to generate invoice. Please try again later.')
+        return redirect('store:order_detail', order_id=order.id)
+
+
+@login_required
+def order_invoice_print(request, order_id):
+    """
+    Open invoice in print-friendly format.
+    """
+    order = get_object_or_404(Order, id=order_id)
+    
+    if not request.user.is_staff and order.user != request.user:
+        messages.error(request, 'You do not have permission to access this invoice.')
+        return redirect('store:profile_dashboard')
+    
+    context = invoice_utils.get_invoice_context(order, request)
+    context['is_pdf'] = True  # Flag for print mode
+    
+    return render(request, 'invoices/invoice_template.html', context)
+
+
+# Admin invoice views
+@login_required
+def admin_regenerate_invoice(request, order_id):
+    """Admin-only: Regenerate an invoice."""
+    from .models import InvoiceHistory
+    
+    if not request.user.is_staff:
+        messages.error(request, 'Access denied.')
+        return redirect('store:profile_dashboard')
+    
+    order = get_object_or_404(Order, id=order_id)
+    
+    try:
+        invoice_context = invoice_utils.get_invoice_context(order, request)
+        
+        InvoiceHistory.objects.create(
+            order=order,
+            invoice_number=invoice_context['invoice_number'],
+            invoice_type='regenerated',
+            generated_by=request.user.get_full_name() or request.user.username,
+            ip_address=request.META.get('REMOTE_ADDR', ''),
+            notes='Invoice regenerated by admin',
+        )
+        
+        messages.success(request, f'Invoice regenerated successfully for Order {order.order_id}.')
+    except Exception as e:
+        logger.error(f"Failed to regenerate invoice for order {order.order_id}: {str(e)}")
+        messages.error(request, 'Failed to regenerate invoice.')
+    
+    return redirect('store:admin_order_detail', order_id=order.id)
+
+
+@login_required
+def admin_invoice_history(request, order_id):
+    """Admin-only: View invoice generation history for an order."""
+    from django.http import JsonResponse
+    from .models import InvoiceHistory
+    
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    order = get_object_or_404(Order, id=order_id)
+    history = InvoiceHistory.objects.filter(order=order)[:50]
+    
+    data = [{
+        'id': h.id,
+        'invoice_number': h.invoice_number,
+        'invoice_type': h.get_invoice_type_display(),
+        'generated_by': h.generated_by,
+        'notes': h.notes,
+        'created_at': h.created_at.strftime('%d %b %Y %I:%M %p'),
+    } for h in history]
+    
+    return JsonResponse({'history': data})
 
 
 # ============================================================

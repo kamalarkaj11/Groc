@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice {{ invoice_number }} - {{ company.name }}</title>
+    <style>
+        /* ============================================================
+           PROFESSIONAL INVOICE — GrocHub
+           Premium A4 layout inspired by Amazon, Flipkart, Blinkit
+           ============================================================ */
+        @page {
+            size: A4;
+            margin: 0;
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 8pt;
+                color: #999;
+                font-family: 'Segoe UI', Arial, sans-serif;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 9.5pt;
+            line-height: 1.5;
+            color: #1a1a2e;
+            background: #f0f2f5;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .invoice-wrapper {
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .invoice-page {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 2px 40px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        /* ── HEADER ── */
+        .invoice-header {
+            padding: 32px 40px 24px;
+            background: linear-gradient(135deg, #0a3d2e 0%, #1a6b4a 50%, #2d8a5e 100%);
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .invoice-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .invoice-header::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-logo {
+            width: 56px;
+            height: 56px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 900;
+            color: #fff;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .brand-text h1 {
+            font-size: 22pt;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin: 0;
+            line-height: 1.1;
+        }
+
+        .brand-text .tagline {
+            font-size: 8pt;
+            opacity: 0.8;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        .invoice-title-section {
+            text-align: right;
+        }
+
+        .invoice-title-section h2 {
+            font-size: 20pt;
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin: 0;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+
+        .invoice-title-section .invoice-number {
+            font-size: 10pt;
+            opacity: 0.85;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            margin-top: 4px;
+        }
+
+        .header-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.15);
+            margin: 20px 0 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-info-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header-info-block {
+            flex: 1;
+        }
+
+        .header-info-block .label {
+            font-size: 7pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            opacity: 0.6;
+            font-weight: 600;
+        }
+
+        .header-info-block .value {
+            font-size: 9pt;
+            font-weight: 600;
+            margin-top: 2px;
+            opacity: 0.95;
+        }
+
+        .header-info-block .value small {
+            font-weight: 400;
+            opacity: 0.7;
+        }
+
+        /* ── BODY ── */
+        .invoice-body {
+            padding: 28px 40px 20px;
+        }
+
+        /* Address Section */
+        .address-section {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .address-block {
+            flex: 1;
+        }
+
+        .address-block .title {
+            font-size: 7.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #888;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .address-block .name {
+            font-size: 10pt;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 2px;
+        }
+
+        .address-block .details {
+            font-size: 8.5pt;
+            color: #555;
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+
+        .address-block .contact {
+            font-size: 8pt;
+            color: #777;
+            margin-top: 4px;
+        }
+
+        .address-block .contact span {
+            display: inline-block;
+            margin-right: 12px;
+        }
+
+        /* ── PRODUCT TABLE ── */
+        .products-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e8eaed;
+        }
+
+        .products-table thead th {
+            background: #f8f9fa;
+            color: #555;
+            font-size: 7.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 2px solid #e8eaed;
+        }
+
+        .products-table thead th:last-child {
+            text-align: right;
+        }
+
+        .products-table thead th:nth-child(3),
+        .products-table thead th:nth-child(4) {
+            text-align: center;
+        }
+
+        .products-table tbody td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f2f5;
+            font-size: 8.5pt;
+            vertical-align: middle;
+        }
+
+        .products-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .products-table tbody tr:hover {
+            background: #fafbfc;
+        }
+
+        .product-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .product-thumb {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            background: #f5f6f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 1px solid #eee;
+        }
+
+        .product-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-thumb .no-img {
+            font-size: 16px;
+            color: #bbb;
+        }
+
+        .product-info .product-name {
+            font-weight: 600;
+            color: #1a1a2e;
+            font-size: 8.5pt;
+        }
+
+        .product-info .product-meta {
+            font-size: 7pt;
+            color: #999;
+            margin-top: 1px;
+        }
+
+        .qty-cell {
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .price-cell {
+            text-align: center;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .total-cell {
+            text-align: right;
+            font-weight: 700;
+            color: #1a1a2e;
+        }
+
+        /* ── SUMMARY ── */
+        .summary-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .summary-table {
+            width: 320px;
+            border-collapse: collapse;
+        }
+
+        .summary-table tr td {
+            padding: 5px 0;
+            font-size: 8.5pt;
+        }
+
+        .summary-table tr td:first-child {
+            color: #777;
+            font-weight: 500;
+        }
+
+        .summary-table tr td:last-child {
+            text-align: right;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+
+        .summary-table .divider td {
+            border-bottom: 1px solid #e8eaed;
+            padding-bottom: 8px;
+        }
+
+        .summary-table .total-row td {
+            padding-top: 8px;
+            font-size: 12pt;
+            font-weight: 800;
+            color: #0a3d2e;
+            border-top: 2px solid #0a3d2e;
+        }
+
+        .summary-table .total-row td:first-child {
+            color: #0a3d2e;
+        }
+
+        .summary-table .discount-row td:last-child {
+            color: #e74c3c;
+        }
+
+        .summary-table .free-row td:last-child {
+            color: #27ae60;
+        }
+
+        /* ── PAYMENT DETAILS ── */
+        .payment-section {
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e8eaed;
+        }
+
+        .payment-section .title {
+            font-size: 7.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #888;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .payment-grid {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .payment-item {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .payment-item .label {
+            font-size: 7pt;
+            color: #999;
+            font-weight: 500;
+        }
+
+        .payment-item .value {
+            font-size: 8.5pt;
+            font-weight: 600;
+            color: #1a1a2e;
+            margin-top: 1px;
+        }
+
+        .payment-item .value.paid {
+            color: #27ae60;
+        }
+
+        .payment-item .value.pending {
+            color: #f39c12;
+        }
+
+        /* ── FOOTER ── */
+        .invoice-footer {
+            padding: 20px 40px 28px;
+            background: #fafbfc;
+            border-top: 1px solid #e8eaed;
+        }
+
+        .footer-grid {
+            display: flex;
+            gap: 30px;
+        }
+
+        .footer-block {
+            flex: 1;
+        }
+
+        .footer-block .title {
+            font-size: 7.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #888;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .footer-block p {
+            font-size: 8pt;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .footer-block .support-item {
+            font-size: 8pt;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .footer-block .support-item strong {
+            color: #1a1a2e;
+            font-weight: 600;
+        }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #e8eaed;
+        }
+
+        .thank-you {
+            font-size: 11pt;
+            font-weight: 700;
+            color: #0a3d2e;
+        }
+
+        .thank-you small {
+            display: block;
+            font-size: 7.5pt;
+            font-weight: 400;
+            color: #999;
+            margin-top: 2px;
+        }
+
+        .signature-area {
+            text-align: right;
+        }
+
+        .signature-area .sig-line {
+            width: 160px;
+            height: 1px;
+            background: #ccc;
+            margin: 0 0 4px auto;
+        }
+
+        .signature-area .sig-label {
+            font-size: 7.5pt;
+            color: #999;
+            font-weight: 500;
+        }
+
+        .signature-area .sig-name {
+            font-size: 9pt;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-top: 2px;
+        }
+
+        /* ── BADGE ── */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 7.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-badge.paid {
+            background: #e8f5e9;
+            color: #27ae60;
+        }
+
+        .status-badge.pending {
+            background: #fff8e1;
+            color: #f39c12;
+        }
+
+        .status-badge.delivered {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        /* ── WATERMARK ── */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: 80pt;
+            font-weight: 900;
+            color: rgba(10, 61, 46, 0.03);
+            pointer-events: none;
+            z-index: 0;
+            letter-spacing: 10px;
+            text-transform: uppercase;
+        }
+
+        /* ── PRINT ── */
+        @media print {
+            body {
+                background: #fff;
+            }
+            .invoice-wrapper {
+                padding: 0;
+                max-width: 100%;
+            }
+            .invoice-page {
+                border-radius: 0;
+                box-shadow: none;
+            }
+            .invoice-header {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .products-table tbody tr:hover {
+                background: inherit;
+            }
+        }
+
+        /* ── RESPONSIVE ── */
+        @media screen and (max-width: 768px) {
+            .invoice-wrapper {
+                padding: 10px;
+            }
+            .invoice-header {
+                padding: 20px;
+            }
+            .invoice-body {
+                padding: 16px 20px;
+            }
+            .invoice-footer {
+                padding: 16px 20px 20px;
+            }
+            .header-top {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .invoice-title-section {
+                text-align: left;
+            }
+            .header-info-row {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .address-section {
+                flex-direction: column;
+                gap: 16px;
+            }
+            .summary-section {
+                justify-content: flex-start;
+            }
+            .summary-table {
+                width: 100%;
+            }
+            .footer-grid {
+                flex-direction: column;
+                gap: 16px;
+            }
+            .footer-bottom {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+            .signature-area {
+                text-align: left;
+            }
+            .signature-area .sig-line {
+                margin: 0 0 4px 0;
+            }
+            .payment-grid {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .products-table {
+                font-size: 8pt;
+            }
+            .products-table thead th,
+            .products-table tbody td {
+                padding: 6px 8px;
+            }
+            .product-thumb {
+                width: 32px;
+                height: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="watermark">{{ company.name }}</div>
+    
+    <div class="invoice-wrapper">
+        <div class="invoice-page">
+            
+            <!-- ═══ HEADER ═══ -->
+            <header class="invoice-header">
+                <div class="header-top">
+                    <div class="brand-section">
+                        <div class="brand-logo">GH</div>
+                        <div class="brand-text">
+                            <h1>{{ company.name }}</h1>
+                            <div class="tagline">{{ company.tagline }}</div>
+                        </div>
+                    </div>
+                    <div class="invoice-title-section">
+                        <h2>Tax Invoice</h2>
+                        <div class="invoice-number">{{ invoice_number }}</div>
+                    </div>
+                </div>
+
+                <div class="header-divider"></div>
+
+                <div class="header-info-row">
+                    <div class="header-info-block">
+                        <div class="label">From</div>
+                        <div class="value">{{ company.name }}</div>
+                        <div class="value" style="font-weight:400;font-size:8pt;opacity:0.8;white-space:pre-line;">{{ company.address }}</div>
+                    </div>
+                    <div class="header-info-block">
+                        <div class="label">Invoice Date</div>
+                        <div class="value">{{ invoice_date }}</div>
+                        <div class="label" style="margin-top:6px;">Order Date</div>
+                        <div class="value">{{ order_date }}</div>
+                    </div>
+                    <div class="header-info-block">
+                        <div class="label">Order ID</div>
+                        <div class="value">{{ order.order_id }}</div>
+                        <div class="label" style="margin-top:6px;">GSTIN</div>
+                        <div class="value" style="font-size:8pt;">{{ company.gst }}</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- ═══ BODY ═══ -->
+            <div class="invoice-body">
+
+                <!-- Address Section -->
+                <div class="address-section">
+                    <div class="address-block">
+                        <div class="title">Bill To</div>
+                        <div class="name">{{ customer_name }}</div>
+                        <div class="details">{{ delivery_address|default:"Address not available" }}</div>
+                        <div class="contact">
+                            {% if customer_email %}<span>✉ {{ customer_email }}</span>{% endif %}
+                            {% if customer_phone %}<span>📞 {{ customer_phone }}</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="address-block">
+                        <div class="title">Order Summary</div>
+                        <div class="details">
+                            <strong>Order Status:</strong> {{ order_status_display }}<br>
+                            <strong>Payment:</strong> {{ payment_status_display }}<br>
+                            <strong>Items:</strong> {{ items|length }} product{{ items|length|pluralize }}<br>
+                            <strong>Order Total:</strong> ₹{{ grand_total|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Table -->
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th style="width:40%;">Product</th>
+                            <th style="width:10%;text-align:center;">Qty</th>
+                            <th style="width:15%;text-align:center;">Price</th>
+                            <th style="width:10%;text-align:center;">Tax</th>
+                            <th style="width:15%;text-align:right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                <div class="product-cell">
+                                    <div class="product-thumb">
+                                        {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}">
+                                        {% elif item.product.external_image_url %}
+                                        <img src="{{ item.product.external_image_url }}" alt="{{ item.product.title }}">
+                                        {% else %}
+                                        <span class="no-img">🛒</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="product-info">
+                                        <div class="product-name">{{ item.product.title }}</div>
+                                        <div class="product-meta">
+                                            {% if item.product.weight %}Weight: {{ item.product.weight }}{% endif %}
+                                            {% if item.product.sku %} | SKU: {{ item.product.sku }}{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="qty-cell">{{ item.quantity }}</td>
+                            <td class="price-cell">₹{{ item.price|floatformat:2 }}</td>
+                            <td class="price-cell" style="color:#999;">—</td>
+                            <td class="total-cell">₹{{ item.total_price|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align:center;padding:20px;color:#999;">
+                                No items found for this order.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <!-- Pricing Summary -->
+                <div class="summary-section">
+                    <table class="summary-table">
+                        <tr>
+                            <td>Subtotal ({{ items|length }} item{{ items|length|pluralize }})</td>
+                            <td>₹{{ subtotal|floatformat:2 }}</td>
+                        </tr>
+                        {% if discount > 0 %}
+                        <tr class="discount-row">
+                            <td>Discount</td>
+                            <td>− ₹{{ discount|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if shipping > 0 %}
+                        <tr>
+                            <td>Delivery Charges</td>
+                            <td>₹{{ shipping|floatformat:2 }}</td>
+                        </tr>
+                        {% else %}
+                        <tr class="free-row">
+                            <td>Delivery Charges</td>
+                            <td>FREE</td>
+                        </tr>
+                        {% endif %}
+                        {% if tax > 0 %}
+                        <tr>
+                            <td>Tax / GST</td>
+                            <td>₹{{ tax|floatformat:2 }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr class="divider"><td colspan="2"></td></tr>
+                        <tr class="total-row">
+                            <td>Grand Total</td>
+                            <td>₹{{ grand_total|floatformat:2 }}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Payment Details -->
+                <div class="payment-section">
+                    <div class="title">Payment Information</div>
+                    <div class="payment-grid">
+                        <div class="payment-item">
+                            <div class="label">Payment Method</div>
+                            <div class="value">{{ payment_method_display }}</div>
+                        </div>
+                        <div class="payment-item">
+                            <div class="label">Transaction ID</div>
+                            <div class="value">{{ transaction_id }}</div>
+                        </div>
+                        <div class="payment-item">
+                            <div class="label">Payment Date</div>
+                            <div class="value">{{ payment_date }}</div>
+                        </div>
+                        <div class="payment-item">
+                            <div class="label">Payment Status</div>
+                            <div class="value {% if order.payment_status == 'paid' %}paid{% else %}pending{% endif %}">
+                                <span class="status-badge {% if order.payment_status == 'paid' %}paid{% else %}pending{% endif %}">
+                                    {{ payment_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ═══ FOOTER ═══ -->
+            <footer class="invoice-footer">
+                <div class="footer-grid">
+                    <div class="footer-block">
+                        <div class="title">Customer Support</div>
+                        <div class="support-item"><strong>Email:</strong> {{ company.email }}</div>
+                        <div class="support-item"><strong>Phone:</strong> {{ company.phone }}</div>
+                        <div class="support-item"><strong>Web:</strong> {{ company.website }}</div>
+                    </div>
+                    <div class="footer-block">
+                        <div class="title">Terms & Conditions</div>
+                        <p>
+                            • Goods once sold will not be taken back or exchanged.<br>
+                            • Subject to Bangalore jurisdiction.<br>
+                            • Delivery timelines are estimates only.<br>
+                            • This is a computer-generated invoice.
+                        </p>
+                    </div>
+                    <div class="footer-block">
+                        <div class="title">Return & Refund Policy</div>
+                        <p>
+                            • Damaged/expired items can be replaced within 24 hours.<br>
+                            • Refunds processed within 5-7 business days.<br>
+                            • Contact support for any issues.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="footer-bottom">
+                    <div class="thank-you">
+                        Thank you for shopping with {{ company.name }}! 🎉
+                        <small>We hope to serve you again soon.</small>
+                    </div>
+                    <div class="signature-area">
+                        <div class="sig-line"></div>
+                        <div class="sig-label">Authorized Signature</div>
+                        <div class="sig-name">{{ company.name }}</div>
+                    </div>
+                </div>
+            </footer>
+
+        </div>
+    </div>
+</body>
+</html>

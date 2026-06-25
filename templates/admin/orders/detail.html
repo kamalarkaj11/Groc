@@ -1,0 +1,812 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Order {{ order.order_id }} - Admin | GrocHub</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    />
+    <style>
+      :root {
+        --admin-green: #198754;
+        --admin-mint: #20c997;
+        --admin-ink: #18251f;
+        --admin-muted: #66736c;
+        --admin-soft: #f4fbf7;
+        --admin-line: rgba(25, 135, 84, 0.16);
+      }
+      body {
+        background: #f0f2f5;
+        font-family: "Segoe UI", system-ui, sans-serif;
+      }
+      .admin-wrapper {
+        display: flex;
+        min-height: 100vh;
+      }
+      .admin-sidebar {
+        width: 250px;
+        background: linear-gradient(180deg, #0f5132, #198754);
+        color: #fff;
+        padding: 20px 0;
+        flex-shrink: 0;
+      }
+      .admin-sidebar .brand {
+        padding: 0 20px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 16px;
+      }
+      .admin-sidebar .brand h3 {
+        margin: 0;
+        font-weight: 900;
+        font-size: 1.3rem;
+      }
+      .admin-sidebar .brand small {
+        opacity: 0.7;
+      }
+      .admin-sidebar .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        font-weight: 700;
+        transition: all 0.2s;
+      }
+      .admin-sidebar .nav-link:hover,
+      .admin-sidebar .nav-link.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+      }
+      .admin-main {
+        flex: 1;
+        padding: 24px;
+        overflow-x: hidden;
+      }
+      .admin-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .admin-header h1 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: var(--admin-ink);
+      }
+
+      .detail-card {
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid var(--admin-line);
+        margin-bottom: 20px;
+        overflow: hidden;
+      }
+      .detail-card-header {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--admin-line);
+        background: var(--admin-soft);
+        font-weight: 800;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .detail-card-header i {
+        color: var(--admin-green);
+      }
+      .detail-card-body {
+        padding: 20px;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+      .info-item {
+        padding: 10px;
+        background: var(--admin-soft);
+        border-radius: 8px;
+      }
+      .info-item label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--admin-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+      }
+      .info-item .value {
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: var(--admin-ink);
+      }
+
+      .badge-status {
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .badge-pending {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .badge-confirmed {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      .badge-processing {
+        background: #e0e7ff;
+        color: #3730a3;
+      }
+      .badge-packed {
+        background: #ede9fe;
+        color: #5b21b6;
+      }
+      .badge-shipped {
+        background: #e0f2fe;
+        color: #075985;
+      }
+      .badge-out_for_delivery {
+        background: #cffafe;
+        color: #155e75;
+      }
+      .badge-delivered {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .badge-cancelled {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .badge-returned {
+        background: #fce7f3;
+        color: #9d174d;
+      }
+      .badge-failed {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .badge-paid {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .badge-pending-pay {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .badge-refunded {
+        background: #e0e7ff;
+        color: #3730a3;
+      }
+
+      .product-table th {
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--admin-muted);
+        border-bottom: 2px solid var(--admin-line);
+        padding: 10px 12px;
+      }
+      .product-table td {
+        padding: 12px;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--admin-line);
+        font-size: 0.88rem;
+      }
+      .product-img {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        object-fit: cover;
+      }
+
+      .history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--admin-line);
+      }
+      .history-item:last-child {
+        border-bottom: none;
+      }
+
+      .update-form {
+        background: var(--admin-soft);
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .update-form select,
+      .update-form input,
+      .update-form textarea {
+        border: 1px solid var(--admin-line);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        width: 100%;
+      }
+      .update-form select:focus,
+      .update-form input:focus,
+      .update-form textarea:focus {
+        border-color: var(--admin-green);
+        box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.1);
+        outline: none;
+      }
+
+      @media (max-width: 768px) {
+        .admin-sidebar {
+          width: 60px;
+        }
+        .admin-sidebar .brand h3,
+        .admin-sidebar .nav-link span {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-wrapper">
+      <div class="admin-sidebar">
+        <div class="brand">
+          <h3><i class="bi bi-basket2-fill"></i> GrocHub</h3>
+          <small>Admin Panel</small>
+        </div>
+        <a href="/admin/" class="nav-link"
+          ><i class="bi bi-speedometer2"></i> <span>Django Admin</span></a
+        >
+        <a href="{% url 'store:admin_order_dashboard' %}" class="nav-link"
+          ><i class="bi bi-box-seam"></i> <span>Orders</span></a
+        >
+        <a href="{% url 'store:home' %}" class="nav-link"
+          ><i class="bi bi-shop"></i> <span>View Store</span></a
+        >
+        <a href="/logout" class="nav-link" style="margin-top: auto"
+          ><i class="bi bi-box-arrow-right"></i> <span>Logout</span></a
+        >
+      </div>
+
+      <div class="admin-main">
+        <div class="admin-header">
+          <div>
+            <h1>
+              <i class="bi bi-receipt me-2"></i>Order {{ order.order_id }}
+            </h1>
+            <p class="mb-0" style="color: var(--admin-muted)">
+              <a
+                href="{% url 'store:admin_order_dashboard' %}"
+                class="text-decoration-none"
+                >&larr; Back to Orders</a
+              >
+            </p>
+          </div>
+          <span
+            class="badge-status badge-{{ order.status }}"
+            style="font-size: 0.85rem; padding: 6px 18px"
+            >{{ order.get_status_display }}</span
+          >
+        </div>
+
+        <!-- Order Status Update -->
+        <div class="detail-card">
+          <div class="detail-card-header">
+            <i class="bi bi-arrow-repeat"></i> Update Order Status
+          </div>
+          <div class="detail-card-body">
+            <form method="post" class="update-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_status" />
+              <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                  <label class="fw-bold small mb-1">New Status</label>
+                  <select name="status" class="form-select">
+                    {% for key, label in status_choices %}
+                    <option
+                      value="{{ key }}"
+                      {%
+                      if
+                      order.status=""
+                      ="key"
+                      %}selected{%
+                      endif
+                      %}
+                    >
+                      {{ label }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <button
+                    type="submit"
+                    class="btn btn-success w-100 fw-bold rounded-3"
+                  >
+                    <i class="bi bi-check-lg"></i> Update
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Payment Update -->
+        <div class="detail-card">
+          <div class="detail-card-header">
+            <i class="bi bi-credit-card"></i> Payment Details
+          </div>
+          <div class="detail-card-body">
+            <form method="post" class="update-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_payment" />
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <label class="fw-bold small mb-1">Payment Status</label>
+                  <select name="payment_status" class="form-select">
+                    {% for key, label in payment_status_choices %}
+                    <option
+                      value="{{ key }}"
+                      {%
+                      if
+                      order.payment_status=""
+                      ="key"
+                      %}selected{%
+                      endif
+                      %}
+                    >
+                      {{ label }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="fw-bold small mb-1">Payment Method</label>
+                  <select name="payment_method" class="form-select">
+                    {% for key, label in payment_method_choices %}
+                    <option
+                      value="{{ key }}"
+                      {%
+                      if
+                      order.payment_method=""
+                      ="key"
+                      %}selected{%
+                      endif
+                      %}
+                    >
+                      {{ label }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="fw-bold small mb-1">Transaction ID</label>
+                  <input
+                    type="text"
+                    name="transaction_id"
+                    value="{{ order.transaction_id }}"
+                    class="form-control"
+                    placeholder="TXN123456"
+                  />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <button
+                    type="submit"
+                    class="btn btn-success w-100 fw-bold rounded-3"
+                  >
+                    <i class="bi bi-save"></i> Save
+                  </button>
+                </div>
+              </div>
+            </form>
+            <div class="info-grid mt-3">
+              <div class="info-item">
+                <label>Current Status</label>
+                <div class="value">
+                  <span class="badge-status badge-{{ order.payment_status }}"
+                    >{{ order.get_payment_status_display }}</span
+                  >
+                </div>
+              </div>
+              <div class="info-item">
+                <label>Payment Method</label>
+                <div class="value">{{ order.get_payment_method_display }}</div>
+              </div>
+              <div class="info-item">
+                <label>Transaction ID</label>
+                <div class="value">{{ order.transaction_id|default:"-" }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Information -->
+        <div class="detail-card">
+          <div class="detail-card-header">
+            <i class="bi bi-person"></i> Customer Information
+          </div>
+          <div class="detail-card-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Full Name</label>
+                <div class="value">
+                  {{ order.user.get_full_name|default:order.user.username }}
+                </div>
+              </div>
+              <div class="info-item">
+                <label>Username</label>
+                <div class="value">@{{ order.user.username }}</div>
+              </div>
+              <div class="info-item">
+                <label>Email</label>
+                <div class="value">{{ order.user.email|default:"-" }}</div>
+              </div>
+              <div class="info-item">
+                <label>Phone</label>
+                <div class="value">{{ order.phone|default:"-" }}</div>
+              </div>
+              <div class="info-item">
+                <label>Registered Since</label>
+                <div class="value">
+                  {{ order.user.date_joined|date:"d M Y" }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery Information -->
+        <div class="detail-card">
+          <div class="detail-card-header">
+            <i class="bi bi-geo-alt"></i> Delivery Information
+          </div>
+          <div class="detail-card-body">
+            <form method="post" class="update-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_delivery" />
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <label class="fw-bold small mb-1">Address Line 1</label>
+                  <input
+                    type="text"
+                    name="address_line1"
+                    value="{% if shipping_address %}{{ shipping_address.address_line1 }}{% else %}{{ order.address_line1 }}{% endif %}"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-3">
+                  <label class="fw-bold small mb-1">City</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value="{% if shipping_address %}{{ shipping_address.city }}{% else %}{{ order.city }}{% endif %}"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-3">
+                  <label class="fw-bold small mb-1">State</label>
+                  <input
+                    type="text"
+                    name="state"
+                    value="{% if shipping_address %}{{ shipping_address.state }}{% else %}{{ order.state }}{% endif %}"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-3">
+                  <label class="fw-bold small mb-1">Pincode</label>
+                  <input
+                    type="text"
+                    name="pincode"
+                    value="{% if shipping_address %}{{ shipping_address.postal_code }}{% else %}{{ order.pincode }}{% endif %}"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-3">
+                  <label class="fw-bold small mb-1">Phone</label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value="{% if shipping_address %}{{ shipping_address.phone }}{% else %}{{ order.phone }}{% endif %}"
+                    class="form-control"
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="fw-bold small mb-1">Delivery Notes</label>
+                  <input
+                    type="text"
+                    name="delivery_notes"
+                    value="{{ order.delivery_notes }}"
+                    class="form-control"
+                    placeholder="Leave at door, etc."
+                  />
+                </div>
+                <div class="col-12">
+                  <button
+                    type="submit"
+                    class="btn btn-success fw-bold rounded-3"
+                  >
+                    <i class="bi bi-save"></i> Update Delivery
+                  </button>
+                </div>
+              </div>
+            </form>
+            <div
+              class="mt-3 p-3"
+              style="
+                background: var(--admin-soft);
+                border-radius: 8px;
+                line-height: 1.7;
+              "
+            >
+              <strong>Current Address:</strong><br />
+              {% if shipping_address %} {{ shipping_address.full_name }}<br />
+              {{ shipping_address.address_line1 }}<br />
+              {% if shipping_address.address_line2 %}{{
+              shipping_address.address_line2 }}<br />{% endif %} {{
+              shipping_address.city }}{% if shipping_address.state %}, {{
+              shipping_address.get_state_display }}{% endif %} - {{
+              shipping_address.postal_code }}<br />
+              Phone: {{ shipping_address.phone|default:order.phone }} {% if
+              shipping_address.delivery_instructions %}<br /><br /><em
+                >Notes: {{ shipping_address.delivery_instructions }}</em
+              >{% endif %} {% else %} {{ order.address_line1|default:"No address
+              on file" }}<br />
+              {{ order.city|default:"" }}{% if order.state %}, {{
+              order.get_state_display }}{% endif %} - {{
+              order.pincode|default:"" }}<br />
+              Phone: {{ order.phone|default:"-" }} {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="detail-card">
+          <div class="detail-card-header">
+            <i class="bi bi-info-circle"></i> Order Summary
+          </div>
+          <div class="detail-card-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Order ID</label>
+                <div class="value">{{ order.order_id }}</div>
+              </div>
+              <div class="info-item">
+                <label>Order Date</label>
+                <div class="value">{{ order.created_at|date:"d M Y" }}</div>
+              </div>
+              <div class="info-item">
+                <label>Order Time</label>
+                <div class="value">{{ order.created_at|date:"h:i A" }}</div>
+              </div>
+              <div class="info-item">
+                <label>Subtotal</label>
+                <div class="value">
+                  Rs. {{
+                  order.subtotal|floatformat:2|default:order.total_amount|floatformat:2
+                  }}
+                </div>
+              </div>
+              <div class="info-item">
+                <label>Tax</label>
+                <div class="value">
+                  Rs. {{ order.tax_amount|floatformat:2|default:"0.00" }}
+                </div>
+              </div>
+              <div class="info-item">
+                <label>Discount</label>
+                <div class="value">
+                  - Rs. {{ order.discount_amount|floatformat:2|default:"0.00" }}
+                </div>
+              </div>
+              <div class="info-item">
+                <label>Shipping</label>
+                <div class="value">
+                  Rs. {{ order.shipping_charge|floatformat:2|default:"0.00" }}
+                </div>
+              </div>
+              <div class="info-item" style="background: #d1fae5">
+                <label>Grand Total</label>
+                <div
+                  class="value"
+                  style="color: var(--admin-green); font-size: 1.1rem"
+                >
+                  Rs. {{ order.total_amount|floatformat:2 }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ordered Products -->
+        <div class="detail-card">
+          <div class="detail-card-header">
+            <i class="bi bi-bag"></i> Ordered Products ({{ items|length }})
+          </div>
+          <div class="detail-card-body p-0">
+            <div style="overflow-x: auto">
+              <table class="product-table table mb-0">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>SKU / ID</th>
+                    <th>Price</th>
+                    <th>Qty</th>
+                    <th style="text-align: right">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in items %}
+                  <tr>
+                    <td>
+                      <div
+                        style="display: flex; align-items: center; gap: 12px"
+                      >
+                        {% if item.product.image %}
+                        <img
+                          src="{{ item.product.image.url }}"
+                          alt="{{ item.product.title }}"
+                          class="product-img"
+                        />
+                        {% else %}
+                        <div
+                          class="product-img"
+                          style="
+                            background: var(--admin-soft);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: var(--admin-muted);
+                          "
+                        >
+                          <i class="bi bi-bag"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                          <div style="font-weight: 800">
+                            {{ item.product.title }}
+                          </div>
+                          <div
+                            style="
+                              font-size: 0.78rem;
+                              color: var(--admin-muted);
+                            "
+                          >
+                            {{ item.product.weight|default:"" }}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style="font-size: 0.8rem; color: var(--admin-muted)">
+                      #{{ item.product.id }}
+                    </td>
+                    <td>Rs. {{ item.price|floatformat:2 }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td style="text-align: right; font-weight: 800">
+                      Rs. {{ item.total_price|floatformat:2 }}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status History -->
+        <div class="detail-card">
+          <div class="detail-card-header">
+            <i class="bi bi-clock-history"></i> Status History (Audit Trail)
+          </div>
+          <div class="detail-card-body">
+            {% if status_history %} {% for history in status_history %}
+            <div class="history-item">
+              <div>
+                <span class="badge-status badge-{{ history.previous_status }}"
+                  >{{ history.get_previous_status_display|default:"-" }}</span
+                >
+                <i
+                  class="bi bi-arrow-right mx-2"
+                  style="color: var(--admin-muted)"
+                ></i>
+                <span class="badge-status badge-{{ history.new_status }}"
+                  >{{ history.get_new_status_display }}</span
+                >
+                <div
+                  style="
+                    font-size: 0.78rem;
+                    color: var(--admin-muted);
+                    margin-top: 4px;
+                  "
+                >
+                  By
+                  <strong
+                    >{{ history.changed_by_name|default:"System" }}</strong
+                  >
+                  {% if history.notes %} &middot; {{ history.notes }}{% endif %}
+                </div>
+              </div>
+              <div
+                style="
+                  text-align: right;
+                  font-size: 0.78rem;
+                  color: var(--admin-muted);
+                  white-space: nowrap;
+                "
+              >
+                {{ history.created_at|date:"d M Y" }}<br />
+                {{ history.created_at|date:"h:i A" }}
+              </div>
+            </div>
+            {% endfor %} {% else %}
+            <div
+              style="
+                text-align: center;
+                padding: 20px;
+                color: var(--admin-muted);
+              "
+            >
+              <i
+                class="bi bi-inbox"
+                style="font-size: 1.5rem; display: block; margin-bottom: 8px"
+              ></i>
+              No status history available yet.
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex gap-2 mt-3">
+          <a
+            href="{% url 'store:order_invoice' order.id %}"
+            class="btn btn-success fw-bold rounded-3"
+            target="_blank"
+          >
+            <i class="bi bi-eye"></i> View Invoice
+          </a>
+          <a
+            href="{% url 'store:order_invoice_pdf' order.id %}"
+            class="btn btn-primary fw-bold rounded-3"
+          >
+            <i class="bi bi-download"></i> Download Invoice
+          </a>
+          <a
+            href="{% url 'store:order_invoice_print' order.id %}"
+            class="btn btn-outline-primary fw-bold rounded-3"
+            target="_blank"
+          >
+            <i class="bi bi-printer"></i> Print Invoice
+          </a>
+          <a
+            href="{% url 'store:admin_regenerate_invoice' order.id %}"
+            class="btn btn-warning fw-bold rounded-3"
+          >
+            <i class="bi bi-arrow-repeat"></i> Regenerate
+          </a>
+          <a
+            href="{% url 'store:admin_order_dashboard' %}"
+            class="btn btn-outline-secondary fw-bold rounded-3"
+          >
+            <i class="bi bi-arrow-left"></i> Back to Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
