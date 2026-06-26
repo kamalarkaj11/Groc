@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm, Password
 from django.contrib.auth.models import User
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from .models import Profile, UserProfile, IndianState, Order, OTP, Category, Subcategory, ContactMessage
+from .models import Profile, UserProfile, IndianState, Order, OTP, Category, Subcategory, ContactMessage, Quotation
 
 class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(
@@ -478,4 +478,52 @@ class ContactForm(forms.ModelForm):
         if len(message) < 10:
             raise forms.ValidationError('Message must be at least 10 characters.')
         return message
+
+
+class QuotationShippingForm(forms.ModelForm):
+    full_name = forms.CharField(
+        required=True,
+        label='Full Name',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full name'})
+    )
+    email = forms.EmailField(
+        required=False,
+        label='Email',
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email address'})
+    )
+    address_line2 = forms.CharField(
+        required=False,
+        label='House / Flat / Landmark',
+        widget=forms.Textarea(attrs={'rows': 2, 'class': 'form-control', 'placeholder': 'Apt, suite, floor, landmark (optional)'}),
+    )
+    state = forms.CharField(
+        required=False,
+        label='State',
+        widget=forms.Select(attrs={'class': 'form-control'}, choices=[('', '--- Select State ---')] + list(IndianState.choices))
+    )
+
+    class Meta:
+        model = Quotation
+        fields = ['full_name', 'email', 'phone', 'address_line1', 'address_line2', 'city', 'state', 'pincode', 'delivery_notes']
+        widgets = {
+            'address_line1': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Street address, house number'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
+            'pincode': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'PIN code (e.g., 400001)', 'maxlength': '10'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone number (up to 15 characters)', 'maxlength': '15'}),
+            'delivery_notes': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'Leave delivery notes/instructions'}),
+        }
+        labels = {
+            'address_line1': 'Street Address',
+            'city': 'City',
+            'state': 'State',
+            'pincode': 'Postal Code',
+            'phone': 'Phone',
+            'delivery_notes': 'Delivery Notes',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+
 

@@ -6,6 +6,7 @@ import csv
 import json
 import logging
 from datetime import datetime, timedelta
+from decimal import Decimal, InvalidOperation
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
@@ -16,7 +17,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .models import Order, OrderItem, OrderAddress, OrderStatusHistory, OrderTracking, Notification, UserProfile
+from .models import Order, OrderItem, OrderAddress, OrderStatusHistory, OrderTracking, Notification, UserProfile, Quotation, QuotationItem
 
 logger = logging.getLogger(__name__)
 
@@ -527,3 +528,109 @@ def _send_order_notifications(order, old_status, new_status, request):
                 
     except Exception as e:
         logger.error(f"Error sending notifications for order {order.id}: {e}")
+
+
+@staff_member_required
+def admin_quotation_dashboard(request):
+    """Custom staff/admin dashboard for managing quotations."""
+    quotations = Quotation.objects.select_related('user').all()
+    
+    # Search filter
+    search_query = request.GET.get('search', '').strip()
+    if search_query:
+        quotations = quotations.filter(
+            Q(quotation_id__icontains=search_query) |
+            Q(user__username__icontains=search_query) |
+            Q(full_name__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(phone__icontains=search_query)
+        )
+        
+    # Status filter
+    status_filter = request.GET.get('status', '').strip()
+    if status_filter:
+        quotations = quotations.filter(status=status_filter)
+        
+    # Stats
+    stats = {
+        'pending': Quotation.objects.filter(status='pending').count(),
+        'approved': Quotation.objects.filter(status='approved').count(),
+        'rejected': Quotation.objects.filter(status='rejected').count(),
+        'ordered': Quotation.objects.filter(status='ordered').count(),
+        'total': Quotation.objects.count(),
+    }
+    
+    # Pagination
+    paginator = Paginator(quotations, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'quotations': page_obj,
+        'stats': stats,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'status_choices': Quotation.STATUS_CHOICES,
+    }
+    return render(request, 'admin/quotations/dashboard.html', context)
+
+
+@staff_member_required
+def admin_quotation_detail(request, quotation_id):
+    """Custom detail view for staff/admin to review, price, and approve/reject quotations."""
+    quotation = get_object_or_404(Quotation, id=quotation_id)
+    items = quotation.items.select_related('product').all()
+    
+    if request.method == 'POST':
+        # Update status
+        status = request.POST.get('status')
+        if status in dict(Quotation.STATUS_CHOICES):
+            quotation.status = status
+            
+        # Update valid_until
+        valid_until_str = request.POST.get('valid_until')
+        if valid_until_str:
+            try:
+                # Expect 'YYYY-MM-DD' from browser input type="date"
+                quotation.valid_until = timezone.make_aware(datetime.strptime(valid_until_str, '%Y-%m-%d'))
+            except (ValueError, TypeError):
+                pass
+        else:
+            quotation.valid_until = None
+            
+        # Update unit prices
+        subtotal = 0
+        for item in items:
+            price_field = f'price_{item.id}'
+            new_price = request.POST.get(price_field)
+            if new_price is not None:
+                try:
+                    item.unit_price = Decimal(new_price)
+                    item.save()
+                except (ValueError, InvalidOperation):
+                    pass
+            subtotal += item.unit_price * item.quantity
+            
+        quotation.subtotal = subtotal
+        
+        # Update other financial fields
+        try:
+            quotation.shipping_charge = Decimal(request.POST.get('shipping_charge', '0.00'))
+            quotation.discount_amount = Decimal(request.POST.get('discount_amount', '0.00'))
+            quotation.tax_amount = Decimal(request.POST.get('tax_amount', '0.00'))
+        except (ValueError, InvalidOperation):
+            pass
+            
+        # Recalculate total
+        quotation.total_amount = (quotation.subtotal + quotation.shipping_charge + quotation.tax_amount) - quotation.discount_amount
+        quotation.save()
+        
+        messages.success(request, f'Quotation {quotation.quotation_id} updated successfully.')
+        return redirect('store:admin_quotation_detail', quotation_id=quotation.id)
+        
+    context = {
+        'quotation': quotation,
+        'items': items,
+        'status_choices': Quotation.STATUS_CHOICES,
+    }
+    return render(request, 'admin/quotations/detail.html', context)

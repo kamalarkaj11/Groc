@@ -33,10 +33,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
-from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm, ContactForm
+from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm, ContactForm, QuotationShippingForm
 from .models import (Category, Subcategory, Order, OrderAddress, OrderItem, Product, Review, UserProfile, CartItem,
                      Profile, PhoneOTP, OTP, NewsletterSubscriber, OrderTracking, OrderTrackingHistory, Notification,
-                     OrderStatusHistory)
+                     OrderStatusHistory, Quotation, QuotationItem)
 from .notifications import send_order_notifications as trigger_order_notifications
 from .signals import create_otp, generate_and_send_otp, send_otp_email
 from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_products
@@ -631,11 +631,45 @@ def product_detail(request, slug):
 
 @login_required
 def cart_view(request):
-    cart_items = CartItem.objects.filter(user=request.user)
+    cart_items = CartItem.objects.filter(user=request.user).select_related('product', 'product__category', 'product__subcategory')
     total = sum(item.total_price() for item in cart_items)
+    item_count = cart_items.count()
+
+    # Calculate summary values
+    platform_fee = Decimal('0.00')
+    tax_amount = Decimal('0.00')
+    discount_amount = Decimal('0.00')
+
+    for item in cart_items:
+        if item.product.discount_price and item.product.discount_price < item.product.price:
+            discount_amount += (item.product.price - item.product.discount_price) * item.quantity
+
+    subtotal = total + discount_amount
+    if subtotal > 0:
+        tax_amount = (subtotal * Decimal('0.05')).quantize(Decimal('0.01'))
+        if subtotal < 200:
+            platform_fee = Decimal('10.00')
+
+    grand_total = subtotal + tax_amount + platform_fee
+
+    # Recommended products: top products from cart categories
+    recommended_products = []
+    if cart_items:
+        category_ids = [item.product.category_id for item in cart_items]
+        recommended_products = Product.objects.filter(
+            category_id__in=category_ids,
+            is_out_of_stock=False
+        ).exclude(
+            id__in=[item.product_id for item in cart_items]
+        ).order_by('-created_at')[:4]
+
     context = {
         'cart_items': cart_items,
-        'total': total,
+        'total': grand_total,
+        'platform_fee': platform_fee,
+        'tax_amount': tax_amount,
+        'discount_amount': discount_amount,
+        'recommended_products': recommended_products,
     }
     return render(request, 'cart.html', context)
 
@@ -1948,6 +1982,13 @@ def stripe_webhook(request):
                 product_id__in=order.items.values_list('product_id', flat=True)
             ).delete()
 
+            # Check if this order was converted from a Quotation
+            if hasattr(order, 'source_quotation') and order.source_quotation:
+                quote = order.source_quotation
+                quote.status = 'ordered'
+                quote.save()
+                logger.info(f"Quotation {quote.quotation_id} marked as ordered")
+
             logger.info(f"Order {order.id} marked as confirmed (notifications will be sent via signal)")
         except Order.DoesNotExist:
             logger.error("Order not found for session")
@@ -2895,4 +2936,195 @@ def api_notification_clear_all(request):
     """Delete all notifications for the current user."""
     Notification.objects.filter(user=request.user).delete()
     return JsonResponse({'success': True, 'unread_count': 0})
+
+
+@login_required
+def request_quotation(request):
+    cart_items = CartItem.objects.filter(user=request.user)
+    if not cart_items:
+        messages.error(request, 'Your cart is empty. Add products to request a quotation.')
+        return redirect('store:cart')
+
+    total = sum(item.total_price() for item in cart_items)
+    
+    # Initialize form with defaults
+    initial_data = {}
+    initial_data['full_name'] = request.user.get_full_name() or request.user.username
+    initial_data['email'] = request.user.email or ''
+    
+    # Fetch phone number
+    user_profile = getattr(request.user, 'userprofile', None)
+    if user_profile and user_profile.phone_number:
+        initial_data['phone'] = user_profile.phone_number
+    else:
+        phone_profile = getattr(request.user, 'phone_profile', None)
+        if phone_profile and phone_profile.phone_number:
+            initial_data['phone'] = phone_profile.phone_number
+
+    if request.method == 'POST':
+        form = QuotationShippingForm(request.POST)
+        if form.is_valid():
+            quotation = form.save(commit=False)
+            quotation.user = request.user
+            quotation.subtotal = total
+            quotation.total_amount = total
+            quotation.status = 'pending'
+            quotation.save()
+
+            # Create items
+            for item in cart_items:
+                QuotationItem.objects.create(
+                    quotation=quotation,
+                    product=item.product,
+                    quantity=item.quantity,
+                    unit_price=item.product.get_price()
+                )
+
+            # Clear cart
+            cart_items.delete()
+
+            messages.success(request, f'Quotation request {quotation.quotation_id} submitted successfully!')
+            return redirect('store:my_quotations')
+    else:
+        form = QuotationShippingForm(initial=initial_data)
+
+    context = {
+        'form': form,
+        'cart_items': cart_items,
+        'total': total,
+    }
+    return render(request, 'quotations/request.html', context)
+
+
+@login_required
+def my_quotations(request):
+    quotations = Quotation.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'quotations/list.html', {'quotations': quotations})
+
+
+@login_required
+def quotation_detail(request, quotation_id):
+    quotation = get_object_or_404(Quotation, id=quotation_id, user=request.user)
+    items = quotation.items.select_related('product').all()
+    
+    is_valid = True
+    if quotation.status == 'approved' and quotation.valid_until:
+        if quotation.valid_until < timezone.now():
+            is_valid = False
+
+    context = {
+        'quotation': quotation,
+        'items': items,
+        'is_valid': is_valid,
+        'STRIPE_PUBLISHABLE_KEY': settings.STRIPE_PUBLISHABLE_KEY,
+    }
+    return render(request, 'quotations/detail.html', context)
+
+
+@login_required
+@require_POST
+def pay_quotation(request, quotation_id):
+    quotation = get_object_or_404(Quotation, id=quotation_id, user=request.user)
+    if quotation.status != 'approved':
+        return JsonResponse({'error': 'Only approved quotations can be paid.'}, status=400)
+    
+    if quotation.valid_until and quotation.valid_until < timezone.now():
+        return JsonResponse({'error': 'This quotation has expired.'}, status=400)
+
+    stripe_secret_key = getattr(settings, 'STRIPE_SECRET_KEY', None)
+    if not stripe_secret_key:
+        return JsonResponse({'error': 'Stripe not configured'}, status=500)
+    
+    stripe.api_key = stripe_secret_key
+    currency = getattr(settings, 'STRIPE_CURRENCY', 'inr')
+
+    try:
+        # Create standard Order object matching the approved quotation prices & details
+        order = Order.objects.create(
+            user=request.user,
+            total_amount=quotation.total_amount,
+            subtotal=quotation.subtotal,
+            tax_amount=quotation.tax_amount,
+            discount_amount=quotation.discount_amount,
+            shipping_charge=quotation.shipping_charge,
+            address=quotation.address_line1,
+            address_line1=quotation.address_line1,
+            city=quotation.city,
+            state=quotation.state,
+            pincode=quotation.pincode,
+            phone=quotation.phone,
+            delivery_notes=quotation.delivery_notes,
+            payment_method='stripe',
+            payment_status='pending',
+            status='pending',
+        )
+
+        OrderAddress.objects.create(
+            order=order,
+            full_name=quotation.full_name,
+            email=quotation.email,
+            phone=quotation.phone,
+            address_line1=quotation.address_line1,
+            address_line2=quotation.address_line2,
+            city=quotation.city,
+            state=quotation.state,
+            postal_code=quotation.pincode,
+            country='India',
+            delivery_instructions=quotation.delivery_notes,
+        )
+
+        # Create OrderItem records from QuotationItems
+        for item in quotation.items.all():
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price=item.unit_price,
+            )
+
+        # Stripe Session
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price_data': {
+                        'currency': currency,
+                        'product_data': {
+                            'name': f'Quotation {quotation.quotation_id} - GroceryHub',
+                        },
+                        'unit_amount': int(quotation.total_amount * 100),
+                    },
+                    'quantity': 1,
+                }
+            ],
+            mode='payment',
+            success_url=request.build_absolute_uri(f'/checkout/success/{order.id}/'),
+            cancel_url=request.build_absolute_uri(f'/quotations/{quotation.id}/'),
+            metadata={
+                'user_id': str(request.user.id),
+                'order_id': str(order.id),
+                'quotation_id': str(quotation.id),
+            },
+        )
+
+        # Link order and save Stripe session ID
+        order.stripe_session_id = session.id
+        order.save()
+
+        quotation.converted_order = order
+        quotation.save()
+
+        return JsonResponse({'url': session.url})
+
+    except stripe.error.InvalidRequestError as e:
+        logger.error(f"Quotation payment error (Stripe InvalidRequest): {str(e)}")
+        if 'order' in locals():
+            order.delete()
+        return JsonResponse({'error': 'Payment provider rejected the request: ' + str(e)}, status=400)
+    except Exception as e:
+        logger.error(f"Quotation payment error: {str(e)}")
+        if 'order' in locals():
+            order.delete()
+        return JsonResponse({'error': 'Payment setup failed: ' + str(e)}, status=500)
+
 

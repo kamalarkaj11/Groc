@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Request Quotation - GroceryHub{% endblock %}
+
+{% block content %}
+<div class="container my-5 animate__animated animate__fadeIn">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <div class="glass-card p-5" style="background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(10px); border-radius: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05); border: 1px solid rgba(255, 255, 255, 0.3);">
+        <div class="row">
+          <div class="col-md-7">
+            <h2 class="fw-bold mb-4 text-success" style="font-family: 'Outfit', sans-serif; background: linear-gradient(135deg, #28a745, #20c997); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+              <i class="bi bi-file-earmark-text me-2"></i>Request a Quotation
+            </h2>
+            <p class="text-muted mb-4">
+              Enter your shipping details below to submit a quotation request. An administrator will review your items and verify availability, custom discounts, and final shipping rates.
+            </p>
+
+            <form method="post" action="{% url 'store:request_quotation' %}" class="needs-validation">
+              {% csrf_token %}
+              {{ form|crispy }}
+              <div class="text-end mt-4">
+                <a href="{% url 'store:cart' %}" class="btn btn-outline-secondary me-2" style="border-radius: 25px; padding: 10px 24px; font-weight: 600;">
+                  <i class="bi bi-arrow-left"></i> Back to Cart
+                </a>
+                <button type="submit" class="btn btn-success px-5 py-3" style="border-radius: 25px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; box-shadow: 0 4px 15px rgba(40,167,69,0.3); font-weight: 700;">
+                  <i class="bi bi-send-fill me-2"></i> Submit Request
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="col-md-5 mt-4 mt-md-0">
+            <div class="p-4" style="background: rgba(248, 249, 250, 0.7); border-radius: 16px; border: 1px solid rgba(0, 0, 0, 0.05);">
+              <h5 class="fw-bold mb-3" style="font-family: 'Outfit', sans-serif; color: #333;">Items Summary</h5>
+              <div id="quotation-summary" style="max-height: 350px; overflow-y: auto; padding-right: 5px;">
+                {% for item in cart_items %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center">
+                    {% if item.product.image %}
+                    <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; margin-right: 12px; border: 1px solid rgba(0,0,0,0.05);">
+                    {% else %}
+                    <div style="width: 48px; height: 48px; background: #e9ecef; border-radius: 8px; margin-right: 12px; display: flex; align-items: center; justify-content: center;">
+                      <i class="bi bi-image text-muted"></i>
+                    </div>
+                    {% endif %}
+                    <div>
+                      <h6 class="mb-0 fw-semibold" style="font-size: 0.95rem; color: #222;">{{ item.product.title }}</h6>
+                      <small class="text-muted">Qty: {{ item.quantity }} · ₹{{ item.product.get_price|floatformat:0 }} each</small>
+                    </div>
+                  </div>
+                  <span class="fw-bold" style="color: #444;">₹{{ item.total_price|floatformat:0 }}</span>
+                </div>
+                {% endfor %}
+              </div>
+              <hr style="border-color: rgba(0,0,0,0.1);">
+              <div class="d-flex justify-content-between fw-bold fs-5 pt-2">
+                <span style="color: #555;">Estimated Subtotal</span>
+                <span class="text-success">₹{{ total|floatformat:0 }}</span>
+              </div>
+              <div class="small text-muted mt-2">
+                * Note: Admin may modify pricing or offer further discount before approval. Shipping and taxes will be added.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

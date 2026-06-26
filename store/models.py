@@ -885,3 +885,70 @@ class ContactMessage(models.Model):
         elif self.status == 'new' and self.is_read:
             self.is_read = False
         super().save(*args, **kwargs)
+
+
+class Quotation(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending Review'),
+        ('approved', 'Approved / Priced'),
+        ('rejected', 'Rejected'),
+        ('ordered', 'Ordered'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quotations')
+    quotation_id = models.CharField(max_length=20, unique=True, blank=True, null=True, help_text="Auto-generated friendly quotation ID like QT-1001")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # Financial fields
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    # Shipping and location fields
+    full_name = models.CharField(max_length=128, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=15, blank=True)
+    address_line1 = models.TextField(blank=True)
+    address_line2 = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=2, choices=IndianState.choices, blank=True)
+    pincode = models.CharField(max_length=10, blank=True)
+    delivery_notes = models.TextField(blank=True)
+    
+    # Expiry for the quotation
+    valid_until = models.DateTimeField(null=True, blank=True)
+    
+    # Linked order once converted
+    converted_order = models.OneToOneField('Order', on_delete=models.SET_NULL, null=True, blank=True, related_name='source_quotation')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def save(self, *args, **kwargs):
+        if not self.quotation_id:
+            # Generate a friendly quotation ID like QT-1001
+            last_quotation = Quotation.objects.order_by('-id').first()
+            next_id = (last_quotation.id + 1) if last_quotation else 1
+            self.quotation_id = f"QT{next_id:04d}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Quotation {self.quotation_id or self.id} - {self.user.username}"
+
+
+class QuotationItem(models.Model):
+    quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.product.title} x {self.quantity} in {self.quotation.quotation_id}"
+
+    def total_price(self):
+        return self.unit_price * self.quantity

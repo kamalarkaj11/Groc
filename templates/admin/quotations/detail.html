@@ -1,0 +1,378 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin - Review Quotation {{ quotation.quotation_id }} | GrocHub</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    />
+    <style>
+      :root {
+        --admin-green: #198754;
+        --admin-mint: #20c997;
+        --admin-ink: #18251f;
+        --admin-muted: #66736c;
+        --admin-soft: #f4fbf7;
+        --admin-line: rgba(25, 135, 84, 0.16);
+      }
+      body {
+        background: #f0f2f5;
+        font-family: "Segoe UI", system-ui, sans-serif;
+      }
+      .admin-wrapper {
+        display: flex;
+        min-height: 100vh;
+      }
+      .admin-sidebar {
+        width: 250px;
+        background: linear-gradient(180deg, #0f5132, #198754);
+        color: #fff;
+        padding: 20px 0;
+        flex-shrink: 0;
+      }
+      .admin-sidebar .brand {
+        padding: 0 20px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 16px;
+      }
+      .admin-sidebar .brand h3 {
+        margin: 0;
+        font-weight: 900;
+        font-size: 1.3rem;
+      }
+      .admin-sidebar .nav-link {
+        color: rgba(255, 255, 255, 0.8);
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        font-weight: 700;
+        transition: all 0.2s;
+      }
+      .admin-sidebar .nav-link:hover,
+      .admin-sidebar .nav-link.active {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+      }
+      .admin-main {
+        flex: 1;
+        padding: 24px;
+        overflow-x: hidden;
+      }
+      
+      .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .status-pending { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+      .status-approved { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+      .status-rejected { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+      .status-ordered { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    </style>
+  </head>
+  <body>
+    <div class="admin-wrapper">
+      <!-- Sidebar -->
+      <div class="admin-sidebar">
+        <div class="brand">
+          <h3><i class="bi bi-basket2-fill"></i> GrocHub</h3>
+          <small>Admin Panel</small>
+        </div>
+        <a href="/admin/" class="nav-link"
+          ><i class="bi bi-speedometer2"></i> <span>Django Admin</span></a
+        >
+        <a href="{% url 'store:admin_order_dashboard' %}" class="nav-link"
+          ><i class="bi bi-box-seam"></i> <span>Orders</span></a
+        >
+        <a href="{% url 'store:admin_quotation_dashboard' %}" class="nav-link active"
+          ><i class="bi bi-receipt"></i> <span>Quotations</span></a
+        >
+        <a href="{% url 'store:home' %}" class="nav-link"
+          ><i class="bi bi-shop"></i> <span>View Store</span></a
+        >
+        <a href="/logout" class="nav-link" style="margin-top: auto"
+          ><i class="bi bi-box-arrow-right"></i> <span>Logout</span></a
+        >
+      </div>
+
+      <!-- Main Content -->
+      <div class="admin-main">
+        <!-- Breadcrumbs -->
+        <nav aria-label="breadcrumb" class="mb-3">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'store:admin_quotation_dashboard' %}" class="text-success text-decoration-none fw-bold">Quotation List</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ quotation.quotation_id }}</li>
+          </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+          <div>
+            <h2 class="fw-bold text-dark mb-0">Review Quotation: {{ quotation.quotation_id }}</h2>
+            <p class="text-muted mb-0 small">Requested by @{{ quotation.user.username }} on {{ quotation.created_at|date:"d M Y, h:i A" }}</p>
+          </div>
+          <div>
+            {% if quotation.status == 'pending' %}
+            <span class="status-badge status-pending">Pending Review</span>
+            {% elif quotation.status == 'approved' %}
+            <span class="status-badge status-approved">Approved</span>
+            {% elif quotation.status == 'rejected' %}
+            <span class="status-badge status-rejected">Rejected</span>
+            {% elif quotation.status == 'ordered' %}
+            <span class="status-badge status-ordered">Ordered & Paid</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if messages %}
+        <div class="row mb-3">
+          <div class="col">
+            {% for msg in messages %}
+            <div class="alert alert-{{ msg.tags }} alert-dismissible fade show" role="alert">
+              {{ msg }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'store:admin_quotation_detail' quotation.id %}">
+          {% csrf_token %}
+          <div class="row g-4">
+            <!-- Left Side: Pricing Table -->
+            <div class="col-lg-8">
+              <div class="card border-0 shadow-sm rounded-3 overflow-hidden mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                  <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-cart-check me-2"></i>Line Items & Quotation Pricing</h5>
+                </div>
+                <div class="table-responsive">
+                  <table class="table align-middle mb-0" id="items-table">
+                    <thead class="table-light text-muted small text-uppercase">
+                      <tr>
+                        <th class="ps-4">Product Name</th>
+                        <th>Standard Price</th>
+                        <th style="width: 180px;">Quoted Unit Price (INR)</th>
+                        <th class="text-center">Qty Requested</th>
+                        <th class="pe-4 text-end">Line Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for item in items %}
+                      <tr data-item-id="{{ item.id }}" data-qty="{{ item.quantity }}">
+                        <td class="ps-4">
+                          <div class="fw-semibold text-dark">{{ item.product.title }}</div>
+                          <small class="text-muted">{{ item.product.unit_value }} {{ item.product.get_unit_display }}</small>
+                        </td>
+                        <td class="text-muted">₹{{ item.product.get_price|floatformat:2 }}</td>
+                        <td>
+                          <div class="input-group input-group-sm">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" name="price_{{ item.id }}" class="form-control unit-price-input" 
+                                   value="{{ item.unit_price|stringformat:".2f" }}" step="0.01" min="0" required
+                                   {% if quotation.status == 'ordered' %}disabled{% endif %}>
+                          </div>
+                        </td>
+                        <td class="text-center fw-bold text-dark">{{ item.quantity }}</td>
+                        <td class="pe-4 text-end fw-bold text-dark">
+                          ₹<span class="line-total-span">{{ item.total_price|floatformat:2 }}</span>
+                        </td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Customer Notes -->
+              {% if quotation.delivery_notes %}
+              <div class="card border-0 shadow-sm rounded-3 mb-4">
+                <div class="card-body">
+                  <h6 class="fw-bold text-dark mb-2"><i class="bi bi-chat-left-text me-2"></i>Customer Request Notes</h6>
+                  <div class="p-3 border rounded bg-light text-muted small">
+                    {{ quotation.delivery_notes }}
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+
+            <!-- Right Side: Details and Pricing Summary -->
+            <div class="col-lg-4">
+              <!-- Customer / Shipping details -->
+              <div class="card border-0 shadow-sm rounded-3 mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                  <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-person-badge me-2"></i>Customer Info</h5>
+                </div>
+                <div class="card-body text-dark">
+                  <h6 class="fw-bold mb-1">{{ quotation.full_name }}</h6>
+                  <p class="text-muted small mb-3">
+                    <i class="bi bi-telephone-fill me-2"></i>{{ quotation.phone }}<br>
+                    <i class="bi bi-envelope-fill me-2"></i>{{ quotation.email|default:"N/A" }}
+                  </p>
+                  <hr>
+                  <h6 class="fw-bold text-dark mb-2"><i class="bi bi-geo-alt me-1"></i>Shipping Destination</h6>
+                  <div class="p-2 border rounded bg-light small" style="line-height: 1.5;">
+                    {{ quotation.address_line1 }}<br>
+                    {% if quotation.address_line2 %}{{ quotation.address_line2 }}<br>{% endif %}
+                    {{ quotation.city }}, {{ quotation.get_state_display }} - {{ quotation.pincode }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Price adjustments & Expiry & Status -->
+              <div class="card border-0 shadow-sm rounded-3 mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                  <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-sliders me-2"></i>Adjustment & Status</h5>
+                </div>
+                <div class="card-body text-dark">
+                  <!-- Expiry Date -->
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Quote Expiry Date</label>
+                    <input type="date" name="valid_until" class="form-control" 
+                           value="{{ quotation.valid_until|date:"Y-m-d" }}"
+                           {% if quotation.status == 'ordered' %}disabled{% endif %}>
+                    <div class="form-text small text-muted">Customer must accept and pay before this date.</div>
+                  </div>
+
+                  <!-- Shipping Charge input -->
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Shipping Charge (INR)</label>
+                    <input type="number" name="shipping_charge" id="id_shipping_charge" class="form-control price-modifier" 
+                           value="{{ quotation.shipping_charge|stringformat:".2f" }}" step="0.01" min="0" required
+                           {% if quotation.status == 'ordered' %}disabled{% endif %}>
+                  </div>
+
+                  <!-- Tax Amount input -->
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Tax Amount (INR)</label>
+                    <input type="number" name="tax_amount" id="id_tax_amount" class="form-control price-modifier" 
+                           value="{{ quotation.tax_amount|stringformat:".2f" }}" step="0.01" min="0" required
+                           {% if quotation.status == 'ordered' %}disabled{% endif %}>
+                  </div>
+
+                  <!-- Discount Amount input -->
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Special Discount (INR)</label>
+                    <input type="number" name="discount_amount" id="id_discount_amount" class="form-control price-modifier" 
+                           value="{{ quotation.discount_amount|stringformat:".2f" }}" step="0.01" min="0" required
+                           {% if quotation.status == 'ordered' %}disabled{% endif %}>
+                  </div>
+
+                  <!-- Status choice selection -->
+                  <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted text-uppercase">Quotation Status</label>
+                    <select name="status" class="form-select" {% if quotation.status == 'ordered' %}disabled{% endif %}>
+                      {% for code, label in status_choices %}
+                      <option value="{{ code }}" {% if quotation.status == code %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+
+                  <hr>
+
+                  <!-- Final Totals Card -->
+                  <div class="p-3 bg-light rounded mb-3 border">
+                    <div class="d-flex justify-content-between mb-1 small text-muted">
+                      <span>Items Subtotal:</span>
+                      <span>₹<span id="summary-subtotal">{{ quotation.subtotal|floatformat:2 }}</span></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1 small text-muted">
+                      <span>Shipping Charge:</span>
+                      <span>₹<span id="summary-shipping">{{ quotation.shipping_charge|floatformat:2 }}</span></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1 small text-muted">
+                      <span>Tax Amount:</span>
+                      <span>₹<span id="summary-tax">{{ quotation.tax_amount|floatformat:2 }}</span></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small text-danger">
+                      <span>Applied Discount:</span>
+                      <span>-₹<span id="summary-discount">{{ quotation.discount_amount|floatformat:2 }}</span></span>
+                    </div>
+                    <hr class="my-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <strong class="text-dark">Grand Total:</strong>
+                      <strong class="text-success fs-5">₹<span id="summary-total">{{ quotation.total_amount|floatformat:2 }}</span></strong>
+                    </div>
+                  </div>
+
+                  <!-- Save action button -->
+                  {% if quotation.status != 'ordered' %}
+                  <button type="submit" class="btn btn-success w-100 fw-bold py-2 rounded-3">
+                    <i class="bi bi-save me-1"></i> Save Updates & Status
+                  </button>
+                  {% else %}
+                  <div class="alert alert-info text-center small mb-0 font-weight-bold">
+                    <i class="bi bi-lock-fill"></i> Completed. Locked from further updates.
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const unitPriceInputs = document.querySelectorAll('.unit-price-input');
+        const modifierInputs = document.querySelectorAll('.price-modifier');
+        
+        const summarySubtotal = document.getElementById('summary-subtotal');
+        const summaryShipping = document.getElementById('summary-shipping');
+        const summaryTax = document.getElementById('summary-tax');
+        const summaryDiscount = document.getElementById('summary-discount');
+        const summaryTotal = document.getElementById('summary-total');
+
+        function recalculate() {
+          let subtotal = 0;
+          
+          unitPriceInputs.forEach(input => {
+            const tr = input.closest('tr');
+            const qty = parseFloat(tr.dataset.qty);
+            const price = parseFloat(input.value) || 0;
+            const lineTotal = price * qty;
+            
+            tr.querySelector('.line-total-span').textContent = lineTotal.toFixed(2);
+            subtotal += lineTotal;
+          });
+
+          const shipping = parseFloat(document.getElementById('id_shipping_charge').value) || 0;
+          const tax = parseFloat(document.getElementById('id_tax_amount').value) || 0;
+          const discount = parseFloat(document.getElementById('id_discount_amount').value) || 0;
+
+          const total = (subtotal + shipping + tax) - discount;
+
+          summarySubtotal.textContent = subtotal.toFixed(2);
+          summaryShipping.textContent = shipping.toFixed(2);
+          summaryTax.textContent = tax.toFixed(2);
+          summaryDiscount.textContent = discount.toFixed(2);
+          summaryTotal.textContent = Math.max(0, total).toFixed(2);
+        }
+
+        unitPriceInputs.forEach(input => {
+          input.addEventListener('input', recalculate);
+        });
+
+        modifierInputs.forEach(input => {
+          input.addEventListener('input', recalculate);
+        });
+      });
+    </script>
+  </body>
+</html>

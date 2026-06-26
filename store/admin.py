@@ -10,7 +10,7 @@ from .models import (
     Profile, PhoneOTP, Review, UserProfile, Category,
     Subcategory, SubSubCategory, Product, CartItem, Order, OrderItem, OrderAddress, OTP,
     NotificationLog, NewsletterSubscriber, OrderTracking, OrderTrackingHistory, Notification,
-    ContactMessage, OrderStatusHistory
+    ContactMessage, OrderStatusHistory, Quotation, QuotationItem
 )
 
 
@@ -1059,3 +1059,22 @@ class ContactMessageAdmin(admin.ModelAdmin):
     def mark_as_replied(self, request, queryset):
         queryset.update(status='replied', is_read=True)
     mark_as_replied.short_description = 'Mark selected as Replied'
+
+
+class QuotationItemInline(admin.TabularInline):
+    model = QuotationItem
+    extra = 0
+    readonly_fields = ('product', 'quantity', 'unit_price', 'total_price_display')
+
+    def total_price_display(self, obj):
+        return f"Rs. {obj.total_price()}"
+    total_price_display.short_description = 'Total Price'
+
+
+@admin.register(Quotation)
+class QuotationAdmin(admin.ModelAdmin):
+    list_display = ('quotation_id', 'user', 'status', 'total_amount', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('quotation_id', 'user__username', 'full_name', 'email', 'phone')
+    inlines = [QuotationItemInline]
+    date_hierarchy = 'created_at'
