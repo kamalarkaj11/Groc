@@ -112,14 +112,5 @@ urlpatterns = [
     path('api/notifications/mark-all-read/', views.api_notification_mark_all_read, name='api_notification_mark_all_read'),
     path('api/notifications/clear-all/', views.api_notification_clear_all, name='api_notification_clear_all'),
 
-    # Quotations Customer
-    path('quotations/request/', views.request_quotation, name='request_quotation'),
-    path('quotations/', views.my_quotations, name='my_quotations'),
-    path('quotations/<int:quotation_id>/', views.quotation_detail, name='quotation_detail'),
-    path('quotations/<int:quotation_id>/pay/', views.pay_quotation, name='pay_quotation'),
-
-    # Quotations Admin
-    path('admin/quotations/', admin_views.admin_quotation_dashboard, name='admin_quotation_dashboard'),
-    path('admin/quotations/<int:quotation_id>/', admin_views.admin_quotation_detail, name='admin_quotation_detail'),
 ]
 

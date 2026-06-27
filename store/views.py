@@ -3,6 +3,7 @@ import json
 import logging
 import random
 from decimal import Decimal, InvalidOperation
+import ssl
 import urllib.request as urllib_request
 import phonenumbers
 import re
@@ -20,7 +21,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db import models
 from django.db.models import Avg, Count, Q, Sum
 from django.views.decorators.csrf import csrf_exempt
@@ -650,7 +651,8 @@ def cart_view(request):
         if subtotal < 200:
             platform_fee = Decimal('10.00')
 
-    grand_total = subtotal + tax_amount + platform_fee
+    packaging_charge = Decimal('5.00') if subtotal > 0 else Decimal('0.00')
+    grand_total = subtotal + tax_amount + platform_fee + packaging_charge
 
     # Recommended products: top products from cart categories
     recommended_products = []
@@ -663,12 +665,33 @@ def cart_view(request):
             id__in=[item.product_id for item in cart_items]
         ).order_by('-created_at')[:4]
 
+    # Additional summary fields for premium cart display
+    delivery_charge = Decimal('0.00')
+    free_delivery_threshold = Decimal('150.00')
+    delivery_progress = 0
+    remaining_for_free_delivery = Decimal('0.00')
+    if free_delivery_threshold > 0:
+        delivery_progress = min(int((total / free_delivery_threshold) * 100), 100)
+        remaining_for_free_delivery = max(free_delivery_threshold - total, Decimal('0.00'))
+
+    total_savings = discount_amount + (delivery_charge if 'FREE' else Decimal('0.00'))
+    total_quantity = sum(item.quantity for item in cart_items)
+
     context = {
         'cart_items': cart_items,
         'total': grand_total,
+        'subtotal': subtotal,
         'platform_fee': platform_fee,
         'tax_amount': tax_amount,
         'discount_amount': discount_amount,
+        'delivery_charge': delivery_charge,
+        'packaging_charge': packaging_charge,
+        'free_delivery_threshold': free_delivery_threshold,
+        'delivery_progress': delivery_progress,
+        'remaining_for_free_delivery': remaining_for_free_delivery,
+        'total_savings': total_savings,
+        'total_quantity': total_quantity,
+        'item_count': item_count,
         'recommended_products': recommended_products,
     }
     return render(request, 'cart.html', context)
@@ -1640,7 +1663,8 @@ def checkout_save_location(request):
             headers={'User-Agent': 'GroceryHub/1.0'}
         )
 
-        with urllib_request.urlopen(request_obj, timeout=10) as response:
+        ctx = ssl._create_unverified_context()
+        with urllib_request.urlopen(request_obj, timeout=10, context=ctx) as response:
             data = json.loads(response.read().decode('utf-8'))
 
         display_name = data.get('display_name', '')
@@ -1724,49 +1748,57 @@ def create_session(request):
         longitude = None
 
     try:
-        # Create order
-        order = Order.objects.create(
-            user=request.user,
-            total_amount=total,
-            address=shipping_data.get('address_line1', ''),
-            latitude=latitude,
-            longitude=longitude,
-            address_line1=shipping_data.get('address_line1', ''),
-            city=shipping_data.get('city', ''),
-            state=shipping_data.get('state', ''),
-            pincode=shipping_data.get('pincode', ''),
-            phone=shipping_data.get('phone', ''),
-        )
-
-        OrderAddress.objects.create(
-            order=order,
-            full_name=shipping_data.get('full_name', request.user.get_full_name() or request.user.username),
-            email=shipping_data.get('email', request.user.email or ''),
-            phone=shipping_data.get('phone', ''),
-            address_line1=shipping_data.get('address_line1', ''),
-            address_line2=shipping_data.get('address_line2', ''),
-            city=shipping_data.get('city', ''),
-            state=shipping_data.get('state', ''),
-            postal_code=shipping_data.get('pincode', ''),
-            country=shipping_data.get('country', 'India'),
-            delivery_instructions=shipping_data.get('delivery_instructions', ''),
-            latitude=latitude,
-            longitude=longitude,
-        )
-        
-        # Create order items
-        for item_data in items_data:
-            cart_item = cart_items.get(product_id=item_data['product'])
-            if cart_item.quantity != item_data['quantity']:
-                raise ValueError('Quantity mismatch')
-            OrderItem.objects.create(
-                order=order,
-                product=cart_item.product,
-                quantity=cart_item.quantity,
-                price=cart_item.product.get_price(),
+        # Use transaction.atomic() to ensure all database operations happen atomically
+        with transaction.atomic():
+            # Create order
+            order = Order.objects.create(
+                user=request.user,
+                total_amount=total,
+                address=shipping_data.get('address_line1', ''),
+                latitude=latitude,
+                longitude=longitude,
+                address_line1=shipping_data.get('address_line1', ''),
+                city=shipping_data.get('city', ''),
+                state=shipping_data.get('state', ''),
+                pincode=shipping_data.get('pincode', ''),
+                phone=shipping_data.get('phone', ''),
             )
+
+            OrderAddress.objects.create(
+                order=order,
+                full_name=shipping_data.get('full_name', request.user.get_full_name() or request.user.username),
+                email=shipping_data.get('email', request.user.email or ''),
+                phone=shipping_data.get('phone', ''),
+                address_line1=shipping_data.get('address_line1', ''),
+                address_line2=shipping_data.get('address_line2', ''),
+                city=shipping_data.get('city', ''),
+                state=shipping_data.get('state', ''),
+                postal_code=shipping_data.get('pincode', ''),
+                country=shipping_data.get('country', 'India'),
+                delivery_instructions=shipping_data.get('delivery_instructions', ''),
+                latitude=latitude,
+                longitude=longitude,
+            )
+            
+            # Create order items
+            purchased_product_ids = []
+            for item_data in items_data:
+                cart_item = cart_items.get(product_id=item_data['product'])
+                if cart_item.quantity != item_data['quantity']:
+                    raise ValueError('Quantity mismatch')
+                OrderItem.objects.create(
+                    order=order,
+                    product=cart_item.product,
+                    quantity=cart_item.quantity,
+                    price=cart_item.product.get_price(),
+                )
+                purchased_product_ids.append(cart_item.product.id)
+            
+            # Note: Cart items are NOT deleted here
+            # They will be deleted in the webhook after successful payment
+            # This ensures cart is only cleared on actual payment success
         
-        # Stripe session
+        # Stripe session (outside transaction since it's an external API call)
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[
@@ -1974,24 +2006,35 @@ def stripe_webhook(request):
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         try:
-            order = Order.objects.select_related('user').get(stripe_session_id=session['id'])
-            order.status = 'confirmed'
-            order.save()
-            CartItem.objects.filter(
-                user=order.user,
-                product_id__in=order.items.values_list('product_id', flat=True)
-            ).delete()
+            # Use transaction.atomic() to ensure order update and cart deletion happen together
+            with transaction.atomic():
+                order = Order.objects.select_related('user').get(stripe_session_id=session['id'])
+                order.status = 'confirmed'
+                order.save()
+                
+                # Delete only the purchased items from the user's cart
+                # This happens ONLY after successful payment
+                purchased_product_ids = order.items.values_list('product_id', flat=True)
+                CartItem.objects.filter(
+                    user=order.user,
+                    product_id__in=purchased_product_ids
+                ).delete()
+                
+                logger.info(f"Cart items deleted for order {order.id}")
 
-            # Check if this order was converted from a Quotation
-            if hasattr(order, 'source_quotation') and order.source_quotation:
-                quote = order.source_quotation
-                quote.status = 'ordered'
-                quote.save()
-                logger.info(f"Quotation {quote.quotation_id} marked as ordered")
+                # Check if this order was converted from a Quotation
+                if hasattr(order, 'source_quotation') and order.source_quotation:
+                    quote = order.source_quotation
+                    quote.status = 'ordered'
+                    quote.save()
+                    logger.info(f"Quotation {quote.quotation_id} marked as ordered")
 
             logger.info(f"Order {order.id} marked as confirmed (notifications will be sent via signal)")
         except Order.DoesNotExist:
             logger.error("Order not found for session")
+        except Exception as e:
+            logger.error(f"Webhook error: {str(e)}")
+            return JsonResponse({'error': 'Processing failed'}, status=500)
     
     return JsonResponse({'status': 'success'})
 
@@ -2937,194 +2980,5 @@ def api_notification_clear_all(request):
     Notification.objects.filter(user=request.user).delete()
     return JsonResponse({'success': True, 'unread_count': 0})
 
-
-@login_required
-def request_quotation(request):
-    cart_items = CartItem.objects.filter(user=request.user)
-    if not cart_items:
-        messages.error(request, 'Your cart is empty. Add products to request a quotation.')
-        return redirect('store:cart')
-
-    total = sum(item.total_price() for item in cart_items)
-    
-    # Initialize form with defaults
-    initial_data = {}
-    initial_data['full_name'] = request.user.get_full_name() or request.user.username
-    initial_data['email'] = request.user.email or ''
-    
-    # Fetch phone number
-    user_profile = getattr(request.user, 'userprofile', None)
-    if user_profile and user_profile.phone_number:
-        initial_data['phone'] = user_profile.phone_number
-    else:
-        phone_profile = getattr(request.user, 'phone_profile', None)
-        if phone_profile and phone_profile.phone_number:
-            initial_data['phone'] = phone_profile.phone_number
-
-    if request.method == 'POST':
-        form = QuotationShippingForm(request.POST)
-        if form.is_valid():
-            quotation = form.save(commit=False)
-            quotation.user = request.user
-            quotation.subtotal = total
-            quotation.total_amount = total
-            quotation.status = 'pending'
-            quotation.save()
-
-            # Create items
-            for item in cart_items:
-                QuotationItem.objects.create(
-                    quotation=quotation,
-                    product=item.product,
-                    quantity=item.quantity,
-                    unit_price=item.product.get_price()
-                )
-
-            # Clear cart
-            cart_items.delete()
-
-            messages.success(request, f'Quotation request {quotation.quotation_id} submitted successfully!')
-            return redirect('store:my_quotations')
-    else:
-        form = QuotationShippingForm(initial=initial_data)
-
-    context = {
-        'form': form,
-        'cart_items': cart_items,
-        'total': total,
-    }
-    return render(request, 'quotations/request.html', context)
-
-
-@login_required
-def my_quotations(request):
-    quotations = Quotation.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'quotations/list.html', {'quotations': quotations})
-
-
-@login_required
-def quotation_detail(request, quotation_id):
-    quotation = get_object_or_404(Quotation, id=quotation_id, user=request.user)
-    items = quotation.items.select_related('product').all()
-    
-    is_valid = True
-    if quotation.status == 'approved' and quotation.valid_until:
-        if quotation.valid_until < timezone.now():
-            is_valid = False
-
-    context = {
-        'quotation': quotation,
-        'items': items,
-        'is_valid': is_valid,
-        'STRIPE_PUBLISHABLE_KEY': settings.STRIPE_PUBLISHABLE_KEY,
-    }
-    return render(request, 'quotations/detail.html', context)
-
-
-@login_required
-@require_POST
-def pay_quotation(request, quotation_id):
-    quotation = get_object_or_404(Quotation, id=quotation_id, user=request.user)
-    if quotation.status != 'approved':
-        return JsonResponse({'error': 'Only approved quotations can be paid.'}, status=400)
-    
-    if quotation.valid_until and quotation.valid_until < timezone.now():
-        return JsonResponse({'error': 'This quotation has expired.'}, status=400)
-
-    stripe_secret_key = getattr(settings, 'STRIPE_SECRET_KEY', None)
-    if not stripe_secret_key:
-        return JsonResponse({'error': 'Stripe not configured'}, status=500)
-    
-    stripe.api_key = stripe_secret_key
-    currency = getattr(settings, 'STRIPE_CURRENCY', 'inr')
-
-    try:
-        # Create standard Order object matching the approved quotation prices & details
-        order = Order.objects.create(
-            user=request.user,
-            total_amount=quotation.total_amount,
-            subtotal=quotation.subtotal,
-            tax_amount=quotation.tax_amount,
-            discount_amount=quotation.discount_amount,
-            shipping_charge=quotation.shipping_charge,
-            address=quotation.address_line1,
-            address_line1=quotation.address_line1,
-            city=quotation.city,
-            state=quotation.state,
-            pincode=quotation.pincode,
-            phone=quotation.phone,
-            delivery_notes=quotation.delivery_notes,
-            payment_method='stripe',
-            payment_status='pending',
-            status='pending',
-        )
-
-        OrderAddress.objects.create(
-            order=order,
-            full_name=quotation.full_name,
-            email=quotation.email,
-            phone=quotation.phone,
-            address_line1=quotation.address_line1,
-            address_line2=quotation.address_line2,
-            city=quotation.city,
-            state=quotation.state,
-            postal_code=quotation.pincode,
-            country='India',
-            delivery_instructions=quotation.delivery_notes,
-        )
-
-        # Create OrderItem records from QuotationItems
-        for item in quotation.items.all():
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price=item.unit_price,
-            )
-
-        # Stripe Session
-        session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[
-                {
-                    'price_data': {
-                        'currency': currency,
-                        'product_data': {
-                            'name': f'Quotation {quotation.quotation_id} - GroceryHub',
-                        },
-                        'unit_amount': int(quotation.total_amount * 100),
-                    },
-                    'quantity': 1,
-                }
-            ],
-            mode='payment',
-            success_url=request.build_absolute_uri(f'/checkout/success/{order.id}/'),
-            cancel_url=request.build_absolute_uri(f'/quotations/{quotation.id}/'),
-            metadata={
-                'user_id': str(request.user.id),
-                'order_id': str(order.id),
-                'quotation_id': str(quotation.id),
-            },
-        )
-
-        # Link order and save Stripe session ID
-        order.stripe_session_id = session.id
-        order.save()
-
-        quotation.converted_order = order
-        quotation.save()
-
-        return JsonResponse({'url': session.url})
-
-    except stripe.error.InvalidRequestError as e:
-        logger.error(f"Quotation payment error (Stripe InvalidRequest): {str(e)}")
-        if 'order' in locals():
-            order.delete()
-        return JsonResponse({'error': 'Payment provider rejected the request: ' + str(e)}, status=400)
-    except Exception as e:
-        logger.error(f"Quotation payment error: {str(e)}")
-        if 'order' in locals():
-            order.delete()
-        return JsonResponse({'error': 'Payment setup failed: ' + str(e)}, status=500)
 
 

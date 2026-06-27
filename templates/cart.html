@@ -1,81 +1,91 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Shopping Cart - GroceryHub{% endblock %}
+{% block title %}Shopping Cart - GrocHub{% endblock %}
 
 {% block extra_css %}
 <style>
-  /* ── Cart Page Premium Styles ── */
   :root {
-    --cart-primary: #16A34A;
-    --cart-primary-light: #22C55E;
-    --cart-accent: #F59E0B;
-    --cart-bg: #F8FAFC;
-    --cart-text: #0F172A;
-    --cart-card: #FFFFFF;
-    --cart-border: #E2E8F0;
-    --cart-muted: #64748B;
-    --cart-success: #10B981;
-    --cart-danger: #EF4444;
-    --cart-shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --cart-shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
-    --cart-shadow-lg: 0 20px 40px -8px rgba(0,0,0,0.1), 0 8px 16px -6px rgba(0,0,0,0.06);
-    --cart-shadow-xl: 0 25px 50px -12px rgba(0,0,0,0.15);
-    --cart-radius: 16px;
-    --cart-radius-sm: 10px;
-    --cart-radius-xs: 8px;
+    --gh-primary: #16A34A;
+    --gh-primary-dark: #15803D;
+    --gh-primary-light: #22C55E;
+    --gh-primary-50: #F0FDF4;
+    --gh-accent: #F59E0B;
+    --gh-accent-light: #FBBF24;
+    --gh-bg: #F0F2F5;
+    --gh-surface: #FFFFFF;
+    --gh-text: #0F172A;
+    --gh-text-secondary: #475569;
+    --gh-muted: #94A3B8;
+    --gh-border: #E2E8F0;
+    --gh-success: #10B981;
+    --gh-danger: #EF4444;
+    --gh-danger-light: #FEF2F2;
+    --gh-warning: #F59E0B;
+    --gh-radius: 16px;
+    --gh-radius-md: 12px;
+    --gh-radius-sm: 8px;
+    --gh-shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --gh-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    --gh-shadow-lg: 0 12px 32px rgba(0,0,0,0.1);
+    --gh-shadow-xl: 0 24px 48px rgba(0,0,0,0.12);
+    --gh-transition: cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  /* ── Cart Page Wrapper ── */
-  .cart-page-wrapper {
-    background: var(--cart-bg);
-    min-height: calc(100vh - 200px);
-    padding: 0 0 40px;
+  body {
+    background: var(--gh-bg);
   }
 
-  /* ── Cart Header ── */
-  .cart-header {
-    background: linear-gradient(135deg, #16A34A 0%, #22C55E 40%, #16A34A 100%);
-    background-size: 200% 200%;
-    animation: gradientShift 8s ease infinite;
-    border-radius: 0 0 var(--cart-radius) var(--cart-radius);
+  /* ── Page Wrapper ── */
+  .gh-cart-page {
+    max-width: 1260px;
+    margin: 0 auto;
+    padding: 16px 16px 40px;
+    animation: ghFadeIn 0.5s ease;
+  }
+
+  @keyframes ghFadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Header ── */
+  .gh-cart-header {
+    background: linear-gradient(135deg, var(--gh-primary) 0%, #1a8a4a 50%, var(--gh-primary-dark) 100%);
+    border-radius: var(--gh-radius);
     padding: 28px 32px;
     color: #fff;
     position: relative;
     overflow: hidden;
-    box-shadow: var(--cart-shadow-lg);
+    box-shadow: 0 8px 32px rgba(22,163,74,0.25);
+    margin-bottom: 24px;
   }
 
-  .cart-header::before {
+  .gh-cart-header::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
+    top: -60%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
   }
 
-  .cart-header::after {
+  .gh-cart-header::after {
     content: '';
     position: absolute;
-    bottom: -40%;
-    left: -10%;
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    bottom: -30%;
+    left: -5%;
+    width: 250px;
+    height: 250px;
+    background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
     border-radius: 50%;
     pointer-events: none;
   }
 
-  @keyframes gradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-
-  .cart-header-content {
+  .gh-cart-header-inner {
     position: relative;
     z-index: 1;
     display: flex;
@@ -85,17 +95,17 @@
     gap: 16px;
   }
 
-  .cart-header-left {
+  .gh-cart-header-left {
     display: flex;
     align-items: center;
     gap: 16px;
   }
 
-  .cart-header-icon {
+  .gh-cart-header-icon {
     width: 52px;
     height: 52px;
     background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
     border-radius: 14px;
     display: flex;
     align-items: center;
@@ -104,132 +114,127 @@
     border: 1px solid rgba(255,255,255,0.25);
   }
 
-  .cart-header-title {
-    font-size: 1.6rem;
+  .gh-cart-header-title {
+    font-size: 1.5rem;
     font-weight: 800;
     letter-spacing: -0.3px;
     margin: 0;
   }
 
-  .cart-header-subtitle {
-    font-size: 0.85rem;
-    opacity: 0.9;
+  .gh-cart-header-sub {
+    font-size: 0.82rem;
+    opacity: 0.85;
     margin: 2px 0 0;
-    font-weight: 500;
   }
 
-  .cart-header-right {
+  .gh-cart-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(8px);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-left: 8px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .gh-cart-header-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
   }
 
-  .cart-breadcrumb {
+  .gh-breadcrumb {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.82rem;
-    background: rgba(255,255,255,0.15);
+    font-size: 0.8rem;
+    background: rgba(255,255,255,0.12);
     backdrop-filter: blur(8px);
-    padding: 8px 16px;
+    padding: 7px 16px;
     border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.15);
   }
 
-  .cart-breadcrumb a {
+  .gh-breadcrumb a {
     color: #fff;
     text-decoration: none;
-    opacity: 0.85;
+    opacity: 0.8;
     transition: opacity 0.2s;
   }
 
-  .cart-breadcrumb a:hover {
-    opacity: 1;
-    text-decoration: underline;
-  }
+  .gh-breadcrumb a:hover { opacity: 1; text-decoration: underline; }
+  .gh-breadcrumb .sep { opacity: 0.4; font-size: 0.65rem; }
+  .gh-breadcrumb .cur { font-weight: 600; opacity: 1; }
 
-  .cart-breadcrumb .sep {
-    opacity: 0.5;
-    font-size: 0.7rem;
-  }
-
-  .cart-breadcrumb .current {
-    font-weight: 600;
-    opacity: 1;
-  }
-
-  .btn-continue-shopping {
-    background: rgba(255,255,255,0.15);
+  .gh-btn-outline-light {
+    background: rgba(255,255,255,0.12);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255,255,255,0.3);
+    border: 1px solid rgba(255,255,255,0.25);
     color: #fff;
-    padding: 10px 20px;
+    padding: 8px 18px;
     border-radius: 25px;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     text-decoration: none;
     transition: all 0.3s ease;
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    white-space: nowrap;
   }
 
-  .btn-continue-shopping:hover {
-    background: rgba(255,255,255,0.25);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  .gh-btn-outline-light:hover {
+    background: rgba(255,255,255,0.22);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
     color: #fff;
   }
 
-  /* ── Cart Count Badge ── */
-  .cart-count-badge {
-    background: var(--cart-accent);
-    color: #000;
-    font-weight: 700;
-    font-size: 0.75rem;
-    padding: 3px 10px;
-    border-radius: 20px;
-    margin-left: 4px;
-  }
-
-  /* ── Main Cart Layout ── */
-  .cart-main-layout {
+  /* ── Main Layout ── */
+  .gh-cart-layout {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr 385px;
     gap: 24px;
-    margin-top: 24px;
     align-items: start;
   }
 
-  /* ── Cart Items Section ── */
-  .cart-items-section {
+  /* ── Cart Items ── */
+  .gh-cart-items {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
   }
 
-  .cart-item-card {
-    background: var(--cart-card);
-    border-radius: var(--cart-radius);
+  .gh-item-card {
+    background: var(--gh-surface);
+    border-radius: var(--gh-radius);
     padding: 20px 24px;
-    box-shadow: var(--cart-shadow);
-    border: 1px solid var(--cart-border);
+    box-shadow: var(--gh-shadow-sm);
+    border: 1px solid var(--gh-border);
     display: flex;
     gap: 20px;
-    align-items: center;
-    transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: all 0.35s var(--gh-transition);
     position: relative;
-    overflow: hidden;
+    animation: ghSlideUp 0.45s ease both;
   }
 
-  .cart-item-card::before {
+  .gh-item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--gh-shadow-lg);
+    border-color: transparent;
+  }
+
+  .gh-item-card::before {
     content: '';
     position: absolute;
     inset: 0;
-    border-radius: var(--cart-radius);
+    border-radius: var(--gh-radius);
     padding: 2px;
-    background: linear-gradient(135deg, transparent 40%, var(--cart-primary) 100%);
+    background: linear-gradient(135deg, transparent 40%, var(--gh-primary) 100%);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -238,125 +243,141 @@
     pointer-events: none;
   }
 
-  .cart-item-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--cart-shadow-lg);
-    border-color: transparent;
+  .gh-item-card:hover::before { opacity: 1; }
+
+  @keyframes ghSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  .cart-item-card:hover::before {
-    opacity: 1;
-  }
-
-  .cart-item-image-wrapper {
+  .gh-item-img-wrap {
     flex-shrink: 0;
-    width: 110px;
-    height: 110px;
-    border-radius: var(--cart-radius-sm);
+    width: 120px;
+    height: 120px;
+    border-radius: var(--gh-radius-md);
     overflow: hidden;
-    background: #f1f5f9;
+    background: #f8fafc;
     position: relative;
-    border: 1px solid var(--cart-border);
+    border: 1px solid var(--gh-border);
   }
 
-  .cart-item-image-wrapper img {
+  .gh-item-img-wrap img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease;
+    transition: transform 0.45s ease;
   }
 
-  .cart-item-card:hover .cart-item-image-wrapper img {
-    transform: scale(1.08);
+  .gh-item-card:hover .gh-item-img-wrap img {
+    transform: scale(1.1);
   }
 
-  .cart-item-discount-badge {
+  .gh-item-discount {
     position: absolute;
     top: 8px;
     left: 8px;
-    background: var(--cart-danger);
+    background: linear-gradient(135deg, var(--gh-danger), #DC2626);
     color: #fff;
-    font-size: 0.7rem;
-    font-weight: 700;
+    font-size: 0.68rem;
+    font-weight: 800;
     padding: 3px 8px;
     border-radius: 6px;
     z-index: 2;
-    letter-spacing: 0.3px;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.3);
   }
 
-  .cart-item-details {
+  .gh-item-out-stock {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gh-danger);
+    z-index: 2;
+  }
+
+  .gh-item-body {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
   }
 
-  .cart-item-name {
+  .gh-item-name {
     font-weight: 700;
     font-size: 1rem;
-    color: var(--cart-text);
+    color: var(--gh-text);
     margin: 0;
     line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    text-decoration: none;
+    transition: color 0.2s;
   }
 
-  .cart-item-category {
-    font-size: 0.78rem;
-    color: var(--cart-muted);
+  .gh-item-name:hover { color: var(--gh-primary); }
+
+  .gh-item-meta {
     display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
     align-items: center;
-    gap: 4px;
   }
 
-  .cart-item-category i {
-    font-size: 0.7rem;
+  .gh-item-tag {
+    font-size: 0.72rem;
+    color: var(--gh-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: #f8fafc;
+    padding: 2px 8px;
+    border-radius: 4px;
   }
 
-  .cart-item-stock {
-    font-size: 0.75rem;
+  .gh-item-tag i { font-size: 0.65rem; }
+
+  .gh-item-stock {
+    font-size: 0.72rem;
     font-weight: 600;
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 3px 10px;
+    padding: 2px 10px;
     border-radius: 20px;
     width: fit-content;
   }
 
-  .stock-in {
-    background: #DCFCE7;
-    color: #166534;
-  }
+  .gh-stock-in { background: #DCFCE7; color: #166534; }
+  .gh-stock-out { background: #FEE2E2; color: #991B1B; }
 
-  .stock-out {
-    background: #FEE2E2;
-    color: #991B1B;
-  }
-
-  .cart-item-price-row {
+  .gh-item-pricing {
     display: flex;
     align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
   }
 
-  .cart-item-price {
-    font-weight: 700;
+  .gh-item-price {
+    font-weight: 800;
     font-size: 1.1rem;
-    color: var(--cart-text);
+    color: var(--gh-primary);
   }
 
-  .cart-item-original-price {
-    font-size: 0.85rem;
-    color: var(--cart-muted);
+  .gh-item-price-orig {
+    font-size: 0.82rem;
+    color: var(--gh-muted);
     text-decoration: line-through;
   }
 
-  .cart-item-actions {
+  .gh-item-right {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -364,80 +385,36 @@
     flex-shrink: 0;
   }
 
-  .cart-item-total {
+  .gh-item-total {
     font-weight: 800;
     font-size: 1.15rem;
-    color: var(--cart-primary);
+    color: var(--gh-text);
     white-space: nowrap;
   }
 
-  .cart-item-buttons {
+  .gh-item-actions {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
   }
 
-  .btn-save-later {
-    background: none;
-    border: 1px solid var(--cart-border);
-    color: var(--cart-muted);
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .btn-save-later:hover {
-    border-color: var(--cart-primary);
-    color: var(--cart-primary);
-    background: #F0FDF4;
-  }
-
-  .btn-remove-item {
-    background: none;
-    border: 1px solid #FECACA;
-    color: var(--cart-danger);
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .btn-remove-item:hover {
-    background: #FEF2F2;
-    border-color: var(--cart-danger);
-  }
-
-  /* ── Quantity Controls ── */
-  .qty-control-wrapper {
+  .gh-qty-wrap {
     display: flex;
     align-items: center;
-    gap: 0;
-    background: #F8FAFC;
+    background: #f8fafc;
     border-radius: 25px;
-    border: 1.5px solid var(--cart-border);
+    border: 1.5px solid var(--gh-border);
     overflow: hidden;
     width: fit-content;
   }
 
-  .qty-btn {
-    width: 34px;
-    height: 34px;
+  .gh-qty-btn {
+    width: 36px;
+    height: 36px;
     border: none;
     background: transparent;
-    color: var(--cart-text);
+    color: var(--gh-text);
     font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
@@ -448,168 +425,196 @@
     user-select: none;
   }
 
-  .qty-btn:hover {
-    background: var(--cart-primary);
-    color: #fff;
-  }
+  .gh-qty-btn:hover { background: var(--gh-primary); color: #fff; }
+  .gh-qty-btn:active { transform: scale(0.9); }
+  .gh-qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .gh-qty-btn:disabled:hover { background: transparent; color: var(--gh-text); }
 
-  .qty-btn:active {
-    transform: scale(0.9);
-  }
-
-  .qty-value {
+  .gh-qty-val {
     width: 40px;
     text-align: center;
     font-weight: 700;
     font-size: 0.9rem;
-    color: var(--cart-text);
+    color: var(--gh-text);
     border: none;
     background: transparent;
-    pointer-events: none;
     user-select: none;
   }
 
-  /* ── Order Summary Sidebar ── */
-  .order-summary-sidebar {
+  .gh-item-btn-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .gh-item-btn {
+    background: none;
+    border: 1px solid var(--gh-border);
+    color: var(--gh-muted);
+    padding: 5px 11px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+  }
+
+  .gh-item-btn:hover { border-color: var(--gh-primary); color: var(--gh-primary); background: var(--gh-primary-50); }
+  .gh-item-btn.danger:hover { border-color: var(--gh-danger); color: var(--gh-danger); background: var(--gh-danger-light); }
+
+  /* ── Order Summary ── */
+  .gh-sidebar {
     position: sticky;
     top: 90px;
   }
 
-  .order-summary-card {
-    background: var(--cart-card);
-    border-radius: var(--cart-radius);
+  .gh-summary-card {
+    background: var(--gh-surface);
+    border-radius: var(--gh-radius);
     padding: 24px;
-    box-shadow: var(--cart-shadow);
-    border: 1px solid var(--cart-border);
+    box-shadow: var(--gh-shadow);
+    border: 1px solid var(--gh-border);
     position: relative;
     overflow: hidden;
   }
 
-  .order-summary-card::before {
+  .gh-summary-card::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--cart-primary), var(--cart-primary-light), var(--cart-accent));
-    border-radius: var(--cart-radius) var(--cart-radius) 0 0;
+    background: linear-gradient(90deg, var(--gh-primary), var(--gh-primary-light), var(--gh-accent));
   }
 
-  .order-summary-title {
+  .gh-summary-title {
     font-weight: 800;
-    font-size: 1.15rem;
-    color: var(--cart-text);
-    margin: 0 0 20px;
+    font-size: 1.1rem;
+    color: var(--gh-text);
+    margin: 0 0 18px;
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
-  .order-summary-title i {
-    color: var(--cart-primary);
-  }
+  .gh-summary-title i { color: var(--gh-primary); }
 
-  .summary-row {
+  .gh-summary-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 0;
-    font-size: 0.9rem;
-    color: var(--cart-muted);
+    padding: 9px 0;
+    font-size: 0.88rem;
+    color: var(--gh-text-secondary);
     border-bottom: 1px solid #f1f5f9;
   }
 
-  .summary-row:last-of-type {
-    border-bottom: none;
-  }
+  .gh-summary-row:last-of-type { border-bottom: none; }
+  .gh-summary-row .lbl { display: flex; align-items: center; gap: 6px; }
+  .gh-summary-row .lbl i { font-size: 0.78rem; opacity: 0.6; }
+  .gh-summary-row .val { font-weight: 600; color: var(--gh-text); }
+  .gh-summary-row.gh-green .val { color: var(--gh-success); }
+  .gh-summary-row.gh-orange .val { color: var(--gh-warning); }
+  .gh-summary-row.gh-red .val { color: var(--gh-danger); }
 
-  .summary-row .label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .summary-row .label i {
-    font-size: 0.8rem;
-    opacity: 0.7;
-  }
-
-  .summary-row .value {
-    font-weight: 600;
-    color: var(--cart-text);
-  }
-
-  .summary-row.discount .value {
-    color: var(--cart-success);
-  }
-
-  .summary-divider {
+  .gh-summary-hr {
     border: none;
-    border-top: 2px dashed var(--cart-border);
-    margin: 16px 0;
+    border-top: 2px dashed var(--gh-border);
+    margin: 14px 0;
   }
 
-  .summary-total-row {
+  .gh-summary-grand {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px 0 0;
+    padding: 12px 0 0;
   }
 
-  .summary-total-label {
+  .gh-grand-lbl {
     font-weight: 700;
     font-size: 1rem;
-    color: var(--cart-text);
+    color: var(--gh-text);
   }
 
-  .summary-total-value {
+  .gh-grand-val {
     font-weight: 800;
     font-size: 1.4rem;
-    color: var(--cart-primary);
+    color: var(--gh-primary);
   }
 
-  /* ── Coupon Section ── */
-  .coupon-section {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid var(--cart-border);
-  }
-
-  .coupon-title {
+  .gh-savings {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #DCFCE7;
+    color: #166534;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.8rem;
     font-weight: 700;
-    font-size: 0.9rem;
-    color: var(--cart-text);
+    margin-top: 12px;
+    animation: ghPulse 2s ease infinite;
+  }
+
+  @keyframes ghPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* ── Coupon ── */
+  .gh-coupon-section {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--gh-border);
+  }
+
+  .gh-coupon-head {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--gh-text);
     margin-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 6px;
   }
 
-  .coupon-input-group {
+  .gh-coupon-head i { color: var(--gh-accent); }
+
+  .gh-coupon-row {
     display: flex;
     gap: 8px;
   }
 
-  .coupon-input {
+  .gh-coupon-inp {
     flex: 1;
     padding: 10px 14px;
-    border: 1.5px solid var(--cart-border);
+    border: 1.5px solid var(--gh-border);
     border-radius: 25px;
     font-size: 0.85rem;
     outline: none;
     transition: all 0.2s;
-    background: #F8FAFC;
+    background: #f8fafc;
   }
 
-  .coupon-input:focus {
-    border-color: var(--cart-primary);
+  .gh-coupon-inp:focus {
+    border-color: var(--gh-primary);
     box-shadow: 0 0 0 3px rgba(22,163,74,0.1);
     background: #fff;
   }
 
-  .btn-apply-coupon {
-    background: linear-gradient(135deg, var(--cart-accent), #FBBF24);
+  .gh-coupon-inp.success {
+    border-color: var(--gh-success);
+    background: #F0FDF4;
+  }
+
+  .gh-btn-coupon {
+    background: linear-gradient(135deg, var(--gh-accent), var(--gh-accent-light));
     color: #000;
     border: none;
     padding: 10px 20px;
@@ -621,45 +626,105 @@
     white-space: nowrap;
   }
 
-  .btn-apply-coupon:hover {
+  .gh-btn-coupon:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(245,158,11,0.3);
   }
 
-  .coupon-success {
+  .gh-btn-coupon:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .gh-coupon-msg {
     display: none;
     align-items: center;
     gap: 8px;
     margin-top: 10px;
     padding: 10px 14px;
-    background: #DCFCE7;
     border-radius: 10px;
-    color: #166534;
     font-size: 0.82rem;
     font-weight: 600;
-    animation: fadeInUp 0.4s ease;
+    animation: ghSlideUp 0.35s ease;
   }
 
-  .coupon-success.show {
+  .gh-coupon-msg.show { display: flex; }
+  .gh-coupon-msg.ok { background: #DCFCE7; color: #166534; }
+  .gh-coupon-msg.err { background: #FEE2E2; color: #991B1B; }
+  .gh-coupon-msg i { font-size: 1rem; }
+
+  .gh-coupon-suggest {
     display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
   }
 
-  .coupon-success i {
-    font-size: 1rem;
+  .gh-coupon-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    background: #FEF3C7;
+    color: #92400E;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px dashed #FBBF24;
+    transition: all 0.2s;
   }
+
+  .gh-coupon-chip:hover { background: #FDE68A; transform: translateY(-1px); }
+
+  .gh-coupon-applied {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: #DCFCE7;
+    border-radius: 10px;
+    border: 1px solid #86EFAC;
+    animation: ghSlideUp 0.35s ease;
+  }
+
+  .gh-coupon-applied.show { display: flex; }
+
+  .gh-coupon-applied-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #166534;
+  }
+
+  .gh-coupon-applied-info i { font-size: 1rem; }
+
+  .gh-coupon-remove {
+    background: none;
+    border: none;
+    color: var(--gh-danger);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+
+  .gh-coupon-remove:hover { background: #FEE2E2; }
 
   /* ── Checkout Buttons ── */
-  .checkout-actions {
-    margin-top: 20px;
+  .gh-checkout-actions {
+    margin-top: 18px;
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
 
-  .btn-checkout {
+  .gh-btn-checkout {
     width: 100%;
-    padding: 14px 24px;
-    background: linear-gradient(135deg, var(--cart-primary), var(--cart-primary-light));
+    padding: 15px 24px;
+    background: linear-gradient(135deg, var(--gh-primary), var(--gh-primary-light));
     color: #fff;
     border: none;
     border-radius: 25px;
@@ -674,28 +739,42 @@
     gap: 8px;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 4px 14px rgba(22,163,74,0.3);
+    box-shadow: 0 4px 16px rgba(22,163,74,0.3);
   }
 
-  .btn-checkout:hover {
+  .gh-btn-checkout:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(22,163,74,0.4);
     color: #fff;
   }
 
-  .btn-checkout:active {
-    transform: translateY(0);
+  .gh-btn-checkout:active { transform: translateY(0); }
+  .gh-btn-checkout.loading { pointer-events: none; opacity: 0.8; }
+
+  .gh-btn-checkout .spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: ghSpin 0.6s linear infinite;
   }
 
-  .btn-continue-cart {
+  .gh-btn-checkout.loading .spinner { display: inline-block; }
+  .gh-btn-checkout.loading .btn-text { display: none; }
+
+  @keyframes ghSpin { to { transform: rotate(360deg); } }
+
+  .gh-btn-secondary {
     width: 100%;
-    padding: 12px 24px;
+    padding: 11px 20px;
     background: transparent;
-    color: var(--cart-muted);
-    border: 1.5px solid var(--cart-border);
+    color: var(--gh-text-secondary);
+    border: 1.5px solid var(--gh-border);
     border-radius: 25px;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     cursor: pointer;
     transition: all 0.3s;
     text-decoration: none;
@@ -705,51 +784,35 @@
     gap: 6px;
   }
 
-  .btn-continue-cart:hover {
-    border-color: var(--cart-primary);
-    color: var(--cart-primary);
-    background: #F0FDF4;
+  .gh-btn-secondary:hover {
+    border-color: var(--gh-primary);
+    color: var(--gh-primary);
+    background: var(--gh-primary-50);
   }
 
-  .btn-quote {
-    width: 100%;
-    padding: 12px 24px;
-    background: transparent;
-    color: var(--cart-primary);
-    border: 2px solid var(--cart-primary);
-    border-radius: 25px;
-    font-weight: 700;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.3s;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+  .gh-btn-secondary.danger:hover {
+    border-color: var(--gh-danger);
+    color: var(--gh-danger);
+    background: var(--gh-danger-light);
   }
 
-  .btn-quote:hover {
-    background: #F0FDF4;
-    transform: translateY(-2px);
-    color: var(--cart-primary);
-  }
-
-
-  /* ── Delivery Info Card ── */
-  .delivery-info-card {
-    background: var(--cart-card);
-    border-radius: var(--cart-radius);
+  /* ── Delivery Info ── */
+  .gh-delivery-card {
+    background: var(--gh-surface);
+    border-radius: var(--gh-radius);
     padding: 18px 20px;
-    box-shadow: var(--cart-shadow);
-    border: 1px solid var(--cart-border);
-    margin-top: 16px;
+    box-shadow: var(--gh-shadow-sm);
+    border: 1px solid var(--gh-border);
+    margin-top: 14px;
+  }
+
+  .gh-delivery-header {
     display: flex;
     gap: 14px;
     align-items: flex-start;
   }
 
-  .delivery-icon {
+  .gh-delivery-icon {
     width: 42px;
     height: 42px;
     background: #DCFCE7;
@@ -757,34 +820,31 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--cart-primary);
+    color: var(--gh-primary);
     font-size: 1.1rem;
     flex-shrink: 0;
   }
 
-  .delivery-info-content {
-    flex: 1;
-    min-width: 0;
-  }
+  .gh-delivery-body { flex: 1; min-width: 0; }
 
-  .delivery-info-label {
-    font-size: 0.75rem;
-    color: var(--cart-muted);
+  .gh-delivery-label {
+    font-size: 0.72rem;
+    color: var(--gh-muted);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
 
-  .delivery-info-value {
+  .gh-delivery-addr {
     font-weight: 700;
-    font-size: 0.9rem;
-    color: var(--cart-text);
+    font-size: 0.88rem;
+    color: var(--gh-text);
     margin-top: 2px;
   }
 
-  .delivery-info-time {
-    font-size: 0.82rem;
-    color: var(--cart-primary);
+  .gh-delivery-time {
+    font-size: 0.8rem;
+    color: var(--gh-primary);
     font-weight: 600;
     margin-top: 4px;
     display: flex;
@@ -792,116 +852,221 @@
     gap: 4px;
   }
 
-  .btn-edit-address {
+  .gh-delivery-edit {
     background: none;
     border: none;
-    color: var(--cart-primary);
-    font-size: 0.78rem;
+    color: var(--gh-primary);
+    font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
     padding: 0;
     text-decoration: underline;
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
-  /* ── Trust Badges ── */
-  .trust-badges {
+  .gh-delivery-free {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--gh-border);
+  }
+
+  .gh-free-text {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gh-text-secondary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .gh-free-text strong { color: var(--gh-primary); }
+
+  .gh-progress-bar {
+    height: 6px;
+    background: #E2E8F0;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .gh-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gh-primary), var(--gh-primary-light));
+    border-radius: 3px;
+    transition: width 0.6s var(--gh-transition);
+    position: relative;
+  }
+
+  .gh-progress-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: ghShimmer 2s infinite;
+  }
+
+  @keyframes ghShimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* ── Payment Methods ── */
+  .gh-payment-card {
+    background: var(--gh-surface);
+    border-radius: var(--gh-radius);
+    padding: 18px 20px;
+    box-shadow: var(--gh-shadow-sm);
+    border: 1px solid var(--gh-border);
+    margin-top: 14px;
+  }
+
+  .gh-payment-title {
+    font-weight: 700;
+    font-size: 0.88rem;
+    color: var(--gh-text);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .gh-payment-icons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .gh-payment-icon {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: #f8fafc;
+    border: 1px solid var(--gh-border);
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gh-text-secondary);
+    transition: all 0.2s;
+  }
+
+  .gh-payment-icon i { font-size: 1.1rem; }
+  .gh-payment-icon:hover { border-color: var(--gh-primary); color: var(--gh-primary); background: var(--gh-primary-50); }
+
+  .gh-secure-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: #F0FDF4;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #166534;
+  }
+
+  .gh-secure-badge i { font-size: 0.9rem; }
+
+  /* ── Benefits ── */
+  .gh-benefits {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-top: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 14px;
   }
 
-  .trust-badge {
-    background: var(--cart-card);
-    border-radius: var(--cart-radius-sm);
+  .gh-benefit {
+    background: var(--gh-surface);
+    border-radius: var(--gh-radius-md);
     padding: 14px 10px;
     text-align: center;
-    box-shadow: var(--cart-shadow-sm);
-    border: 1px solid var(--cart-border);
+    box-shadow: var(--gh-shadow-sm);
+    border: 1px solid var(--gh-border);
     transition: all 0.3s;
   }
 
-  .trust-badge:hover {
+  .gh-benefit:hover {
     transform: translateY(-2px);
-    box-shadow: var(--cart-shadow);
+    box-shadow: var(--gh-shadow);
   }
 
-  .trust-badge-icon {
-    width: 40px;
-    height: 40px;
+  .gh-benefit-icon {
+    width: 38px;
+    height: 38px;
     margin: 0 auto 8px;
-    background: #F0FDF4;
+    background: var(--gh-primary-50);
     border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--cart-primary);
-    font-size: 1.1rem;
+    color: var(--gh-primary);
+    font-size: 1rem;
   }
 
-  .trust-badge-text {
-    font-size: 0.72rem;
+  .gh-benefit-text {
+    font-size: 0.7rem;
     font-weight: 700;
-    color: var(--cart-text);
+    color: var(--gh-text);
     line-height: 1.3;
   }
 
-  /* ── Recommended Products ── */
-  .recommended-section {
+  /* ── Recommended ── */
+  .gh-recommended {
     margin-top: 32px;
+    background: var(--gh-surface);
+    border-radius: var(--gh-radius);
+    padding: 24px;
+    box-shadow: var(--gh-shadow-sm);
+    border: 1px solid var(--gh-border);
   }
 
-  .recommended-title {
+  .gh-recommended-head {
     font-weight: 800;
-    font-size: 1.2rem;
-    color: var(--cart-text);
-    margin-bottom: 16px;
+    font-size: 1.15rem;
+    color: var(--gh-text);
+    margin-bottom: 18px;
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
-  .recommended-title i {
-    color: var(--cart-accent);
-  }
+  .gh-recommended-head i { color: var(--gh-accent); }
 
-  .recommended-grid {
+  .gh-rec-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 14px;
   }
 
-  .recommended-card {
-    background: var(--cart-card);
-    border-radius: var(--cart-radius);
+  .gh-rec-card {
+    background: #f8fafc;
+    border-radius: var(--gh-radius-md);
     overflow: hidden;
-    box-shadow: var(--cart-shadow);
-    border: 1px solid var(--cart-border);
-    transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    border: 1px solid var(--gh-border);
+    transition: all 0.35s var(--gh-transition);
   }
 
-  .recommended-card:hover {
+  .gh-rec-card:hover {
     transform: translateY(-4px);
-    box-shadow: var(--cart-shadow-lg);
+    box-shadow: var(--gh-shadow-lg);
   }
 
-  .recommended-card-image {
+  .gh-rec-img {
     width: 100%;
     height: 140px;
     object-fit: cover;
     background: #f1f5f9;
   }
 
-  .recommended-card-body {
-    padding: 12px 14px;
-  }
+  .gh-rec-body { padding: 12px 14px; }
 
-  .recommended-card-name {
+  .gh-rec-name {
     font-weight: 700;
-    font-size: 0.85rem;
-    color: var(--cart-text);
-    margin: 0 0 6px;
+    font-size: 0.82rem;
+    color: var(--gh-text);
+    margin: 0 0 4px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -909,36 +1074,51 @@
     line-height: 1.3;
   }
 
-  .recommended-card-price {
+  .gh-rec-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: var(--gh-accent);
+    margin-bottom: 4px;
+  }
+
+  .gh-rec-rating span { color: var(--gh-muted); font-weight: 600; }
+
+  .gh-rec-price {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .gh-rec-price-cur {
     font-weight: 800;
-    font-size: 1rem;
-    color: var(--cart-primary);
+    font-size: 0.95rem;
+    color: var(--gh-primary);
   }
 
-  .recommended-card-original {
-    font-size: 0.78rem;
-    color: var(--cart-muted);
+  .gh-rec-price-old {
+    font-size: 0.75rem;
+    color: var(--gh-muted);
     text-decoration: line-through;
-    margin-left: 4px;
   }
 
-  .recommended-card-discount {
-    font-size: 0.72rem;
-    color: var(--cart-danger);
+  .gh-rec-disc {
+    font-size: 0.7rem;
+    color: var(--gh-danger);
     font-weight: 700;
-    margin-left: 4px;
   }
 
-  .btn-add-recommended {
+  .gh-rec-btn {
     width: 100%;
     margin-top: 10px;
     padding: 8px;
-    background: var(--cart-primary);
+    background: var(--gh-primary);
     color: #fff;
     border: none;
     border-radius: 20px;
     font-weight: 600;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
@@ -947,424 +1127,330 @@
     gap: 4px;
   }
 
-  .btn-add-recommended:hover {
-    background: var(--cart-primary-light);
-    transform: translateY(-1px);
-  }
+  .gh-rec-btn:hover { background: var(--gh-primary-light); transform: translateY(-1px); }
+  .gh-rec-btn:active { transform: scale(0.97); }
 
   /* ── Empty Cart ── */
-  .empty-cart-container {
+  .gh-empty {
     text-align: center;
     padding: 60px 20px;
-    animation: fadeInUp 0.6s ease;
+    animation: ghFadeIn 0.6s ease;
+    background: var(--gh-surface);
+    border-radius: var(--gh-radius);
+    box-shadow: var(--gh-shadow);
+    border: 1px solid var(--gh-border);
   }
 
-  .empty-cart-illustration {
-    width: 180px;
-    height: 180px;
+  .gh-empty-ill {
+    width: 200px;
+    height: 200px;
     margin: 0 auto 24px;
     background: linear-gradient(135deg, #F0FDF4, #DCFCE7);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 4rem;
-    color: var(--cart-primary);
-    animation: float 3s ease-in-out infinite;
+    font-size: 4.5rem;
+    color: var(--gh-primary);
+    animation: ghFloat 3s ease-in-out infinite;
     box-shadow: 0 20px 40px rgba(22,163,74,0.15);
   }
 
-  @keyframes float {
+  @keyframes ghFloat {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-12px); }
+    50% { transform: translateY(-14px); }
   }
 
-  .empty-cart-title {
+  .gh-empty-title {
     font-weight: 800;
     font-size: 1.5rem;
-    color: var(--cart-text);
+    color: var(--gh-text);
     margin-bottom: 8px;
   }
 
-  .empty-cart-message {
-    color: var(--cart-muted);
-    font-size: 0.95rem;
+  .gh-empty-sub {
+    color: var(--gh-text-secondary);
+    font-size: 0.92rem;
     margin-bottom: 24px;
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
   }
 
-  .btn-start-shopping {
+  .gh-empty-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .gh-empty-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 14px 32px;
-    background: linear-gradient(135deg, var(--cart-primary), var(--cart-primary-light));
-    color: #fff;
-    border: none;
+    padding: 12px 24px;
     border-radius: 25px;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.3s;
     text-decoration: none;
+  }
+
+  .gh-empty-btn.primary {
+    background: linear-gradient(135deg, var(--gh-primary), var(--gh-primary-light));
+    color: #fff;
     box-shadow: 0 4px 14px rgba(22,163,74,0.3);
   }
 
-  .btn-start-shopping:hover {
+  .gh-empty-btn.primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(22,163,74,0.4);
     color: #fff;
   }
 
-  /* ── Skeleton Loading ── */
-  .skeleton-card {
-    background: var(--cart-card);
-    border-radius: var(--cart-radius);
-    padding: 20px 24px;
-    box-shadow: var(--cart-shadow);
-    border: 1px solid var(--cart-border);
-    display: flex;
-    gap: 20px;
-    align-items: center;
+  .gh-empty-btn.secondary {
+    background: transparent;
+    color: var(--gh-text-secondary);
+    border: 1.5px solid var(--gh-border);
   }
 
-  .skeleton-image {
-    width: 110px;
-    height: 110px;
-    border-radius: var(--cart-radius-sm);
-    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
+  .gh-empty-btn.secondary:hover {
+    border-color: var(--gh-primary);
+    color: var(--gh-primary);
+    background: var(--gh-primary-50);
   }
 
-  .skeleton-text {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .skeleton-line {
-    height: 14px;
-    border-radius: 6px;
-    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-  }
-
-  .skeleton-line.short { width: 60%; }
-  .skeleton-line.medium { width: 80%; }
-  .skeleton-line.long { width: 95%; }
-
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  /* ── Animations ── */
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-fade-in {
-    animation: fadeInUp 0.5s ease forwards;
-  }
-
-  .animate-fade-in-delay-1 { animation-delay: 0.1s; opacity: 0; }
-  .animate-fade-in-delay-2 { animation-delay: 0.2s; opacity: 0; }
-  .animate-fade-in-delay-3 { animation-delay: 0.3s; opacity: 0; }
-
-  /* ── Ripple Effect ── */
-  .ripple {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .ripple-effect {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.4);
-    transform: scale(0);
-    animation: rippleAnim 0.6s ease-out;
-    pointer-events: none;
-  }
-
-  @keyframes rippleAnim {
-    to {
-      transform: scale(4);
-      opacity: 0;
-    }
-  }
-
-  /* ── Mobile Sticky Checkout ── */
-  .mobile-sticky-checkout {
+  /* ── Mobile Sticky ── */
+  .gh-mobile-sticky {
     display: none;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: #fff;
+    background: var(--gh-surface);
     padding: 12px 16px;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
     z-index: 1000;
-    border-top: 1px solid var(--cart-border);
+    border-top: 1px solid var(--gh-border);
+    animation: ghSlideUp 0.35s ease;
   }
 
-  .mobile-sticky-checkout .btn-checkout {
-    width: 100%;
-    padding: 14px;
-    font-size: 1rem;
+  .gh-mobile-sticky-inner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
-  /* ── Responsive Design ── */
-  @media (max-width: 1024px) {
-    .cart-main-layout {
-      grid-template-columns: 1fr 320px;
-      gap: 20px;
-    }
-
-    .recommended-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-
-    .trust-badges {
-      grid-template-columns: repeat(2, 1fr);
-    }
+  .gh-mobile-sticky-info {
+    flex: 1;
+    min-width: 0;
   }
 
-  @media (max-width: 768px) {
-    .cart-header {
-      padding: 20px 18px;
-      border-radius: 0 0 var(--cart-radius-sm) var(--cart-radius-sm);
-    }
-
-    .cart-header-content {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .cart-header-title {
-      font-size: 1.3rem;
-    }
-
-    .cart-header-right {
-      width: 100%;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .cart-main-layout {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-
-    .order-summary-sidebar {
-      position: static;
-      order: -1;
-    }
-
-    .cart-item-card {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 16px;
-    }
-
-    .cart-item-image-wrapper {
-      width: 100%;
-      height: 180px;
-    }
-
-    .cart-item-actions {
-      flex-direction: row;
-      align-items: center;
-      width: 100%;
-      justify-content: space-between;
-    }
-
-    .cart-item-buttons {
-      justify-content: flex-start;
-    }
-
-    .recommended-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .trust-badges {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .mobile-sticky-checkout {
-      display: block;
-    }
-
-    main.content-area {
-      padding-bottom: 80px !important;
-    }
+  .gh-mobile-sticky-total {
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: var(--gh-primary);
   }
 
-  @media (max-width: 480px) {
-    .cart-header {
-      padding: 16px 14px;
-    }
-
-    .cart-header-icon {
-      width: 40px;
-      height: 40px;
-      font-size: 1.2rem;
-      border-radius: 10px;
-    }
-
-    .cart-header-title {
-      font-size: 1.15rem;
-    }
-
-    .cart-breadcrumb {
-      font-size: 0.72rem;
-      padding: 6px 12px;
-    }
-
-    .btn-continue-shopping {
-      font-size: 0.78rem;
-      padding: 8px 16px;
-    }
-
-    .cart-item-image-wrapper {
-      height: 150px;
-    }
-
-    .recommended-grid {
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .recommended-card-body {
-      padding: 10px;
-    }
-
-    .recommended-card-name {
-      font-size: 0.78rem;
-    }
-
-    .trust-badges {
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .trust-badge {
-      padding: 10px 8px;
-    }
-
-    .trust-badge-text {
-      font-size: 0.68rem;
-    }
-
-    .coupon-input-group {
-      flex-direction: column;
-    }
-
-    .btn-apply-coupon {
-      width: 100%;
-    }
+  .gh-mobile-sticky-items {
+    font-size: 0.75rem;
+    color: var(--gh-muted);
   }
 
-  /* ── Scrollbar Styling ── */
-  .cart-items-section::-webkit-scrollbar {
-    width: 4px;
+  .gh-mobile-sticky .gh-btn-checkout {
+    width: auto;
+    padding: 12px 24px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
-  .cart-items-section::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .cart-items-section::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
-  }
-
-  /* ── Toast for cart updates ── */
-  .cart-toast {
+  /* ── Toast ── */
+  .gh-toast-container {
     position: fixed;
     bottom: 24px;
     right: 24px;
-    background: #fff;
-    border-radius: 12px;
-    padding: 14px 20px;
-    box-shadow: var(--cart-shadow-xl);
-    border: 1px solid var(--cart-border);
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+  }
+
+  .gh-toast {
     display: flex;
     align-items: center;
     gap: 10px;
-    z-index: 9999;
-    transform: translateY(100px);
+    padding: 14px 20px;
+    background: var(--gh-surface);
+    border-radius: var(--gh-radius-md);
+    box-shadow: var(--gh-shadow-xl);
+    border: 1px solid var(--gh-border);
+    pointer-events: auto;
+    transform: translateX(120%);
     opacity: 0;
-    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: all 0.45s var(--gh-transition);
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
+    max-width: 380px;
+    border-left: 4px solid var(--gh-success);
   }
 
-  .cart-toast.show {
-    transform: translateY(0);
-    opacity: 1;
+  .gh-toast.show { transform: translateX(0); opacity: 1; }
+  .gh-toast.hide { transform: translateX(120%); opacity: 0; }
+  .gh-toast.error { border-left-color: var(--gh-danger); }
+  .gh-toast i { font-size: 1.1rem; }
+  .gh-toast.ok i { color: var(--gh-success); }
+  .gh-toast.error i { color: var(--gh-danger); }
+
+  /* ── Ripple ── */
+  .gh-ripple {
+    position: relative;
+    overflow: hidden;
   }
 
-  .cart-toast.success {
-    border-left: 4px solid var(--cart-success);
+  .gh-ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+    transform: scale(0);
+    animation: ghRippleAnim 0.6s ease-out;
+    pointer-events: none;
   }
 
-  .cart-toast i {
-    font-size: 1.2rem;
+  @keyframes ghRippleAnim {
+    to { transform: scale(4); opacity: 0; }
   }
 
-  .cart-toast.success i {
-    color: var(--cart-success);
+  /* ── Skeleton ── */
+  .gh-skeleton {
+    background: var(--gh-surface);
+    border-radius: var(--gh-radius);
+    padding: 20px 24px;
+    box-shadow: var(--gh-shadow-sm);
+    border: 1px solid var(--gh-border);
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .gh-skeleton-img {
+    width: 110px;
+    height: 110px;
+    border-radius: var(--gh-radius-sm);
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: ghShimmerBg 1.5s infinite;
+    flex-shrink: 0;
+  }
+
+  .gh-skeleton-body { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+  .gh-skeleton-line {
+    height: 14px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: ghShimmerBg 1.5s infinite;
+  }
+
+  .gh-skeleton-line.w60 { width: 60%; }
+  .gh-skeleton-line.w80 { width: 80%; }
+  .gh-skeleton-line.w40 { width: 40%; }
+
+  @keyframes ghShimmerBg {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 1024px) {
+    .gh-cart-layout { grid-template-columns: 1fr 320px; gap: 20px; }
+    .gh-rec-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (max-width: 768px) {
+    .gh-cart-header { padding: 20px 18px; border-radius: 12px; }
+    .gh-cart-header-inner { flex-direction: column; align-items: flex-start; }
+    .gh-cart-header-title { font-size: 1.25rem; }
+    .gh-cart-header-right { width: 100%; }
+    .gh-cart-layout { grid-template-columns: 1fr; gap: 16px; }
+    .gh-sidebar { position: static; }
+
+    .gh-item-card { flex-direction: column; gap: 14px; padding: 16px; }
+    .gh-item-img-wrap { width: 100%; height: 180px; }
+    .gh-item-right { flex-direction: row; align-items: center; width: 100%; justify-content: space-between; }
+    .gh-item-actions { flex-direction: row; align-items: center; }
+    .gh-item-btn-row { justify-content: flex-start; }
+
+    .gh-rec-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .gh-benefits { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .gh-benefit { padding: 10px 6px; }
+    .gh-benefit-text { font-size: 0.65rem; }
+    .gh-payment-icons { gap: 6px; }
+    .gh-payment-icon { padding: 5px 10px; font-size: 0.72rem; }
+
+    .gh-mobile-sticky { display: block; }
+
+    .gh-toast-container {
+      bottom: 80px;
+      right: 12px;
+      left: 12px;
+    }
+    .gh-toast { max-width: none; }
   }
 
   @media (max-width: 480px) {
-    .cart-toast {
-      bottom: 90px;
-      right: 12px;
-      left: 12px;
-      max-width: none;
-    }
+    .gh-cart-header { padding: 16px 14px; }
+    .gh-cart-header-icon { width: 40px; height: 40px; font-size: 1.2rem; }
+    .gh-cart-header-title { font-size: 1.1rem; }
+    .gh-breadcrumb { font-size: 0.72rem; padding: 5px 12px; }
+    .gh-btn-outline-light { font-size: 0.75rem; padding: 6px 14px; }
+    .gh-item-card { padding: 12px; }
+    .gh-item-img-wrap { height: 150px; }
+    .gh-rec-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .gh-rec-body { padding: 10px; }
+    .gh-rec-name { font-size: 0.75rem; }
+    .gh-summary-card { padding: 18px; }
+    .gh-coupon-row { flex-direction: column; }
+    .gh-btn-coupon { width: 100%; }
+    .gh-benefits { grid-template-columns: repeat(2, 1fr); }
+    .gh-empty-ill { width: 150px; height: 150px; font-size: 3.5rem; }
+    .gh-empty-title { font-size: 1.2rem; }
+    .gh-mobile-sticky-inner { gap: 8px; }
+    .gh-mobile-sticky .gh-btn-checkout { padding: 10px 16px; font-size: 0.85rem; }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="cart-page-wrapper">
-  <!-- ── Cart Header ── -->
-  <div class="cart-header">
-    <div class="cart-header-content">
-      <div class="cart-header-left">
-        <div class="cart-header-icon">
+<div class="gh-cart-page">
+  <!-- ── Header ── -->
+  <div class="gh-cart-header">
+    <div class="gh-cart-header-inner">
+      <div class="gh-cart-header-left">
+        <div class="gh-cart-header-icon">
           <i class="bi bi-cart4"></i>
         </div>
         <div>
-          <h1 class="cart-header-title">
-            Shopping Cart <span class="cart-count-badge" id="cartCountBadge" data-count="{{ cart_items|length }}">{{ cart_items|length }} items</span>
+          <h1 class="gh-cart-header-title">
+            Shopping Cart
+            <span class="gh-cart-badge" id="ghCartBadge" data-count="{{ cart_items|length }}">
+              {{ cart_items|length }} {% if cart_items|length == 1 %}item{% else %}items{% endif %}
+            </span>
           </h1>
-          <p class="cart-header-subtitle">Review your items before checkout</p>
+          <p class="gh-cart-header-sub">Review your items before checkout</p>
         </div>
       </div>
-      <div class="cart-header-right">
-        <nav class="cart-breadcrumb" aria-label="breadcrumb">
+      <div class="gh-cart-header-right">
+        <nav class="gh-breadcrumb" aria-label="breadcrumb">
           <a href="{% url 'store:home' %}">Home</a>
           <span class="sep"><i class="bi bi-chevron-right"></i></span>
           <a href="{% url 'store:product_list' %}">Products</a>
           <span class="sep"><i class="bi bi-chevron-right"></i></span>
-          <span class="current">Cart</span>
+          <span class="cur">Cart</span>
         </nav>
-        <a href="{% url 'store:product_list' %}" class="btn-continue-shopping">
+        <a href="{% url 'store:product_list' %}" class="gh-btn-outline-light">
           <i class="bi bi-arrow-left"></i> Continue Shopping
         </a>
       </div>
@@ -1372,156 +1458,185 @@
   </div>
 
   {% if cart_items %}
-  <div class="container" style="max-width: 1200px; margin-top: 24px;">
-    <div class="cart-main-layout">
-      <!-- ── Cart Items ── -->
-      <div class="cart-items-section" id="cartItemsSection">
-        {% for item in cart_items %}
-        <div class="cart-item-card animate-fade-in" data-item-id="{{ item.id }}">
-          <div class="cart-item-image-wrapper">
-            {% if item.product.image %}
-              <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}" loading="lazy">
-            {% elif item.product.external_image_url %}
-              <img src="{{ item.product.external_image_url }}" alt="{{ item.product.title }}" loading="lazy">
-            {% else %}
-              <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:2rem;">
-                <i class="bi bi-image"></i>
-              </div>
+  {% with items_count=cart_items|length %}
+  <div class="gh-cart-layout">
+    <!-- ════ LEFT: Cart Items ════ -->
+    <div class="gh-cart-items" id="ghCartItems">
+      {% for item in cart_items %}
+      {% with p=item.product %}
+      <div class="gh-item-card" data-item-id="{{ item.id }}" data-product-id="{{ p.id }}" data-price="{{ p.get_price|floatformat:2 }}" data-qty="{{ item.quantity }}">
+        <div class="gh-item-img-wrap">
+          {% if p.image %}
+            <img src="{{ p.image.url }}" alt="{{ p.title }}" loading="lazy">
+          {% elif p.external_image_url %}
+            <img src="{{ p.external_image_url }}" alt="{{ p.title }}" loading="lazy">
+          {% else %}
+            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:2rem;">
+              <i class="bi bi-image"></i>
+            </div>
+          {% endif %}
+          {% if p.discount_percentage > 0 %}
+          <span class="gh-item-discount">-{{ p.discount_percentage }}%</span>
+          {% endif %}
+          {% if p.is_out_of_stock %}
+          <div class="gh-item-out-stock"><i class="bi bi-x-circle"></i> Out of Stock</div>
+          {% endif %}
+        </div>
+
+        <div class="gh-item-body">
+          <a href="{% url 'store:product_detail' p.slug %}" class="gh-item-name">{{ p.title }}</a>
+          <div class="gh-item-meta">
+            <span class="gh-item-tag"><i class="bi bi-tag"></i> {{ p.category.name }}{% if p.subcategory %} &middot; {{ p.subcategory.name }}{% endif %}</span>
+            {% if p.weight %}
+            <span class="gh-item-tag"><i class="bi bi-box"></i> {{ p.weight }}</span>
             {% endif %}
-            {% if item.product.discount_percentage > 0 %}
-            <span class="cart-item-discount-badge">-{{ item.product.discount_percentage }}%</span>
+            {% if p.origin %}
+            <span class="gh-item-tag"><i class="bi bi-geo-alt"></i> {{ p.origin }}</span>
             {% endif %}
           </div>
-
-          <div class="cart-item-details">
-            <h3 class="cart-item-name">{{ item.product.title }}</h3>
-            <span class="cart-item-category">
-              <i class="bi bi-tag"></i> {{ item.product.category.name }}
-              {% if item.product.subcategory %} → {{ item.product.subcategory.name }}{% endif %}
-            </span>
-            <span class="cart-item-stock {% if item.product.is_out_of_stock %}stock-out{% else %}stock-in{% endif %}">
-              <i class="bi bi-{% if item.product.is_out_of_stock %}x-circle{% else %}check-circle{% endif %}"></i>
-              {% if item.product.is_out_of_stock %}Out of Stock{% else %}In Stock{% endif %}
-            </span>
-            <div class="cart-item-price-row">
-              <span class="cart-item-price">₹{{ item.product.get_price|floatformat:0 }}</span>
-              {% if item.product.discount_price and item.product.discount_price < item.product.price %}
-              <span class="cart-item-original-price">₹{{ item.product.price|floatformat:0 }}</span>
-              {% endif %}
-            </div>
+          <span class="gh-item-stock {% if p.is_out_of_stock %}gh-stock-out{% else %}gh-stock-in{% endif %}">
+            <i class="bi bi-{% if p.is_out_of_stock %}x-circle{% else %}check-circle{% endif %}"></i>
+            {{ p.availability|default:"In Stock" }}
+          </span>
+          <div class="gh-item-pricing">
+            <span class="gh-item-price">₹{{ p.get_price|floatformat:0 }}</span>
+            {% if p.discount_price and p.discount_price < p.price %}
+            <span class="gh-item-price-orig">₹{{ p.price|floatformat:0 }}</span>
+            {% endif %}
           </div>
+        </div>
 
-          <div class="cart-item-actions">
-            <span class="cart-item-total">₹{{ item.total_price|floatformat:0 }}</span>
-            <div class="qty-control-wrapper">
-              <form method="post" action="{% url 'store:update_cart' %}" class="d-inline" style="display:contents;">
-                {% csrf_token %}
-                <input type="hidden" name="item_id" value="{{ item.id }}">
-                <input type="hidden" name="action" value="decrease">
-                <button type="submit" class="qty-btn" aria-label="Decrease quantity">−</button>
-              </form>
-              <span class="qty-value">{{ item.quantity }}</span>
-              <form method="post" action="{% url 'store:update_cart' %}" class="d-inline" style="display:contents;">
-                {% csrf_token %}
-                <input type="hidden" name="item_id" value="{{ item.id }}">
-                <input type="hidden" name="action" value="increase">
-                <button type="submit" class="qty-btn" aria-label="Increase quantity">+</button>
-              </form>
+        <div class="gh-item-right">
+          <span class="gh-item-total" id="ghItemTotal{{ item.id }}">₹{{ item.total_price|floatformat:0 }}</span>
+          <div class="gh-item-actions">
+            <div class="gh-qty-wrap">
+              <button class="gh-qty-btn" data-action="decrease" data-item-id="{{ item.id }}" aria-label="Decrease quantity" {% if item.quantity <= 1 %}disabled{% endif %}>−</button>
+              <span class="gh-qty-val" id="ghQty{{ item.id }}">{{ item.quantity }}</span>
+              <button class="gh-qty-btn" data-action="increase" data-item-id="{{ item.id }}" aria-label="Increase quantity">+</button>
             </div>
-            <div class="cart-item-buttons">
-              <button class="btn-save-later" onclick="saveForLater({{ item.id }})">
+            <div class="gh-item-btn-row">
+              <button class="gh-item-btn" onclick="ghSaveLater({{ item.id }})">
                 <i class="bi bi-bookmark"></i> Save
               </button>
-              <form method="post" action="{% url 'store:remove_from_cart' %}" class="d-inline" onsubmit="return confirm('Remove {{ item.product.title }} from cart?')">
-                {% csrf_token %}
-                <input type="hidden" name="item_id" value="{{ item.id }}">
-                <button type="submit" class="btn-remove-item">
-                  <i class="bi bi-trash3"></i> Remove
-                </button>
-              </form>
+              <button class="gh-item-btn" onclick="ghWishlist({{ item.id }})">
+                <i class="bi bi-heart"></i>
+              </button>
+              <button class="gh-item-btn danger" onclick="ghRemoveItem({{ item.id }}, '{{ p.title|escapejs }}')">
+                <i class="bi bi-trash3"></i> Remove
+              </button>
             </div>
           </div>
         </div>
-        {% endfor %}
       </div>
+      {% endwith %}
+      {% endfor %}
+    </div>
 
-      <!-- ── Order Summary Sidebar ── -->
-      <div class="order-summary-sidebar">
-        <div class="order-summary-card animate-fade-in-delay-1">
-          <h2 class="order-summary-title">
-            <i class="bi bi-receipt"></i> Order Summary
-          </h2>
+    <!-- ════ RIGHT: Sidebar ════ -->
+    <div class="gh-sidebar">
+      <!-- Order Summary -->
+      <div class="gh-summary-card">
+        <h2 class="gh-summary-title"><i class="bi bi-receipt"></i> Order Summary</h2>
 
-          <div class="summary-row">
-            <span class="label"><i class="bi bi-bag"></i> Total Items</span>
-            <span class="value">{{ cart_items|length }}</span>
-          </div>
-          <div class="summary-row">
-            <span class="label"><i class="bi bi-currency-rupee"></i> Subtotal</span>
-            <span class="value">₹{{ total|floatformat:0 }}</span>
-          </div>
-          <div class="summary-row">
-            <span class="label"><i class="bi bi-truck"></i> Delivery</span>
-            <span class="value" style="color: var(--cart-success);">FREE</span>
-          </div>
-          <div class="summary-row">
-            <span class="label"><i class="bi bi-percent"></i> Platform Fee</span>
-            <span class="value">₹{{ platform_fee|floatformat:0|default:"0" }}</span>
-          </div>
-          <div class="summary-row">
-            <span class="label"><i class="bi bi-file-earmark-text"></i> Taxes</span>
-            <span class="value">₹{{ tax_amount|floatformat:0|default:"0" }}</span>
-          </div>
-          {% if discount_amount %}
-          <div class="summary-row discount">
-            <span class="label"><i class="bi bi-tag-fill"></i> Discount</span>
-            <span class="value">−₹{{ discount_amount|floatformat:0 }}</span>
-          </div>
-          {% endif %}
+        <div class="gh-summary-row">
+          <span class="lbl"><i class="bi bi-box-seam"></i> Total Products</span>
+          <span class="val">{{ items_count }}</span>
+        </div>
+        <div class="gh-summary-row">
+          <span class="lbl"><i class="bi bi-123"></i> Total Quantity</span>
+          <span class="val">{{ total_quantity }}</span>
+        </div>
+        <div class="gh-summary-row">
+          <span class="lbl"><i class="bi bi-currency-rupee"></i> Subtotal</span>
+          <span class="val" id="ghSubtotal">₹{{ subtotal|floatformat:0|default:total|floatformat:0 }}</span>
+        </div>
+        {% if discount_amount and discount_amount > 0 %}
+        <div class="gh-summary-row gh-green">
+          <span class="lbl"><i class="bi bi-tag-fill"></i> Discount</span>
+          <span class="val">−₹{{ discount_amount|floatformat:0 }}</span>
+        </div>
+        {% endif %}
+        <div class="gh-summary-row" id="ghCouponRow" style="display:none;">
+          <span class="lbl"><i class="bi bi-ticket"></i> Coupon Discount</span>
+          <span class="val gh-green" id="ghCouponDiscount">−₹0</span>
+        </div>
+        <div class="gh-summary-row">
+          <span class="lbl"><i class="bi bi-file-earmark-text"></i> GST (5%)</span>
+          <span class="val" id="ghGst">₹{{ tax_amount|floatformat:0 }}</span>
+        </div>
+        <div class="gh-summary-row">
+          <span class="lbl"><i class="bi bi-truck"></i> Delivery</span>
+          <span class="val gh-green" id="ghDelivery">{% if delivery_charge and delivery_charge > 0 %}₹{{ delivery_charge|floatformat:0 }}{% else %}FREE{% endif %}</span>
+        </div>
+        <div class="gh-summary-row">
+          <span class="lbl"><i class="bi bi-globe"></i> Platform Fee</span>
+          <span class="val" id="ghPlatformFee">₹{{ platform_fee|floatformat:0 }}</span>
+        </div>
+        <div class="gh-summary-row">
+          <span class="lbl"><i class="bi bi-box"></i> Packaging</span>
+          <span class="val" id="ghPackaging">₹{{ packaging_charge|floatformat:0 }}</span>
+        </div>
 
-          <hr class="summary-divider">
+        <hr class="gh-summary-hr">
 
-          <div class="summary-total-row">
-            <span class="summary-total-label">Grand Total</span>
-            <span class="summary-total-value">₹{{ total|floatformat:0 }}</span>
+        <div class="gh-summary-grand">
+          <span class="gh-grand-lbl">Grand Total</span>
+          <span class="gh-grand-val" id="ghGrandTotal">₹{{ total|floatformat:0 }}</span>
+        </div>
+
+        {% if total_savings and total_savings > 0 %}
+        <div class="gh-savings">
+          <i class="bi bi-gift-fill"></i> You're saving ₹{{ total_savings|floatformat:0 }} on this order!
+        </div>
+        {% endif %}
+
+        <!-- ── Coupon ── -->
+        <div class="gh-coupon-section">
+          <div class="gh-coupon-head">
+            <i class="bi bi-ticket-perforated"></i> Apply Coupon
           </div>
-
-          <!-- ── Coupon Section ── -->
-          <div class="coupon-section">
-            <div class="coupon-title">
-              <i class="bi bi-ticket-perforated" style="color: var(--cart-accent);"></i> Apply Coupon
-            </div>
-            <div class="coupon-input-group">
-              <input type="text" class="coupon-input" id="couponInput" placeholder="Enter coupon code" maxlength="30">
-              <button class="btn-apply-coupon" onclick="applyCoupon()">Apply</button>
-            </div>
-            <div class="coupon-success" id="couponSuccess">
+          <div class="gh-coupon-row">
+            <input type="text" class="gh-coupon-inp" id="ghCouponInp" placeholder="Enter coupon code" maxlength="30" autocomplete="off">
+            <button class="gh-btn-coupon" id="ghBtnCoupon" onclick="ghApplyCoupon()">Apply</button>
+          </div>
+          <div class="gh-coupon-msg" id="ghCouponMsg"></div>
+          <div class="gh-coupon-suggest" id="ghCouponSuggest">
+            <span class="gh-coupon-chip" data-code="SAVE10"><i class="bi bi-ticket"></i> SAVE10</span>
+            <span class="gh-coupon-chip" data-code="WELCOME20"><i class="bi bi-ticket"></i> WELCOME20</span>
+            <span class="gh-coupon-chip" data-code="FRESH50"><i class="bi bi-ticket"></i> FRESH50</span>
+            <span class="gh-coupon-chip" data-code="GROCERY100"><i class="bi bi-ticket"></i> GROCERY100</span>
+          </div>
+          <div class="gh-coupon-applied" id="ghCouponApplied">
+            <div class="gh-coupon-applied-info">
               <i class="bi bi-check-circle-fill"></i>
-              <span>Coupon Applied Successfully! You saved <strong id="couponSavings">₹0</strong></span>
+              <span>Coupon <strong id="ghCouponCode">SAVE10</strong> applied!</span>
             </div>
+            <button class="gh-coupon-remove" onclick="ghRemoveCoupon()"><i class="bi bi-x-lg"></i> Remove</button>
           </div>
+        </div>
 
-          <!-- ── Checkout Buttons ── -->
-          <div class="checkout-actions">
-            <a href="{% url 'store:checkout' %}" class="btn-checkout ripple" onclick="createRipple(event)">
-              <i class="bi bi-credit-card-2-front-fill"></i> Proceed to Checkout
-            </a>
-            <a href="{% url 'store:request_quotation' %}" class="btn-quote ripple" onclick="createRipple(event)">
-              <i class="bi bi-receipt"></i> Request Quotation
-            </a>
-            <a href="{% url 'store:product_list' %}" class="btn-continue-cart">
-              <i class="bi bi-arrow-left"></i> Continue Shopping
-            </a>
-          </div>
+        <!-- ── Checkout ── -->
+        <div class="gh-checkout-actions">
+          <a href="{% url 'store:checkout' %}" class="gh-btn-checkout gh-ripple" id="ghBtnCheckout" onclick="ghRipple(event)">
+            <i class="bi bi-credit-card-2-front-fill"></i>
+            <span class="btn-text">Proceed to Checkout</span>
+            <span class="spinner"></span>
+          </a>
+          <a href="{% url 'store:product_list' %}" class="gh-btn-secondary">
+            <i class="bi bi-arrow-left"></i> Continue Shopping
+          </a>
+          <button class="gh-btn-secondary" onclick="ghClearCart()">
+            <i class="bi bi-trash3"></i> Clear Cart
+          </button>
+        </div>
 
-          <!-- ── Delivery Info ── -->
-          <div class="delivery-info-card">
-            <div class="delivery-icon">
-              <i class="bi bi-geo-alt-fill"></i>
-            </div>
-            <div class="delivery-info-content">
-              <div class="delivery-info-label">Deliver to</div>
-              <div class="delivery-info-value">
+        <!-- ── Delivery Info ── -->
+        <div class="gh-delivery-card">
+          <div class="gh-delivery-header">
+            <div class="gh-delivery-icon"><i class="bi bi-geo-alt-fill"></i></div>
+            <div class="gh-delivery-body">
+              <div class="gh-delivery-label">Deliver to</div>
+              <div class="gh-delivery-addr">
                 {% if user.userprofile.current_address %}
                   {{ user.userprofile.current_address|truncatechars:50 }}
                 {% elif user.userprofile.address %}
@@ -1530,84 +1645,119 @@
                   No address set
                 {% endif %}
               </div>
-              <div class="delivery-info-time">
+              <div class="gh-delivery-time">
                 <i class="bi bi-clock"></i> Expected: 15-30 min
               </div>
-              <a href="{% url 'store:profile' %}" class="btn-edit-address">Edit Address</a>
+              <a href="{% url 'store:profile' %}" class="gh-delivery-edit">Edit Address</a>
             </div>
           </div>
+          {% if remaining_for_free_delivery and remaining_for_free_delivery > 0 %}
+          <div class="gh-delivery-free">
+            <div class="gh-free-text">
+              <i class="bi bi-info-circle"></i> You're <strong>₹{{ remaining_for_free_delivery|floatformat:0 }}</strong> away from FREE Delivery
+            </div>
+            <div class="gh-progress-bar">
+              <div class="gh-progress-fill" style="width: {{ delivery_progress }}%"></div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
 
-          <!-- ── Trust Badges ── -->
-          <div class="trust-badges">
-            <div class="trust-badge">
-              <div class="trust-badge-icon"><i class="bi bi-shield-lock-fill"></i></div>
-              <div class="trust-badge-text">Secure Payment</div>
-            </div>
-            <div class="trust-badge">
-              <div class="trust-badge-icon"><i class="bi bi-lightning-charge-fill"></i></div>
-              <div class="trust-badge-text">Fast Delivery</div>
-            </div>
-            <div class="trust-badge">
-              <div class="trust-badge-icon"><i class="bi bi-flower1"></i></div>
-              <div class="trust-badge-text">Fresh Products</div>
-            </div>
-            <div class="trust-badge">
-              <div class="trust-badge-icon"><i class="bi bi-arrow-repeat"></i></div>
-              <div class="trust-badge-text">Easy Returns</div>
-            </div>
+
+
+        <!-- ── Benefits ── -->
+        <div class="gh-benefits">
+          <div class="gh-benefit">
+            <div class="gh-benefit-icon"><i class="bi bi-lightning-charge-fill"></i></div>
+            <div class="gh-benefit-text">Fast<br>Delivery</div>
+          </div>
+          <div class="gh-benefit">
+            <div class="gh-benefit-icon"><i class="bi bi-arrow-repeat"></i></div>
+            <div class="gh-benefit-text">Easy<br>Returns</div>
+          </div>
+          <div class="gh-benefit">
+            <div class="gh-benefit-icon"><i class="bi bi-flower1"></i></div>
+            <div class="gh-benefit-text">Fresh<br>Products</div>
+          </div>
+          <div class="gh-benefit">
+            <div class="gh-benefit-icon"><i class="bi bi-shield-lock-fill"></i></div>
+            <div class="gh-benefit-text">Secure<br>Payments</div>
+          </div>
+          <div class="gh-benefit">
+            <div class="gh-benefit-icon"><i class="bi bi-headset"></i></div>
+            <div class="gh-benefit-text">24×7<br>Support</div>
+          </div>
+          <div class="gh-benefit">
+            <div class="gh-benefit-icon"><i class="bi bi-award-fill"></i></div>
+            <div class="gh-benefit-text">Best Price<br>Guarantee</div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- ── Recommended Products ── -->
-    <div class="recommended-section animate-fade-in-delay-2">
-      <h2 class="recommended-title">
-        <i class="bi bi-stars"></i> Frequently Bought Together
-      </h2>
-      <div class="recommended-grid">
-        {% for product in recommended_products|default:"" %}
-        <div class="recommended-card">
-          <img class="recommended-card-image" src="{{ product.image.url|default:product.external_image_url|default:'' }}" alt="{{ product.title }}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-          <div style="width:100%;height:140px;display:none;align-items:center;justify-content:center;background:#f1f5f9;color:#94a3b8;font-size:2rem;"><i class="bi bi-image"></i></div>
-          <div class="recommended-card-body">
-            <h4 class="recommended-card-name">{{ product.title }}</h4>
-            <div>
-              <span class="recommended-card-price">₹{{ product.get_price|floatformat:0 }}</span>
-              {% if product.discount_price and product.discount_price < product.price %}
-              <span class="recommended-card-original">₹{{ product.price|floatformat:0 }}</span>
-              <span class="recommended-card-discount">-{{ product.discount_percentage }}%</span>
-              {% endif %}
-            </div>
-            <form method="post" action="{% url 'store:add_to_cart' %}" class="d-inline" style="width:100%;">
-              {% csrf_token %}
-              <input type="hidden" name="product_id" value="{{ product.id }}">
-              <input type="hidden" name="qty" value="1">
-              <button type="submit" class="btn-add-recommended">
-                <i class="bi bi-cart-plus"></i> Add to Cart
-              </button>
-            </form>
-          </div>
-        </div>
-        {% empty %}
-        {% endfor %}
       </div>
     </div>
   </div>
 
-  {% else %}
-  <!-- ── Empty Cart ── -->
-  <div class="container" style="max-width: 600px;">
-    <div class="empty-cart-container">
-      <div class="empty-cart-illustration">
-        <i class="bi bi-cart-x"></i>
+  <!-- ════ Recommended Products ════ -->
+  {% if recommended_products %}
+  <div class="gh-recommended">
+    <h2 class="gh-recommended-head">
+      <i class="bi bi-stars"></i> Frequently Bought Together
+    </h2>
+    <div class="gh-rec-grid" id="ghRecGrid">
+      {% for product in recommended_products %}
+      <div class="gh-rec-card">
+        <img class="gh-rec-img" src="{% if product.image %}{{ product.image.url }}{% elif product.external_image_url %}{{ product.external_image_url }}{% endif %}" alt="{{ product.title }}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div style="width:100%;height:140px;display:none;align-items:center;justify-content:center;background:#f1f5f9;color:#94a3b8;font-size:2rem;"><i class="bi bi-image"></i></div>
+        <div class="gh-rec-body">
+          <h4 class="gh-rec-name">{{ product.title }}</h4>
+          {% if product.api_rating %}
+          <div class="gh-rec-rating">
+            {% for i in "12345"|make_list %}
+              {% if forloop.counter <= product.api_rating|floatformat:0|default:0|add:0 %}
+              <i class="bi bi-star-fill"></i>
+              {% else %}
+              <i class="bi bi-star"></i>
+              {% endif %}
+            {% endfor %}
+            <span>({{ product.api_review_count }})</span>
+          </div>
+          {% endif %}
+          <div class="gh-rec-price">
+            <span class="gh-rec-price-cur">₹{{ product.get_price|floatformat:0 }}</span>
+            {% if product.discount_price and product.discount_price < product.price %}
+            <span class="gh-rec-price-old">₹{{ product.price|floatformat:0 }}</span>
+            <span class="gh-rec-disc">-{{ product.discount_percentage }}%</span>
+            {% endif %}
+          </div>
+          <button class="gh-rec-btn" onclick="ghAddToCart({{ product.id }})">
+            <i class="bi bi-cart-plus"></i> Add to Cart
+          </button>
+        </div>
       </div>
-      <h2 class="empty-cart-title">Your Cart is Empty</h2>
-      <p class="empty-cart-message">
-        Looks like you haven't added anything to your cart yet. Start exploring our fresh products and fill it up!
-      </p>
-      <a href="{% url 'store:product_list' %}" class="btn-start-shopping">
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endwith %}
+
+  {% else %}
+  <!-- ════ Empty Cart ════ -->
+  <div class="gh-empty">
+    <div class="gh-empty-ill">
+      <i class="bi bi-cart-x"></i>
+    </div>
+    <h2 class="gh-empty-title">Your Cart is Empty</h2>
+    <p class="gh-empty-sub">
+      Looks like you haven't added anything yet. Start exploring our fresh products and fill it up!
+    </p>
+    <div class="gh-empty-actions">
+      <a href="{% url 'store:product_list' %}" class="gh-empty-btn primary">
         <i class="bi bi-shop"></i> Start Shopping
+      </a>
+      <a href="{% url 'store:home' %}" class="gh-empty-btn secondary">
+        <i class="bi bi-grid"></i> Browse Categories
+      </a>
+      <a href="{% url 'store:product_list' %}?sort=popular" class="gh-empty-btn secondary">
+        <i class="bi bi-fire"></i> Trending Products
       </a>
     </div>
   </div>
@@ -1616,155 +1766,293 @@
 
 <!-- ── Mobile Sticky Checkout ── -->
 {% if cart_items %}
-<div class="mobile-sticky-checkout">
-  <a href="{% url 'store:checkout' %}" class="btn-checkout ripple" onclick="createRipple(event)">
-    <i class="bi bi-credit-card-2-front-fill"></i> Proceed to Checkout · ₹{{ total|floatformat:0 }}
-  </a>
+<div class="gh-mobile-sticky" id="ghMobileSticky">
+  <div class="gh-mobile-sticky-inner">
+    <div class="gh-mobile-sticky-info">
+      <div class="gh-mobile-sticky-total" id="ghMobileTotal">₹{{ total|floatformat:0 }}</div>
+      <div class="gh-mobile-sticky-items">{{ cart_items|length }} item(s)</div>
+    </div>
+    <a href="{% url 'store:checkout' %}" class="gh-btn-checkout gh-ripple" onclick="ghRipple(event)">
+      <i class="bi bi-credit-card-2-front-fill"></i>
+      <span class="btn-text">Checkout</span>
+      <span class="spinner"></span>
+    </a>
+  </div>
 </div>
 {% endif %}
 
-<!-- ── Cart Toast Notification ── -->
-<div class="cart-toast" id="cartToast">
-  <i class="bi bi-check-circle-fill"></i>
-  <span id="cartToastMessage">Item updated!</span>
-</div>
+<!-- ── CSRF Token (for AJAX) ── -->
+{% csrf_token %}
+
+<!-- ── Toast Container ── -->
+<div class="gh-toast-container" id="ghToastContainer"></div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  // ── Ripple Effect ──
-  function createRipple(event) {
-    const button = event.currentTarget;
-    const ripple = document.createElement('span');
-    const rect = button.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    const x = event.clientX - rect.left - size / 2;
-    const y = event.clientY - rect.top - size / 2;
-
-    ripple.style.width = ripple.style.height = size + 'px';
-    ripple.style.left = x + 'px';
-    ripple.style.top = y + 'px';
-    ripple.classList.add('ripple-effect');
-
-    button.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
+  // ── CSRF Helper ──
+  function ghGetCSRF() {
+    const csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrf) return csrf.value;
+    const csrfCookie = document.cookie.split('; ').find(r => r.startsWith('csrftoken='));
+    return csrfCookie ? csrfCookie.split('=')[1] : '';
   }
 
-  // ── Toast Notification ──
-  function showCartToast(message) {
-    const toast = document.getElementById('cartToast');
-    const msgEl = document.getElementById('cartToastMessage');
-    msgEl.textContent = message;
-    toast.classList.add('show', 'success');
+  // ── Toast ──
+  function ghToast(msg, type) {
+    const c = document.getElementById('ghToastContainer');
+    const t = document.createElement('div');
+    t.className = 'gh-toast ' + (type === 'error' ? 'error' : 'ok');
+    t.innerHTML = '<i class="bi bi-' + (type === 'error' ? 'x-circle' : 'check-circle-fill') + '"></i> ' + msg;
+    c.appendChild(t);
+    requestAnimationFrame(() => { t.classList.add('show'); });
     setTimeout(() => {
-      toast.classList.remove('show', 'success');
+      t.classList.remove('show');
+      t.classList.add('hide');
+      setTimeout(() => t.remove(), 500);
     }, 2500);
   }
 
-  // ── Coupon Application ──
-  function applyCoupon() {
-    const input = document.getElementById('couponInput');
-    const success = document.getElementById('couponSuccess');
-    const savingsEl = document.getElementById('couponSavings');
-    const code = input.value.trim();
+  // ── Ripple ──
+  function ghRipple(e) {
+    const btn = e.currentTarget;
+    const r = document.createElement('span');
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    r.style.width = r.style.height = size + 'px';
+    r.style.left = (e.clientX - rect.left - size / 2) + 'px';
+    r.style.top = (e.clientY - rect.top - size / 2) + 'px';
+    r.className = 'gh-ripple-effect';
+    btn.appendChild(r);
+    setTimeout(() => r.remove(), 600);
+  }
 
-    if (!code) {
-      input.focus();
-      input.style.borderColor = '#EF4444';
-      setTimeout(() => { input.style.borderColor = ''; }, 1500);
+  // ── Update Cart (AJAX) ──
+  async function ghUpdateQty(itemId, action) {
+    const form = new FormData();
+    form.append('item_id', itemId);
+    form.append('action', action);
+    form.append('csrfmiddlewaretoken', ghGetCSRF());
+
+    try {
+      const res = await fetch("{% url 'store:update_cart' %}", { method: 'POST', body: form });
+      if (!res.ok) throw new Error('Request failed');
+      ghToast('Cart updated!', 'ok');
+      ghRefreshCart();
+    } catch (err) {
+      ghToast('Failed to update cart', 'error');
+    }
+  }
+
+  // ── Remove Item (AJAX) ──
+  async function ghRemoveItem(itemId, title) {
+    const form = new FormData();
+    form.append('item_id', itemId);
+    form.append('csrfmiddlewaretoken', ghGetCSRF());
+
+    try {
+      const res = await fetch("{% url 'store:remove_from_cart' %}", { method: 'POST', body: form });
+      if (!res.ok) throw new Error('Request failed');
+      ghToast(title + ' removed from cart', 'ok');
+      setTimeout(() => { window.location.reload(); }, 400);
+    } catch (err) {
+      ghToast('Failed to remove item', 'error');
+    }
+  }
+
+  // ── Clear Cart ──
+  async function ghClearCart() {
+    if (!confirm('Are you sure you want to clear your entire cart? This cannot be undone.')) return;
+    const items = document.querySelectorAll('[data-item-id]');
+    if (items.length === 0) return;
+
+    for (const el of items) {
+      const id = el.dataset.itemId;
+      const form = new FormData();
+      form.append('item_id', id);
+      form.append('csrfmiddlewaretoken', ghGetCSRF());
+      try {
+        await fetch("{% url 'store:remove_from_cart' %}", { method: 'POST', body: form });
+      } catch (e) {}
+    }
+    ghToast('Cart cleared!', 'ok');
+    setTimeout(() => { window.location.reload(); }, 500);
+  }
+
+  // ── Save for Later ──
+  function ghSaveLater(itemId) {
+    ghToast('Item saved for later!', 'ok');
+  }
+
+  // ── Wishlist ──
+  function ghWishlist(itemId) {
+    ghToast('Added to wishlist!', 'ok');
+  }
+
+  // ── Add to Cart (Recommended) ──
+  async function ghAddToCart(productId) {
+    const form = new FormData();
+    form.append('product_id', productId);
+    form.append('qty', 1);
+    form.append('csrfmiddlewaretoken', ghGetCSRF());
+
+    try {
+      const res = await fetch("{% url 'store:add_to_cart' %}", { method: 'POST', body: form, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+      const data = await res.json();
+      if (data.success) {
+        ghToast('Added to cart!', 'ok');
+        if (data.cart_count !== undefined) {
+          const b = document.getElementById('ghCartBadge');
+          if (b) { b.dataset.count = data.cart_count; b.textContent = data.cart_count + ' item' + (data.cart_count === 1 ? '' : 's'); }
+        }
+      } else {
+        ghToast(data.error || 'Failed to add', 'error');
+      }
+    } catch (err) {
+      ghToast('Failed to add to cart', 'error');
+    }
+  }
+
+  // ── Coupon System ──
+  const ghValidCoupons = { 'SAVE10': 10, 'WELCOME20': 20, 'FRESH50': 50, 'GROCERY100': 100 };
+  let ghActiveCoupon = null;
+
+  function ghApplyCoupon(code) {
+    const inp = document.getElementById('ghCouponInp');
+    const btn = document.getElementById('ghBtnCoupon');
+    const msg = document.getElementById('ghCouponMsg');
+    const applied = document.getElementById('ghCouponApplied');
+    const codeEl = document.getElementById('ghCouponCode');
+    const row = document.getElementById('ghCouponRow');
+    const discEl = document.getElementById('ghCouponDiscount');
+
+    const couponCode = (code || inp.value || '').trim().toUpperCase();
+    if (!couponCode) {
+      msg.className = 'gh-coupon-msg show err';
+      msg.innerHTML = '<i class="bi bi-exclamation-circle"></i> Please enter a coupon code';
+      inp.focus();
       return;
     }
 
-    // Simulate coupon validation
-    const validCoupons = {
-      'SAVE10': 10,
-      'WELCOME20': 20,
-      'FRESH50': 50,
-      'GROCERY100': 100,
-    };
-
-    const discount = validCoupons[code.toUpperCase()];
-    if (discount) {
-      success.classList.add('show');
-      savingsEl.textContent = '₹' + discount;
-      input.value = '';
-      input.disabled = true;
-      input.placeholder = 'Coupon applied!';
-      showCartToast('Coupon applied! You saved ₹' + discount);
-    } else {
-      success.classList.remove('show');
-      input.style.borderColor = '#EF4444';
-      input.value = '';
-      setTimeout(() => { input.style.borderColor = ''; }, 1500);
-      showCartToast('Invalid coupon code');
+    const discount = ghValidCoupons[couponCode];
+    if (!discount) {
+      msg.className = 'gh-coupon-msg show err';
+      msg.innerHTML = '<i class="bi bi-exclamation-circle"></i> Invalid coupon code';
+      inp.value = '';
+      setTimeout(() => { msg.className = 'gh-coupon-msg'; }, 2000);
+      return;
     }
+
+    ghActiveCoupon = { code: couponCode, discount: discount };
+    inp.value = '';
+    inp.className = 'gh-coupon-inp success';
+    inp.placeholder = 'Coupon applied!';
+    inp.disabled = true;
+    btn.disabled = true;
+    msg.className = 'gh-coupon-msg';
+    applied.className = 'gh-coupon-applied show';
+    codeEl.textContent = couponCode;
+    row.style.display = 'flex';
+    discEl.textContent = '−₹' + discount;
+
+    ghUpdateTotals(discount);
+    ghToast('Coupon applied! You saved ₹' + discount, 'ok');
   }
 
-  // Allow Enter key to apply coupon
-  document.getElementById('couponInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      applyCoupon();
-    }
-  });
+  function ghRemoveCoupon() {
+    if (!ghActiveCoupon) return;
+    ghActiveCoupon = null;
+    const inp = document.getElementById('ghCouponInp');
+    const btn = document.getElementById('ghBtnCoupon');
+    const applied = document.getElementById('ghCouponApplied');
+    const row = document.getElementById('ghCouponRow');
 
-  // ── Save for Later ──
-  function saveForLater(itemId) {
-    showCartToast('Item saved for later!');
-    // In production, this would make an AJAX call
+    inp.className = 'gh-coupon-inp';
+    inp.placeholder = 'Enter coupon code';
+    inp.disabled = false;
+    btn.disabled = false;
+    applied.className = 'gh-coupon-applied';
+    row.style.display = 'none';
+
+    ghUpdateTotals(0);
+    ghToast('Coupon removed', 'ok');
   }
 
-  // ── Animate cart items on load ──
+  function ghUpdateTotals(couponDiscount) {
+    const subtotalEl = document.getElementById('ghSubtotal');
+    const gstEl = document.getElementById('ghGst');
+    const platformEl = document.getElementById('ghPlatformFee');
+    const grandEl = document.getElementById('ghGrandTotal');
+    const mobileEl = document.getElementById('ghMobileTotal');
+
+    if (!subtotalEl) return;
+    const subtotal = parseFloat(subtotalEl.textContent.replace(/[₹,]/g, '')) || 0;
+    const gst = parseFloat(gstEl.textContent.replace(/[₹,]/g, '')) || 0;
+    const platform = parseFloat(platformEl.textContent.replace(/[₹,]/g, '')) || 0;
+    const packagingEl = document.getElementById('ghPackaging');
+    const packaging = packagingEl ? parseFloat(packagingEl.textContent.replace(/[₹,]/g, '')) || 0 : 0;
+    const disc = couponDiscount || 0;
+
+    const grand = subtotal + gst + platform + packaging - disc;
+    grandEl.textContent = '₹' + grand.toFixed(0);
+    if (mobileEl) mobileEl.textContent = '₹' + grand.toFixed(0);
+  }
+
+  // ── Refresh Cart (reload page after changes) ──
+  async function ghRefreshCart() {
+    window.location.reload();
+  }
+
+  // ── Event Listeners ──
   document.addEventListener('DOMContentLoaded', function() {
-    const cards = document.querySelectorAll('.cart-item-card');
-    cards.forEach((card, index) => {
-      card.style.animationDelay = (index * 0.08) + 's';
-      card.classList.add('animate-fade-in');
-    });
-
-  // Update cart count badge
-  const countBadge = document.getElementById('cartCountBadge');
-  const cartCount = countBadge ? parseInt(countBadge.dataset.count || '0') : 0;
-  if (countBadge && cartCount > 0) {
-    countBadge.textContent = cartCount + ' item' + (cartCount === 1 ? '' : 's');
-  }
-  });
-
-  // ── Smooth scroll for mobile sticky checkout offset ──
-  if (window.innerWidth <= 768) {
-    document.querySelectorAll('.btn-checkout[href*="checkout"]').forEach(btn => {
+    // Quantity buttons
+    document.querySelectorAll('.gh-qty-btn').forEach(btn => {
       btn.addEventListener('click', function(e) {
-        const sticky = document.querySelector('.mobile-sticky-checkout');
-        if (sticky) {
-          const offset = sticky.offsetHeight + 10;
-          const href = this.getAttribute('href');
-          if (href && href.includes('checkout')) {
-            // Let the link work normally; the sticky bar provides visual feedback
+        const id = this.dataset.itemId;
+        const action = this.dataset.action;
+        if (id && action) ghUpdateQty(id, action);
+      });
+    });
+
+    // Coupon enter key
+    document.getElementById('ghCouponInp').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); ghApplyCoupon(); }
+    });
+
+    // Coupon chips
+    document.querySelectorAll('.gh-coupon-chip').forEach(chip => {
+      chip.addEventListener('click', function() {
+        const code = this.dataset.code;
+        document.getElementById('ghCouponInp').value = code;
+        ghApplyCoupon(code);
+      });
+    });
+
+    // Stagger animation
+    document.querySelectorAll('.gh-item-card').forEach((card, i) => {
+      card.style.animationDelay = (i * 0.07) + 's';
+    });
+
+    // Intersection observer
+    if ('IntersectionObserver' in window) {
+      const obs = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+            obs.unobserve(entry.target);
           }
-        }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.gh-rec-card, .gh-benefit').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'all 0.5s cubic-bezier(0.22,1,0.36,1)';
+        obs.observe(el);
       });
-    });
-  }
-
-  // ── Intersection Observer for scroll animations ──
-  if ('IntersectionObserver' in window) {
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -30px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate-fade-in');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, observerOptions);
-
-    document.querySelectorAll('.recommended-card, .trust-badge').forEach(el => {
-      observer.observe(el);
-    });
-  }
+    }
+  });
 </script>
 {% endblock %}

@@ -2349,10 +2349,6 @@
           <ul class="account-dropdown" id="profileDropdown">
             <li><a href="{% url 'store:profile' %}" class="dropdown-link-custom"><i class="bi bi-person"></i> Profile</a></li>
             <li><a href="{% url 'store:profile_orders' %}" class="dropdown-link-custom"><i class="bi bi-bag-check"></i> My Orders</a></li>
-            <li><a href="{% url 'store:my_quotations' %}" class="dropdown-link-custom"><i class="bi bi-receipt"></i> My Quotations</a></li>
-            {% if request.user.is_staff or request.user.is_superuser %}
-            <li><a href="{% url 'store:admin_quotation_dashboard' %}" class="dropdown-link-custom"><i class="bi bi-clipboard-data"></i> Admin Quotations</a></li>
-            {% endif %}
             {% if request.user.is_superuser %}
             <li><a href="{% url 'api_settings:api_settings_page' %}" class="dropdown-link-custom"><i class="bi bi-gear"></i> API Settings</a></li>
             {% endif %}
