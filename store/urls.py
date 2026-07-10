@@ -112,5 +112,17 @@ urlpatterns = [
     path('api/notifications/mark-all-read/', views.api_notification_mark_all_read, name='api_notification_mark_all_read'),
     path('api/notifications/clear-all/', views.api_notification_clear_all, name='api_notification_clear_all'),
 
+    # Coupon API
+    path('api/coupon/validate/', views.api_validate_coupon, name='api_validate_coupon'),
+
+    # Address Intelligence API
+    path('api/address/search/', views.api_address_search, name='api_address_search'),
+    path('api/address/reverse/', views.api_reverse_geocode, name='api_reverse_geocode'),
+    path('api/address/validate/', views.api_validate_coordinates, name='api_validate_coordinates'),
+    path('api/address/save/', views.api_save_address, name='api_save_address'),
+    path('api/address/list/', views.api_list_addresses, name='api_list_addresses'),
+    path('api/address/delete/<int:address_id>/', views.api_delete_address, name='api_delete_address'),
+    path('api/address/default/<int:address_id>/', views.api_set_default_address, name='api_set_default_address'),
+
 ]
 

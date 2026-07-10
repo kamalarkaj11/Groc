@@ -37,7 +37,7 @@ from django.core.exceptions import ValidationError
 from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm, ContactForm, QuotationShippingForm
 from .models import (Category, Subcategory, Order, OrderAddress, OrderItem, Product, Review, UserProfile, CartItem,
                      Profile, PhoneOTP, OTP, NewsletterSubscriber, OrderTracking, OrderTrackingHistory, Notification,
-                     OrderStatusHistory, Quotation, QuotationItem)
+                     OrderStatusHistory, Quotation, QuotationItem, Coupon)
 from .notifications import send_order_notifications as trigger_order_notifications
 from .signals import create_otp, generate_and_send_otp, send_otp_email
 from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_products
@@ -1484,6 +1484,53 @@ def profile_dashboard(request):
     return render(request, 'dashboard.html', context)
 
 @login_required
+def api_validate_coupon(request):
+    if request.method != 'POST':
+        return JsonResponse({'valid': False, 'error': 'POST only'}, status=405)
+
+    try:
+        body = json.loads(request.body.decode('utf-8'))
+        code = body.get('code', '').strip().upper()
+        subtotal = Decimal(str(body.get('subtotal', '0')))
+    except (json.JSONDecodeError, UnicodeDecodeError, InvalidOperation, TypeError):
+        return JsonResponse({'valid': False, 'error': 'Invalid request'}, status=400)
+
+    if not code:
+        return JsonResponse({'valid': False, 'error': 'Please enter a coupon code.'})
+
+    try:
+        coupon = Coupon.objects.get(code=code)
+    except Coupon.DoesNotExist:
+        return JsonResponse({'valid': False, 'error': 'Invalid coupon code.'})
+
+    if not coupon.is_valid(subtotal):
+        now = timezone.now()
+        if not coupon.is_active:
+            return JsonResponse({'valid': False, 'error': 'This coupon is no longer active.'})
+        if coupon.valid_from and now < coupon.valid_from:
+            return JsonResponse({'valid': False, 'error': 'This coupon is not yet valid.'})
+        if coupon.valid_to and now > coupon.valid_to:
+            return JsonResponse({'valid': False, 'error': 'This coupon has expired.'})
+        if coupon.max_uses is not None and coupon.used_count >= coupon.max_uses:
+            return JsonResponse({'valid': False, 'error': 'This coupon has reached its usage limit.'})
+        if subtotal < coupon.min_order_amount:
+            return JsonResponse({
+                'valid': False,
+                'error': f'Minimum order amount of ₹{coupon.min_order_amount:.0f} required for this coupon.'
+            })
+        return JsonResponse({'valid': False, 'error': 'This coupon cannot be applied.'})
+
+    discount = coupon.calculate_discount(subtotal)
+    return JsonResponse({
+        'valid': True,
+        'discount': float(discount),
+        'discount_formatted': f'₹{discount:.0f}' if coupon.discount_type == 'flat' else f'{coupon.discount_value:.0f}% off',
+        'code': coupon.code,
+        'description': coupon.description,
+    })
+
+
+@login_required
 def checkout(request):
     cart_items = CartItem.objects.filter(user=request.user)
     if not cart_items:
@@ -1546,7 +1593,9 @@ def checkout(request):
 
     context = {
         'form': form,
+        'subtotal': total,
         'total': total,
+        'tax_amount': Decimal('0.00'),
         'stripe_minimum_amount': get_stripe_minimum_amount(),
         'cart_items': cart_items,
         'STRIPE_PUBLISHABLE_KEY': settings.STRIPE_PUBLISHABLE_KEY,
@@ -1715,15 +1764,42 @@ def create_session(request):
     if len(cart_items) != len(items_data):
         return JsonResponse({'error': 'Cart mismatch'}, status=400)
 
-    total = sum((item.total_price() for item in cart_items), Decimal('0.00')).quantize(Decimal('0.01'))
+    subtotal = sum((item.total_price() for item in cart_items), Decimal('0.00')).quantize(Decimal('0.01'))
     stripe_minimum_amount = get_stripe_minimum_amount()
-    if total < stripe_minimum_amount:
+    if subtotal < stripe_minimum_amount:
         return JsonResponse({
             'error': (
                 f'Online payments require a minimum order total of Rs {stripe_minimum_amount}. '
-                f'Your current total is Rs {total}. Please add more items to continue.'
+                f'Your current total is Rs {subtotal}. Please add more items to continue.'
             )
         }, status=400)
+
+    # Parse delivery fee, discount & coupon_code from request body
+    delivery_fee = Decimal('0.00')
+    discount = Decimal('0.00')
+    coupon_code = ''
+    try:
+        body = json.loads(request.body.decode('utf-8')) if request.body else {}
+        delivery_fee = Decimal(str(body.get('delivery_fee', '0'))).quantize(Decimal('0.01'))
+        coupon_code = body.get('coupon_code', '').strip().upper()
+        # Server-side coupon validation
+        if coupon_code:
+            try:
+                coupon = Coupon.objects.get(code=coupon_code)
+                if coupon.is_valid(subtotal):
+                    discount = coupon.calculate_discount(subtotal).quantize(Decimal('0.01'))
+                else:
+                    coupon_code = ''
+                    discount = Decimal('0.00')
+            except Coupon.DoesNotExist:
+                coupon_code = ''
+                discount = Decimal('0.00')
+        else:
+            discount = Decimal(str(body.get('discount', '0'))).quantize(Decimal('0.01'))
+    except (json.JSONDecodeError, UnicodeDecodeError, InvalidOperation, TypeError):
+        pass
+
+    final_total = max(subtotal + delivery_fee - discount, Decimal('0.00')).quantize(Decimal('0.01'))
     
     # Stripe setup
     stripe_secret_key = getattr(settings, 'STRIPE_SECRET_KEY', None)
@@ -1753,7 +1829,11 @@ def create_session(request):
             # Create order
             order = Order.objects.create(
                 user=request.user,
-                total_amount=total,
+                subtotal=subtotal,
+                total_amount=final_total,
+                shipping_charge=delivery_fee,
+                discount_amount=discount,
+                coupon_code=coupon_code,
                 address=shipping_data.get('address_line1', ''),
                 latitude=latitude,
                 longitude=longitude,
@@ -1808,7 +1888,7 @@ def create_session(request):
                         'product_data': {
                             'name': f'Order #{order.id} - GroceryHub',
                         },
-                        'unit_amount': int(total * 100),
+                        'unit_amount': int(final_total * 100),
 
                     },
                     'quantity': 1,
@@ -2979,6 +3059,148 @@ def api_notification_clear_all(request):
     """Delete all notifications for the current user."""
     Notification.objects.filter(user=request.user).delete()
     return JsonResponse({'success': True, 'unread_count': 0})
+
+
+# ============================================================
+# Address Intelligence API Views
+# ============================================================
+
+from .address_service import search_address, reverse_geocode, validate_coordinates
+from .models import SavedAddress
+
+
+@require_http_methods(['GET'])
+def api_address_search(request):
+    """Forward geocoding: search addresses via Nominatim."""
+    query = request.GET.get('q', '').strip()
+    limit = int(request.GET.get('limit', 8))
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+    results = search_address(query, limit=limit)
+    return JsonResponse({'results': results})
+
+
+@require_http_methods(['GET'])
+def api_reverse_geocode(request):
+    """Reverse geocoding: get address from coordinates."""
+    lat = request.GET.get('lat')
+    lon = request.GET.get('lon')
+    if not lat or not lon:
+        return JsonResponse({'success': False, 'error': 'lat and lon parameters required.'}, status=400)
+    validation = validate_coordinates(lat, lon)
+    if not validation['valid']:
+        return JsonResponse({'success': False, 'error': validation['error']}, status=400)
+    result = reverse_geocode(validation['latitude'], validation['longitude'])
+    if not result:
+        return JsonResponse({'success': False, 'error': 'Unable to resolve address for these coordinates.'}, status=404)
+    result['success'] = True
+    return JsonResponse(result)
+
+
+@require_http_methods(['GET'])
+def api_validate_coordinates(request):
+    """Validate latitude/longitude coordinates."""
+    lat = request.GET.get('lat')
+    lon = request.GET.get('lon')
+    if not lat or not lon:
+        return JsonResponse({'valid': False, 'error': 'lat and lon parameters required.'}, status=400)
+    validation = validate_coordinates(lat, lon)
+    return JsonResponse(validation)
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_save_address(request):
+    """Save an address to the user's SavedAddresses."""
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid JSON payload.'}, status=400)
+    required = ['full_address', 'latitude', 'longitude']
+    for field in required:
+        if not payload.get(field):
+            return JsonResponse({'success': False, 'error': f'{field} is required.'}, status=400)
+    try:
+        lat = round(float(payload['latitude']), 6)
+        lon = round(float(payload['longitude']), 6)
+    except (TypeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid coordinates.'}, status=400)
+    label = payload.get('label', '').strip()[:64]
+    is_default = payload.get('is_default', False)
+    if is_default:
+        SavedAddress.objects.filter(user=request.user, is_default=True).update(is_default=False)
+    address = SavedAddress.objects.create(
+        user=request.user,
+        label=label,
+        full_address=payload.get('full_address', ''),
+        house_number=payload.get('house_number', ''),
+        street=payload.get('street', ''),
+        area=payload.get('area', ''),
+        locality=payload.get('locality', ''),
+        village=payload.get('village', ''),
+        town=payload.get('town', ''),
+        city=payload.get('city', ''),
+        district=payload.get('district', ''),
+        state=payload.get('state', ''),
+        country=payload.get('country', 'India'),
+        postal_code=payload.get('postcode', '') or payload.get('postal_code', ''),
+        latitude=lat,
+        longitude=lon,
+        place_id=payload.get('place_id', ''),
+        bounding_box=payload.get('bounding_box', ''),
+        display_name=payload.get('display_name', ''),
+        osm_type=payload.get('osm_type', ''),
+        osm_id=payload.get('osm_id', ''),
+        is_default=is_default,
+    )
+    return JsonResponse({'success': True, 'id': address.id})
+
+
+@login_required
+def api_list_addresses(request):
+    """List saved addresses for the current user."""
+    addresses = SavedAddress.objects.filter(user=request.user)
+    data = []
+    for addr in addresses:
+        data.append({
+            'id': addr.id,
+            'label': addr.label,
+            'full_address': addr.full_address,
+            'latitude': str(addr.latitude) if addr.latitude else None,
+            'longitude': str(addr.longitude) if addr.longitude else None,
+            'city': addr.city,
+            'state': addr.state,
+            'postal_code': addr.postal_code,
+            'country': addr.country,
+            'is_default': addr.is_default,
+        })
+    return JsonResponse({'addresses': data})
+
+
+@login_required
+@require_http_methods(['DELETE', 'POST'])
+def api_delete_address(request, address_id):
+    """Delete a saved address."""
+    try:
+        address = SavedAddress.objects.get(id=address_id, user=request.user)
+        address.delete()
+        return JsonResponse({'success': True})
+    except SavedAddress.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Address not found.'}, status=404)
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_set_default_address(request, address_id):
+    """Set an address as the default shipping address."""
+    SavedAddress.objects.filter(user=request.user, is_default=True).update(is_default=False)
+    try:
+        address = SavedAddress.objects.get(id=address_id, user=request.user)
+        address.is_default = True
+        address.save(update_fields=['is_default'])
+        return JsonResponse({'success': True})
+    except SavedAddress.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Address not found.'}, status=404)
 
 
 

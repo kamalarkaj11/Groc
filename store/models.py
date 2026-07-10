@@ -444,6 +444,50 @@ class Review(models.Model):
         return f"{self.user.username} - {self.get_rating_display()} - {self.product.title}"
 
 
+class Coupon(models.Model):
+    DISCOUNT_TYPE_CHOICES = [
+        ('flat', 'Flat Amount'),
+        ('percent', 'Percentage'),
+    ]
+
+    code = models.CharField(max_length=20, unique=True, help_text="Coupon code (entered by customer)")
+    discount_type = models.CharField(max_length=10, choices=DISCOUNT_TYPE_CHOICES, default='flat')
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2, help_text="Flat amount or percentage value")
+    min_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Minimum order subtotal to use this coupon")
+    max_uses = models.PositiveIntegerField(null=True, blank=True, help_text="Maximum number of times this coupon can be used (null = unlimited)")
+    used_count = models.PositiveIntegerField(default=0, help_text="How many times this coupon has been used")
+    is_active = models.BooleanField(default=True)
+    valid_from = models.DateTimeField(default=timezone.now)
+    valid_to = models.DateTimeField()
+    description = models.TextField(blank=True, help_text="Display description for the coupon")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.code
+
+    def is_valid(self, subtotal=0):
+        now = timezone.now()
+        if not self.is_active:
+            return False
+        if self.valid_from and now < self.valid_from:
+            return False
+        if self.valid_to and now > self.valid_to:
+            return False
+        if self.max_uses is not None and self.used_count >= self.max_uses:
+            return False
+        if subtotal < self.min_order_amount:
+            return False
+        return True
+
+    def calculate_discount(self, subtotal):
+        if self.discount_type == 'percent':
+            return min((subtotal * self.discount_value / Decimal('100')).quantize(Decimal('0.01')), subtotal)
+        return min(self.discount_value, subtotal)
+
+
 class CartItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -496,6 +540,7 @@ class Order(models.Model):
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    coupon_code = models.CharField(max_length=20, blank=True, help_text="Coupon code used for this order")
     shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     # Shipping and location fields
     address = models.TextField(blank=True)
@@ -852,6 +897,54 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"[{self.get_notification_type_display()}] {self.title} - {self.user.username}"
+
+
+class SavedAddress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_addresses')
+    label = models.CharField(max_length=64, blank=True, help_text="e.g. Home, Work, Office")
+    full_address = models.TextField(blank=True)
+    house_number = models.CharField(max_length=100, blank=True)
+    street = models.CharField(max_length=255, blank=True)
+    area = models.CharField(max_length=255, blank=True)
+    locality = models.CharField(max_length=255, blank=True)
+    village = models.CharField(max_length=255, blank=True)
+    town = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=255, blank=True)
+    district = models.CharField(max_length=255, blank=True)
+    state = models.CharField(max_length=255, blank=True)
+    country = models.CharField(max_length=255, default='India', blank=True)
+    postal_code = models.CharField(max_length=20, blank=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    place_id = models.CharField(max_length=100, blank=True)
+    bounding_box = models.CharField(max_length=255, blank=True, help_text="Comma-separated bounding box coordinates")
+    display_name = models.TextField(blank=True)
+    osm_type = models.CharField(max_length=20, blank=True)
+    osm_id = models.CharField(max_length=50, blank=True)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-is_default', '-updated_at']
+        indexes = [
+            models.Index(fields=['user', 'is_default']),
+            models.Index(fields=['user', '-updated_at']),
+        ]
+        verbose_name = 'Saved Address'
+        verbose_name_plural = 'Saved Addresses'
+
+    def __str__(self):
+        return f"{self.label or 'Address'} - {self.full_address[:60]}"
+
+    def get_coordinates(self):
+        if self.latitude and self.longitude:
+            return float(self.latitude), float(self.longitude)
+        return None
+
+    @property
+    def coordinates(self):
+        return self.get_coordinates()
 
 
 class ContactMessage(models.Model):

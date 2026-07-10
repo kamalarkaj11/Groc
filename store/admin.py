@@ -10,7 +10,7 @@ from .models import (
     Profile, PhoneOTP, Review, UserProfile, Category,
     Subcategory, SubSubCategory, Product, CartItem, Order, OrderItem, OrderAddress, OTP,
     NotificationLog, NewsletterSubscriber, OrderTracking, OrderTrackingHistory, Notification,
-    ContactMessage, OrderStatusHistory, Quotation, QuotationItem
+    ContactMessage, OrderStatusHistory, Quotation, QuotationItem, SavedAddress
 )
 
 
@@ -1077,4 +1077,13 @@ class QuotationAdmin(admin.ModelAdmin):
     list_filter = ('status', 'created_at')
     search_fields = ('quotation_id', 'user__username', 'full_name', 'email', 'phone')
     inlines = [QuotationItemInline]
-    date_hierarchy = 'created_at'
+    date_hierarchy = 'created_at'
+
+
+@admin.register(SavedAddress)
+class SavedAddressAdmin(admin.ModelAdmin):
+    list_display = ('user', 'label', 'city', 'state', 'country', 'is_default', 'created_at')
+    list_filter = ('is_default', 'country', 'state', 'created_at')
+    search_fields = ('user__username', 'user__email', 'full_address', 'city', 'state', 'postal_code')
+    readonly_fields = ('created_at', 'updated_at')
+    list_select_related = ('user',)

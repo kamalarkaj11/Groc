@@ -1,0 +1,145 @@
+{% load static %}
+<!-- Address Intelligence System - Address Search, Map, Autofill -->
+<div class="addr-wrapper">
+    <div class="addr-section-title">
+        <i class="bi bi-geo-alt-fill"></i> Search Address
+    </div>
+
+    <div class="addr-search-container">
+        <i class="bi bi-search addr-search-icon"></i>
+        <div class="spinner-border spinner-border-sm addr-search-spinner text-success" role="status" id="addressSearchSpinner">
+            <span class="visually-hidden">Searching…</span>
+        </div>
+        <input type="text"
+               id="addressSearchInput"
+               class="addr-search-input"
+               placeholder="Search your address… e.g. Sector 17, Chandigarh"
+               autocomplete="off"
+               aria-label="Search address"
+               aria-autocomplete="list"
+               aria-controls="addressSuggestions">
+        <div id="addressSuggestions" class="addr-suggestions" role="listbox" aria-label="Address suggestions"></div>
+    </div>
+
+    <div id="addressStatus" class="addr-status"></div>
+
+    <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
+        <button type="button" id="btnCurrentLocation" class="addr-current-location-btn">
+            <i class="bi bi-crosshair"></i> Use My Current Location
+        </button>
+        <span class="text-muted small">
+            <i class="bi bi-info-circle me-1"></i>GPS-based location detection
+        </span>
+    </div>
+
+    <div class="addr-fields-grid">
+        <div class="form-group addr-field-full">
+            <label class="addr-label" for="id_address">Full Address</label>
+            <textarea id="id_address" name="{% if address_field_name %}address{% endif %}" class="addr-field" rows="2" readonly placeholder="Auto-filled address">{% if current_address %}{{ current_address }}{% endif %}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="addr-label" for="id_house_number">House / Flat No.</label>
+            <input type="text" id="id_house_number" name="house_number" class="addr-field" placeholder="e.g. 42" value="{{ house_number|default:'' }}">
+        </div>
+
+        <div class="form-group">
+            <label class="addr-label" for="id_street">Street / Road</label>
+            <input type="text" id="id_street" name="street" class="addr-field" placeholder="Street name" value="{{ street|default:'' }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label class="addr-label" for="id_area">Area / Suburb</label>
+            <input type="text" id="id_area" name="area" class="addr-field" placeholder="Area" value="{{ area|default:'' }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label class="addr-label" for="id_locality">Locality</label>
+            <input type="text" id="id_locality" name="locality" class="addr-field" placeholder="Locality" value="{{ locality|default:'' }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label class="addr-label" for="id_village">Village</label>
+            <input type="text" id="id_village" name="village" class="addr-field" placeholder="Village" value="{{ village|default:'' }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label class="addr-label" for="id_town">Town</label>
+            <input type="text" id="id_town" name="town" class="addr-field" placeholder="Town" value="{{ town|default:'' }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label class="addr-label" for="id_city">City</label>
+            <input type="text" id="id_city" name="{% if city_field_name %}city{% endif %}" class="addr-field" placeholder="City" value="{{ city|default:'' }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label class="addr-label" for="id_district">District</label>
+            <input type="text" id="id_district" name="district" class="addr-field" placeholder="District" value="{{ district|default:'' }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label class="addr-label" for="id_state">State</label>
+            <input type="text" id="id_state" name="{% if state_field_name %}state{% endif %}" class="addr-field" placeholder="State" value="{{ state|default:'' }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label class="addr-label" for="id_country">Country</label>
+            <input type="text" id="id_country" name="country" class="addr-field" placeholder="Country" value="{{ country|default:'India' }}" readonly>
+        </div>
+
+        <div class="form-group">
+            <label class="addr-label" for="id_postal_code">Postal Code</label>
+            <input type="text" id="id_postal_code" name="{% if postal_field_name %}pincode{% endif %}" class="addr-field" placeholder="Postal code" value="{{ postal_code|default:'' }}" readonly>
+        </div>
+    </div>
+
+    <!-- Hidden fields for metadata -->
+    <input type="hidden" id="id_latitude" name="{% if lat_field_name %}latitude{% endif %}" value="{{ latitude|default:'' }}">
+    <input type="hidden" id="id_longitude" name="{% if lng_field_name %}longitude{% endif %}" value="{{ longitude|default:'' }}">
+    <input type="hidden" id="id_place_id" name="place_id" value="{{ place_id|default:'' }}">
+    <input type="hidden" id="id_bounding_box" name="bounding_box" value="{{ bounding_box|default:'' }}">
+    <input type="hidden" id="id_display_name" name="display_name" value="{{ display_name|default:'' }}">
+
+    <div class="addr-map-section">
+        <div class="addr-section-title">
+            <i class="bi bi-map"></i> Location Preview
+        </div>
+        <div id="addressMap" class="addr-map-container"></div>
+    </div>
+</div>
+
+{% block address_extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+<script src="{% static 'js/address_intelligence.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    AddressIntelligence.init({
+        searchInputId: 'addressSearchInput',
+        suggestionsId: 'addressSuggestions',
+        mapId: 'addressMap',
+        latId: 'id_latitude',
+        lngId: 'id_longitude',
+        addressId: 'id_address',
+        streetId: 'id_street',
+        areaId: 'id_area',
+        cityId: 'id_city',
+        districtId: 'id_district',
+        stateId: 'id_state',
+        countryId: 'id_country',
+        postalId: 'id_postal_code',
+        houseNumberId: 'id_house_number',
+        localityId: 'id_locality',
+        villageId: 'id_village',
+        townId: 'id_town',
+        placeIdId: 'id_place_id',
+        boundingBoxId: 'id_bounding_box',
+        displayNameId: 'id_display_name',
+        currentLocationBtnId: 'btnCurrentLocation',
+        statusId: 'addressStatus'
+    });
+});
+</script>
+{% endblock %}

@@ -741,7 +741,7 @@
      MEGA DROPDOWN — PREMIUM
      ============================ */
 
-  .cat-dropdown { position: relative; }
+  .cat-dropdown { position: static; }
 
   .cat-dropdown-menu {
     position: absolute;
@@ -801,7 +801,6 @@
     content: "";
     position: absolute;
     top: -8px;
-    left: 50%;
     width: 16px;
     height: 16px;
     border-left: 1px solid rgba(22, 131, 76, 0.12);
@@ -809,6 +808,7 @@
     background: linear-gradient(135deg, 
       rgba(255, 255, 255, 0.99), 
       rgba(247, 252, 249, 0.97));
+    left: var(--arrow-left, 50%);
     transform: translateX(-50%) rotate(45deg);
     z-index: 1;
   }
@@ -2390,6 +2390,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const isMobile = () => window.innerWidth <= 900;
 
+  // ── Dynamic arrow position for centered mega dropdown ──
+  function updateDropdownArrow() {
+    const dropdown = document.querySelector('.cat-dropdown-menu');
+    const trigger = document.getElementById('catDropdownTrigger');
+    if (!dropdown || !trigger || window.innerWidth <= 900) {
+      if (dropdown) dropdown.style.removeProperty('--arrow-left');
+      return;
+    }
+    const triggerRect = trigger.getBoundingClientRect();
+    const dropdownRect = dropdown.getBoundingClientRect();
+    const triggerCenter = triggerRect.left + triggerRect.width / 2;
+    const relativeLeft = triggerCenter - dropdownRect.left;
+    dropdown.style.setProperty('--arrow-left', relativeLeft + 'px');
+  }
+
   // ── Ripple effect on click ──
   function createRipple(event, element) {
     const existingRipple = element.querySelector('.ripple');
@@ -2542,6 +2557,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!catSidebar.querySelector('.mega-sidebar-item.active')) {
         activateFirstPanel();
       }
+      updateDropdownArrow();
     }, HOVER_DELAY);
   }
 
@@ -2611,6 +2627,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!isMobile() && currentlyOpen && !catDropdown.classList.contains('menu-open')) {
         activateFirstPanel();
       }
+      updateDropdownArrow();
     });
 
     catDropdownTrigger.addEventListener('keydown', function (event) {
@@ -2752,6 +2769,7 @@ document.addEventListener('DOMContentLoaded', function () {
         menuToggle.setAttribute('aria-expanded', 'false');
       }
     }
+    updateDropdownArrow();
   });
 
   // ── Notification Center ──
