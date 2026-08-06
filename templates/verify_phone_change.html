@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verify Phone Number - GroceryHub{% endblock %}
+
+{% block content %}
+<div class="container py-5" style="max-width: 600px;">
+  <div class="card shadow">
+    <div class="card-body p-5">
+      <div class="text-center mb-4">
+        <i class="bi bi-phone" style="font-size: 3rem; color: var(--ep-green);"></i>
+        <h2 class="mt-3">Verify Your Phone Number</h2>
+        <p class="text-muted">We've sent a 6-digit OTP to</p>
+        <p class="fw-bold text-primary">{{ new_phone }}</p>
+      </div>
+
+      <form method="post" id="verifyPhoneForm">
+        {% csrf_token %}
+        <div class="mb-4">
+          <label for="id_otp" class="form-label fw-bold">Enter OTP</label>
+          <input type="text" name="otp" id="id_otp" class="form-control form-control-lg text-center fw-bold fs-4"
+                 placeholder="000000" maxlength="6" pattern="[0-9]{6}" inputmode="numeric" autocomplete="one-time-code"
+                 required autofocus>
+          <div class="form-text text-center mt-2">
+            OTP expires in <span id="countdown" class="fw-bold">5:00</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg w-100 mb-3" id="verifyBtn">
+          <i class="bi bi-check-circle"></i> Verify Phone Number
+        </button>
+
+        <button type="button" class="btn btn-outline-secondary w-100" id="resendBtn" disabled>
+          <i class="bi bi-arrow-repeat"></i> Resend OTP (<span id="resendCountdown">30</span>s)
+        </button>
+      </form>
+
+      <div class="mt-4 text-center">
+        <a href="{% url 'store:edit_profile' %}" class="text-decoration-none">
+          <i class="bi bi-arrow-left"></i> Back to Edit Profile
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const RESEND_COOLDOWN = 30;
+  const OTP_EXPIRY = 300; // 5 minutes
+  
+  let resendTimer = null;
+  let expiryTimer = null;
+  let resendSeconds = 0;
+  let expirySeconds = OTP_EXPIRY;
+
+  function updateCountdown() {
+    const minutes = Math.floor(expirySeconds / 60);
+    const seconds = expirySeconds % 60;
+    document.getElementById('countdown').textContent = 
+      `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    
+    if (expirySeconds <= 0) {
+      clearInterval(expiryTimer);
+      document.getElementById('countdown').textContent = 'Expired';
+      document.getElementById('countdown').classList.add('text-danger');
+    }
+    expirySeconds--;
+  }
+
+  function updateResendCountdown() {
+    document.getElementById('resendCountdown').textContent = resendSeconds;
+    if (resendSeconds <= 0) {
+      clearInterval(resendTimer);
+      const btn = document.getElementById('resendBtn');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Resend OTP';
+    }
+    resendSeconds--;
+  }
+
+  // Initialize timers
+  expiryTimer = setInterval(updateCountdown, 1000);
+  updateCountdown();
+
+  resendTimer = setInterval(updateResendCountdown, 1000);
+  updateResendCountdown();
+
+  // Resend button
+  document.getElementById('resendBtn').addEventListener('click', function() {
+    if (this.disabled) return;
+    
+    this.disabled = true;
+    this.innerHTML = '<i class="bi bi-arrow-repeat"></i> Resending...';
+    
+    fetch("{% url 'store:profile_resend_phone_otp' %}", {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        messages.success(request, 'OTP resent successfully!');
+        resendSeconds = RESEND_COOLDOWN;
+        expirySeconds = OTP_EXPIRY;
+      } else {
+        messages.error(request, data.error || 'Failed to resend OTP.');
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-arrow-repeat"></i> Resend OTP';
+      }
+    })
+    .catch(error => {
+      messages.error(request, 'Network error. Please try again.');
+      this.disabled = false;
+      this.innerHTML = '<i class="bi bi-arrow-repeat"></i> Resend OTP';
+    });
+  });
+
+  // Form submission
+  document.getElementById('verifyPhoneForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const btn = document.getElementById('verifyBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Verifying...';
+    
+    const formData = new FormData(this);
+    
+    fetch("{% url 'store:profile_verify_phone_otp' %}", {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'X-Requested-With': 'XMLHttpRequest',
+      },
+      body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        messages.success(request, data.message || 'Phone number updated successfully!');
+        setTimeout(() => {
+          window.location.href = "{% url 'store:profile' %}";
+        }, 1500);
+      } else {
+        messages.error(request, data.error || 'Verification failed.');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    })
+    .catch(error => {
+      messages.error(request, 'Network error. Please try again.');
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    });
+  });
+})();
+</script>
+{% endblock %}

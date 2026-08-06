@@ -7,13 +7,196 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from .models import Profile, UserProfile, IndianState, Order, OTP, Category, Subcategory, ContactMessage, Quotation
 
+class EmailSignupForm(UserCreationForm):
+    """Form for email-based registration."""
+    first_name = forms.CharField(
+        max_length=30,
+        required=True,
+        label='Full Name',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your full name'})
+    )
+    username = forms.CharField(
+        max_length=30,
+        required=True,
+        label='Username',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Choose a username'})
+    )
+    email = forms.EmailField(
+        required=True,
+        label='Email Address',
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'your.email@example.com'})
+    )
+
+    class Meta:
+        model = User
+        fields = ('first_name', 'username', 'email', 'password1', 'password2')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['password1'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Create a strong password'
+        })
+        self.fields['password2'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Confirm your password'
+        })
+        self.helper = FormHelper()
+        self.helper.add_input(Submit('submit', 'Create Account', css_class='btn btn-success btn-lg w-100'))
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError('This email address is already registered. Please use a different email or try logging in.')
+        return email
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '').strip()
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError('This username is already taken. Please choose a different username.')
+        return username
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.first_name = self.cleaned_data.get('first_name', '')
+        user.email = self.cleaned_data.get('email', '').lower()
+        user.is_active = False  # Will be activated after email verification
+        if commit:
+            user.save()
+            # Create UserProfile
+            user_profile, _ = UserProfile.objects.get_or_create(user=user)
+            # Create Profile with email verification method
+            Profile.objects.get_or_create(
+                user=user,
+                defaults={
+                    'verification_method': 'email',
+                    'phone_number': 'pending'
+                }
+            )
+        return user
+
+
+class PhoneSignupForm(forms.Form):
+    """Form for phone-based registration."""
+    first_name = forms.CharField(
+        max_length=30,
+        required=True,
+        label='Full Name',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your full name'})
+    )
+    username = forms.CharField(
+        max_length=30,
+        required=True,
+        label='Username',
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Choose a username'})
+    )
+    country_code = forms.ChoiceField(
+        choices=[
+            ('+91', '+91 (India)'),
+            ('+1', '+1 (USA)'),
+            ('+44', '+44 (UK)'),
+            ('+61', '+61 (Australia)'),
+            ('+86', '+86 (China)'),
+            ('+971', '+971 (UAE)'),
+            ('+966', '+966 (Saudi Arabia)'),
+            ('+65', '+65 (Singapore)'),
+            ('+60', '+60 (Malaysia)'),
+            ('+880', '+880 (Bangladesh)'),
+            ('+94', '+94 (Sri Lanka)'),
+            ('+92', '+92 (Pakistan)'),
+            ('+977', '+977 (Nepal)'),
+            ('+93', '+93 (Afghanistan)'),
+            ('+98', '+98 (Iran)'),
+            ('+964', '+964 (Iraq)'),
+            ('+962', '+962 (Jordan)'),
+            ('+20', '+20 (Egypt)'),
+            ('+27', '+27 (South Africa)'),
+            ('+234', '+234 (Nigeria)'),
+        ],
+        initial='+91',
+        required=True,
+        label='Country Code',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    phone_number = forms.CharField(
+        max_length=15,
+        required=True,
+        label='Phone Number',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter your mobile number',
+            'autocomplete': 'tel'
+        })
+    )
+    password1 = forms.CharField(
+        label='Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Create a strong password'})
+    )
+    password2 = forms.CharField(
+        label='Confirm Password',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirm your password'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.add_input(Submit('submit', 'Send OTP', css_class='btn btn-success btn-lg w-100'))
+
+    def clean_phone_number(self):
+        raw_phone = self.cleaned_data.get('phone_number', '').strip()
+        country_code = self.cleaned_data.get('country_code', '+91')
+
+        # Remove any non-digit characters except leading +
+        if raw_phone.startswith('+'):
+            raw_phone = raw_phone[1:]
+
+        # Combine country code and phone number
+        full_phone = f"{country_code}{raw_phone}"
+
+        try:
+            parsed = phonenumbers.parse(full_phone, None)
+            if not phonenumbers.is_valid_number(parsed):
+                raise forms.ValidationError('Enter a valid phone number.')
+            normalized = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+
+            # Check if phone is already registered
+            if Profile.objects.filter(phone_number=normalized).exists():
+                raise forms.ValidationError('This phone number is already registered. Please use a different number or try logging in.')
+            if UserProfile.objects.filter(phone_number=normalized).exists():
+                raise forms.ValidationError('This phone number is already registered. Please use a different number or try logging in.')
+
+            return normalized
+        except phonenumbers.NumberParseException:
+            raise forms.ValidationError('Enter a valid phone number.')
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username', '').strip()
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError('This username is already taken. Please choose a different username.')
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('password1')
+        password2 = cleaned_data.get('password2')
+
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError('Passwords do not match. Please try again.')
+
+        return cleaned_data
+
+
 class CustomUserCreationForm(UserCreationForm):
     first_name = forms.CharField(
-        max_length=30, required=True, label='First Name *',
+        max_length=30,
+        required=True,
+        label='First Name *',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'})
     )
     last_name = forms.CharField(
-        max_length=30, required=False, label='Last Name',
+        max_length=30,
+        required=False,
+        label='Last Name',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name (Optional)'})
     )
     age = forms.IntegerField(required=False, min_value=13, label='Age')
@@ -74,26 +257,35 @@ class CustomUserCreationForm(UserCreationForm):
             profile.save()
         return user
 
+
 class CustomUserChangeForm(UserChangeForm):
     class Meta:
         model = User
         fields = ('username', 'email')
 
+
 class ProfileForm(forms.ModelForm):
     """Form for editing user profile including User model fields and UserProfile fields."""
     first_name = forms.CharField(
-        max_length=30, required=False, label='First Name',
+        max_length=30,
+        required=False,
+        label='First Name',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'})
     )
     last_name = forms.CharField(
-        max_length=30, required=False, label='Last Name',
+        max_length=30,
+        required=False,
+        label='Last Name',
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'})
     )
     email = forms.EmailField(
-        required=False, label='Email',
+        required=False,
+        label='Email',
         widget=forms.EmailInput(attrs={
-            'class': 'form-control', 'placeholder': 'Email address',
-            'readonly': 'readonly', 'style': 'background-color: #e9ecef; cursor: not-allowed;',
+            'class': 'form-control',
+            'placeholder': 'Email address',
+            'readonly': 'readonly',
+            'style': 'background-color: #e9ecef; cursor: not-allowed;',
         })
     )
 
@@ -122,6 +314,13 @@ class ProfileForm(forms.ModelForm):
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
             self.fields['email'].initial = self.instance.user.email
+            # Ensure phone_number is populated from Profile if UserProfile is empty
+            user = self.instance.user
+            if not self.instance.phone_number:
+                phone_profile = getattr(user, 'phone_profile', None)
+                if phone_profile and phone_profile.phone_number and phone_profile.phone_number != 'pending':
+                    self.instance.phone_number = phone_profile.phone_number
+                    self.fields['phone_number'].initial = phone_profile.phone_number
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', 'Update Profile', css_class='btn btn-primary btn-lg w-100'))
 
@@ -162,11 +361,13 @@ class ProfileForm(forms.ModelForm):
             profile.save()
         return profile
 
+
 class ChangePasswordForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.add_input(Submit('submit', 'Change Password', css_class='btn btn-success btn-lg w-100'))
+
 
 class CheckoutShippingForm(forms.ModelForm):
     full_name = forms.CharField(
@@ -197,9 +398,6 @@ class CheckoutShippingForm(forms.ModelForm):
     )
     latitude = forms.DecimalField(required=False, max_digits=9, decimal_places=6, widget=forms.HiddenInput())
     longitude = forms.DecimalField(required=False, max_digits=9, decimal_places=6, widget=forms.HiddenInput())
-    # Override state as a plain CharField (not a ChoiceField) so that unrecognized
-    # values from the "Use Current Location" feature (e.g. the string "undefined")
-    # are accepted at the field level and can be normalized in clean_state().
     state = forms.CharField(
         required=False,
         label='State',
@@ -240,34 +438,6 @@ class CheckoutShippingForm(forms.ModelForm):
         if len(digits) > 15:
             raise forms.ValidationError('Phone number must have no more than 15 digits in total.')
         return phone
-
-
-class PhoneSignupForm(forms.Form):
-    phone = forms.CharField(
-        max_length=20,
-        label='Phone number',
-        widget=forms.TextInput(attrs={
-            'class': 'form-control form-control-lg',
-            'placeholder': '+91XXXXXXXXXX',
-            'autocomplete': 'tel',
-        })
-    )
-
-    def clean_phone(self):
-        raw_phone = self.cleaned_data.get('phone', '').strip()
-        try:
-            parsed = phonenumbers.parse(raw_phone, 'IN')
-            if not phonenumbers.is_valid_number(parsed):
-                raise forms.ValidationError('Enter a valid phone number.')
-            return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
-        except phonenumbers.NumberParseException:
-            raise forms.ValidationError('Enter a valid phone number.')
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_method = 'POST'
-        self.helper.add_input(Submit('submit', 'Send OTP', css_class='btn btn-success btn-lg w-100'))
 
 
 class PhoneLoginForm(forms.Form):
@@ -326,8 +496,8 @@ class PhoneOTPForm(forms.Form):
 
 class OTPVerificationForm(forms.Form):
     otp = forms.CharField(
-        max_length=6, 
-        min_length=6, 
+        max_length=6,
+        min_length=6,
         label='Enter 6-digit verification code',
         widget=forms.TextInput(attrs={
             'class': 'form-control form-control-lg text-center fw-bold fs-4',
@@ -348,13 +518,13 @@ class OTPVerificationForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         otp_input = cleaned_data.get('otp')
-        
+
         if otp_input:
             latest_otp = OTP.objects.filter(
-                user=self.user, 
+                user=self.user,
                 is_latest=True
             ).first()
-            
+
             if not latest_otp:
                 raise forms.ValidationError('No OTP found. Please request a new one.')
 
@@ -385,16 +555,13 @@ class ProductAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # If editing an existing product with a category, limit subcategory choices
         if self.instance and self.instance.pk and self.instance.category:
             self.fields['subcategory'].queryset = Subcategory.objects.filter(
                 category=self.instance.category
             )
         else:
-            # New product: start with empty queryset until category is chosen via JS
             self.fields['subcategory'].queryset = Subcategory.objects.none()
 
-        # When category is submitted, filter subcategory accordingly
         if 'category' in self.data:
             try:
                 category_id = int(self.data.get('category'))
@@ -525,5 +692,3 @@ class QuotationShippingForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_method = 'POST'
-
-

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Alert: New Login to Your GrocHub Account</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f4f6f8;
+            padding: 0;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        .header {
+            background: linear-gradient(135deg, #198754, #20c997);
+            padding: 36px 30px 30px;
+            text-align: center;
+            color: white;
+        }
+        .header .logo {
+            margin-bottom: 12px;
+        }
+        .header .logo img {
+            max-width: 140px;
+            height: auto;
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        .header p {
+            font-size: 15px;
+            opacity: 0.92;
+        }
+        .security-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            margin-bottom: 16px;
+            font-size: 36px;
+        }
+        .content { padding: 28px 30px; }
+        .greeting { font-size: 16px; margin-bottom: 16px; }
+        .greeting strong { color: #198754; }
+
+        .login-details-card {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .login-details-card .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 14px;
+            border-bottom: 1px solid #e8f5e9;
+        }
+        .login-details-card .row:last-child { border-bottom: none; }
+        .login-details-card .row .label { color: #555; font-weight: 600; }
+        .login-details-card .row .value { color: #222; font-weight: 500; }
+
+        .alert-card {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin: 20px 0;
+        }
+        .alert-card h4 {
+            color: #856404;
+            font-size: 15px;
+            margin-bottom: 6px;
+        }
+        .alert-card p {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.7;
+        }
+
+        .cta-buttons {
+            text-align: center;
+            margin: 24px 0;
+        }
+        .cta-buttons .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #198754, #20c997);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+            margin: 6px;
+        }
+        .cta-buttons .btn-outline {
+            display: inline-block;
+            padding: 12px 28px;
+            border: 2px solid #198754;
+            color: #198754;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 6px;
+            background: transparent;
+        }
+        .cta-buttons .btn-danger {
+            display: inline-block;
+            padding: 12px 28px;
+            background: #dc3545;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 6px;
+        }
+
+        .support-section {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-top: 20px;
+        }
+        .support-section h4 {
+            color: #856404;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        .support-section p {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.8;
+        }
+        .support-section a { color: #198754; text-decoration: none; }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #eee;
+        }
+        .footer a { color: #198754; text-decoration: none; }
+        .footer .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 6px 14px;
+            background: #e8f5e9;
+            border-radius: 16px;
+            font-size: 11px;
+            color: #198754;
+            font-weight: 600;
+        }
+
+        @media (max-width: 480px) {
+            .container { margin: 10px; border-radius: 8px; }
+            .header { padding: 24px 18px 20px; }
+            .header h1 { font-size: 20px; }
+            .content { padding: 20px 16px; }
+            .login-details-card .row { flex-direction: column; gap: 2px; }
+            .login-details-card .row .label { font-size: 12px; }
+            .login-details-card .row .value { font-size: 13px; }
+            .cta-buttons .btn, .cta-buttons .btn-outline, .cta-buttons .btn-danger { display: block; margin: 8px 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="security-icon">&#x1F512;</div>
+            <div class="logo">
+                <img src="https://img.icons8.com/color/96/null/grocery-store.png"
+                     alt="GrocHub"
+                     style="max-width: 140px; height: auto;"
+                     width="140">
+            </div>
+            <h1>Security Alert: New Login to Your GrocHub Account</h1>
+            <p>Security notification from GrocHub</p>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Hello <strong>{{ user_name }}</strong>,</p>
+            <p style="margin-bottom: 18px; font-size: 15px; color: #444;">
+                We detected a successful login to your <strong>GrocHub</strong> account.
+                Here are the details of this login:
+            </p>
+
+            <div class="login-details-card">
+                <div class="row">
+                    <span class="label">Date</span>
+                    <span class="value">{{ login_date }}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Time</span>
+                    <span class="value">{{ login_time }}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Email Address</span>
+                    <span class="value">{{ email }}</span>
+                </div>
+                {% if browser %}
+                <div class="row">
+                    <span class="label">Browser</span>
+                    <span class="value">{{ browser }}</span>
+                </div>
+                {% endif %}
+                {% if device %}
+                <div class="row">
+                    <span class="label">Device</span>
+                    <span class="value">{{ device }}</span>
+                </div>
+                {% endif %}
+                {% if os %}
+                <div class="row">
+                    <span class="label">Operating System</span>
+                    <span class="value">{{ os }}</span>
+                </div>
+                {% endif %}
+                {% if ip_address %}
+                <div class="row">
+                    <span class="label">IP Address</span>
+                    <span class="value">{{ ip_address }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if security_warning %}
+            <div class="alert-card" style="background: #fdf2f2; border-color: #f5c6cb;">
+                <h4>&#x26A0;&#xFE0F; Security Alert</h4>
+                <p>{{ security_warning }}</p>
+            </div>
+            {% endif %}
+
+            <div class="alert-card">
+                <h4>&#x2705; If this login was you</h4>
+                <p>No further action is required. You can continue using your account securely.</p>
+            </div>
+
+            <div class="alert-card" style="background: #fdf2f2; border-color: #f5c6cb;">
+                <h4>&#x26A0;&#xFE0F; If you do not recognize this login</h4>
+                <p>
+                    Please change your password immediately and contact GrocHub Support.
+                    Your account security is our top priority.
+                </p>
+            </div>
+
+            <div class="cta-buttons">
+                <a href="{{ change_password_url }}" class="btn-danger">&#x1F512; Change Password</a>
+                <a href="{{ support_email_url }}" class="btn-outline">&#x1F4E7; Contact Support</a>
+                {% if login_history_url %}
+                <a href="{{ login_history_url }}" class="btn-outline">&#x1F4CB; Login History</a>
+                {% endif %}
+            </div>
+
+            <div class="support-section">
+                <h4>GrocHub Customer Support</h4>
+                <p>
+                    Email: <a href="mailto:{{ support_email }}">{{ support_email }}</a><br>
+                    We are here to assist you with any security concerns.
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; {% now "Y" %} GrocHub. Fresh groceries delivered to your door.</p>
+            <div class="security-badge">
+                &#x1F512; This is an automated security notification from GrocHub
+            </div>
+            <p style="margin-top: 8px;">
+                <a href="#">Privacy Policy</a> &bull;
+                <a href="#">Terms of Service</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

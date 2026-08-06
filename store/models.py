@@ -4,6 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
+from decimal import Decimal
 
 class Profile(models.Model):
     VERIFICATION_METHOD_CHOICES = [
@@ -12,7 +13,6 @@ class Profile(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='phone_profile')
-    # Registered phone numbers are stored in E.164 format and must be unique.
     phone_number = models.CharField(max_length=15, unique=True)
     is_email_verified = models.BooleanField(default=False)
     is_phone_verified = models.BooleanField(default=False)
@@ -62,7 +62,6 @@ class IndianState(models.TextChoices):
     ANDHRA_PRADESH = 'AP', 'Andhra Pradesh'
     TELANGANA = 'TS', 'Telangana'
     MAHARASHTRA = 'MH', 'Maharashtra'
-    # Add all 28 states + 8 UTs
     ANDAMAN_NICOBAR = 'AN', 'Andaman & Nicobar'
     ARUNACHAL_PRADESH = 'AR', 'Arunachal Pradesh'
     ASSAM = 'AS', 'Assam'
@@ -97,7 +96,6 @@ class IndianState(models.TextChoices):
     WEST_BENGAL = 'WB', 'West Bengal'
 
 
-
 class UserProfile(models.Model):
     ADDRESS_SOURCE_CHOICES = [
         ('manual', 'Manual Entry'),
@@ -119,7 +117,6 @@ class UserProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Current location fields
     current_address = models.TextField(blank=True, help_text="Full address from current location")
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
@@ -161,7 +158,7 @@ class OTP(models.Model):
     attempts = models.PositiveIntegerField(default=0)
     max_attempts = models.PositiveIntegerField(default=5)
     is_used = models.BooleanField(default=False)
-    is_latest = models.BooleanField(default=True)  # Only latest valid
+    is_latest = models.BooleanField(default=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -178,42 +175,108 @@ class OTP(models.Model):
         return not self.is_used and not self.is_expired and self.attempts < self.max_attempts and self.is_latest
 
 
-@receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        UserProfile.objects.create(user=instance)
+# ============================================================
+# Login Activity Tracking Model
+# ============================================================
 
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    if hasattr(instance, 'userprofile'):
-        instance.userprofile.save()
+class LoginActivity(models.Model):
+    """Tracks all successful login activities for security monitoring."""
+    
+    LOGIN_METHOD_CHOICES = [
+        ('password', 'Email/Password'),
+        ('otp', 'Phone OTP'),
+        ('google', 'Google OAuth'),
+        ('facebook', 'Facebook'),
+        ('twitter', 'Twitter'),
+        ('github', 'GitHub'),
+        ('other', 'Other'),
+    ]
+    
+    DEVICE_TYPE_CHOICES = [
+        ('desktop', 'Desktop'),
+        ('mobile', 'Mobile'),
+        ('tablet', 'Tablet'),
+        ('unknown', 'Unknown'),
+    ]
+    
+    SECURITY_STATUS_CHOICES = [
+        ('success', 'Successful Login'),
+        ('new_device', 'New Device Login'),
+        ('new_browser', 'New Browser Login'),
+        ('new_location', 'New Location Login'),
+        ('suspicious', 'Suspicious Login'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='login_activities')
+    login_date = models.DateField(help_text="Date of login")
+    login_time = models.TimeField(help_text="Time of login (user's local timezone)")
+    device_type = models.CharField(max_length=20, choices=DEVICE_TYPE_CHOICES, default='unknown')
+    browser = models.CharField(max_length=100, blank=True, help_text="Browser name and version")
+    operating_system = models.CharField(max_length=100, blank=True, help_text="Operating system")
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, help_text="City from IP geolocation")
+    state = models.CharField(max_length=100, blank=True, help_text="State from IP geolocation")
+    country = models.CharField(max_length=100, blank=True, help_text="Country from IP geolocation")
+    login_method = models.CharField(max_length=20, choices=LOGIN_METHOD_CHOICES, default='password')
+    security_status = models.CharField(max_length=20, choices=SECURITY_STATUS_CHOICES, default='success')
+    is_new_device = models.BooleanField(default=False, help_text="First time login from this device")
+    is_new_browser = models.BooleanField(default=False, help_text="First time login from this browser")
+    is_new_location = models.BooleanField(default=False, help_text="First time login from this city/country")
+    email_sent = models.BooleanField(default=False, help_text="Whether login alert email was sent")
+    sms_sent = models.BooleanField(default=False, help_text="Whether login alert SMS was sent")
+    email_error = models.TextField(blank=True, help_text="Error message if email sending failed")
+    sms_error = models.TextField(blank=True, help_text="Error message if SMS sending failed")
+    user_agent = models.TextField(blank=True, help_text="Full User-Agent string")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['user', 'country', 'city']),
+            models.Index(fields=['is_new_device', 'is_new_browser', 'is_new_location']),
+            models.Index(fields=['email_sent', 'sms_sent']),
+        ]
+    
+    def __str__(self):
+        username = self.user.username if self.user else 'Deleted User'
+        return f"Login by {username} on {self.login_date} at {self.login_time} from {self.city or self.country or 'Unknown'}"
+    
+    @property
+    def location_display(self):
+        """Return formatted location string."""
+        parts = []
+        if self.city:
+            parts.append(self.city)
+        if self.state:
+            parts.append(self.state)
+        if self.country:
+            parts.append(self.country)
+        return ', '.join(parts) if parts else 'Unknown Location'
+    
+    @property
+    def is_fully_delivered(self):
+        """Check if both email and SMS were sent successfully (if applicable)."""
+        return self.email_sent and self.sms_sent
+    
+    @property
+    def has_any_error(self):
+        """Check if there were any delivery errors."""
+        return bool(self.email_error or self.sms_error)
 
-
-@receiver(post_save, sender=User)
-def generate_initial_otp(sender, instance, created, **kwargs):
-    """Generate OTP for new users if not active."""
-    if created and not instance.is_active:
-        from .signals import create_otp  # Forward ref
-        create_otp(instance)
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True, blank=True)
     image = models.ImageField(upload_to='categories/', blank=True, null=True)
-    description = models.TextField(blank=True, help_text="Brief description for SEO and display.")
-    icon = models.CharField(
-        max_length=50, blank=True,
-        help_text='Bootstrap Icons class, e.g. "bi-apple" or "bi-cup-straw".'
-    )
-    is_active = models.BooleanField(default=True, help_text="Inactive categories are hidden from the storefront.")
-    sort_order = models.PositiveIntegerField(default=0, help_text="Lower numbers appear first.")
+    description = models.TextField(blank=True)
+    icon = models.CharField(max_length=50, blank=True)
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:
         verbose_name_plural = 'categories'
         ordering = ['sort_order', 'name']
-        indexes = [
-            models.Index(fields=['is_active', 'sort_order']),
-        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -231,34 +294,23 @@ class Category(models.Model):
         return self.name
 
     def product_count(self):
-        """Return the number of in-stock products in this category."""
         return self.products.filter(is_out_of_stock=False).count()
 
 
 class Subcategory(models.Model):
-    """Subcategory under a Category. E.g. Fruits -> Apple, Banana."""
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True, blank=True)
-    category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, related_name='subcategories'
-    )
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories')
     image = models.ImageField(upload_to='subcategories/', blank=True, null=True)
-    description = models.TextField(blank=True, help_text="Brief description for SEO and display.")
-    icon = models.CharField(
-        max_length=50, blank=True,
-        help_text='Bootstrap Icons class, e.g. "bi-apple" or "bi-cup-straw".'
-    )
-    is_active = models.BooleanField(default=True, help_text="Inactive subcategories are hidden from the storefront.")
-    sort_order = models.PositiveIntegerField(default=0, help_text="Lower numbers appear first.")
+    description = models.TextField(blank=True)
+    icon = models.CharField(max_length=50, blank=True)
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:
         verbose_name_plural = 'subcategories'
         ordering = ['sort_order', 'name']
-        # Prevent duplicate subcategory names within the same category
         unique_together = ('name', 'category')
-        indexes = [
-            models.Index(fields=['is_active', 'sort_order']),
-        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -275,58 +327,21 @@ class Subcategory(models.Model):
     def __str__(self):
         return f"{self.category.name} → {self.name}"
 
-    def product_count(self):
-        """Return the number of in-stock products in this subcategory."""
-        return self.products.filter(is_out_of_stock=False).count()
-
-    def clean(self):
-        """Validate that subcategory name is unique within its category."""
-        from django.core.exceptions import ValidationError
-        qs = Subcategory.objects.filter(name=self.name, category=self.category)
-        if self.pk:
-            qs = qs.exclude(pk=self.pk)
-        if qs.exists():
-            raise ValidationError(
-                f'Subcategory "{self.name}" already exists under "{self.category.name}".'
-            )
-
-
-class NewsletterSubscriber(models.Model):
-    email = models.EmailField(unique=True)
-    subscribed_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name = 'Newsletter Subscriber'
-        verbose_name_plural = 'Newsletter Subscribers'
-        ordering = ['-subscribed_at']
-
-    def __str__(self):
-        return self.email
-
 
 class SubSubCategory(models.Model):
-    """Sub-subcategory under a Subcategory. E.g., Fruits > Fresh Fruits > Apple, Mango."""
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True, blank=True)
-    subcategory = models.ForeignKey(
-        Subcategory, on_delete=models.CASCADE, related_name='subsubcategories'
-    )
+    subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE, related_name='subsubcategories')
     image = models.ImageField(upload_to='subsubcategories/', blank=True, null=True)
-    description = models.TextField(blank=True, help_text="Brief description for SEO and display.")
-    icon = models.CharField(
-        max_length=50, blank=True,
-        help_text='Bootstrap Icons class, e.g. "bi-apple" or "bi-cup-straw".'
-    )
-    is_active = models.BooleanField(default=True, help_text="Inactive sub-subcategories are hidden from the storefront.")
-    sort_order = models.PositiveIntegerField(default=0, help_text="Lower numbers appear first.")
+    description = models.TextField(blank=True)
+    icon = models.CharField(max_length=50, blank=True)
+    is_active = models.BooleanField(default=True)
+    sort_order = models.PositiveIntegerField(default=0)
 
     class Meta:
         verbose_name_plural = 'sub-subcategories'
         ordering = ['sort_order', 'name']
         unique_together = ('name', 'subcategory')
-        indexes = [
-            models.Index(fields=['is_active', 'sort_order']),
-        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -343,21 +358,6 @@ class SubSubCategory(models.Model):
     def __str__(self):
         return f"{self.subcategory.category.name} → {self.subcategory.name} → {self.name}"
 
-    def product_count(self):
-        """Return the number of in-stock products in this sub-subcategory."""
-        return self.products.filter(is_out_of_stock=False).count()
-
-    def clean(self):
-        """Validate that sub-subcategory name is unique within its subcategory."""
-        from django.core.exceptions import ValidationError
-        qs = SubSubCategory.objects.filter(name=self.name, subcategory=self.subcategory)
-        if self.pk:
-            qs = qs.exclude(pk=self.pk)
-        if qs.exists():
-            raise ValidationError(
-                f'Sub-subcategory "{self.name}" already exists under "{self.subcategory.name}".'
-            )
-
 
 class Product(models.Model):
     title = models.CharField(max_length=200)
@@ -367,22 +367,16 @@ class Product(models.Model):
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     image = models.ImageField(upload_to='products/')
     external_image_url = models.URLField(blank=True)
-    product_video = models.FileField(upload_to='products/videos/', blank=True, null=True, help_text='Upload a product video (MP4, WebM, etc.)')
-    external_video_url = models.URLField(blank=True, help_text='External video URL (e.g. YouTube embed or direct video link)')
+    product_video = models.FileField(upload_to='products/videos/', blank=True, null=True)
+    external_video_url = models.URLField(blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
-    subcategory = models.ForeignKey(
-        Subcategory, on_delete=models.CASCADE, related_name='products',
-        null=True, blank=True
-    )
-    subsubcategory = models.ForeignKey(
-        'SubSubCategory', on_delete=models.SET_NULL, related_name='products',
-        null=True, blank=True
-    )
-    weight = models.CharField(max_length=50, blank=True, help_text="e.g. 500g, 1kg")
+    subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE, related_name='products', null=True, blank=True)
+    subsubcategory = models.ForeignKey('SubSubCategory', on_delete=models.SET_NULL, related_name='products', null=True, blank=True)
+    weight = models.CharField(max_length=50, blank=True)
     origin = models.CharField(max_length=100, blank=True)
     expiry_date = models.DateField(null=True, blank=True)
-    nutrition_info = models.JSONField(default=dict, blank=True, help_text="e.g. {'calories': 85, 'protein': 2.5}")
-    highlights = models.JSONField(default=list, blank=True, help_text="e.g. ['100% Fresh', 'Quality Guaranteed']")
+    nutrition_info = models.JSONField(default=dict, blank=True)
+    highlights = models.JSONField(default=list, blank=True)
     is_out_of_stock = models.BooleanField(default=False)
     availability = models.CharField(max_length=120, blank=True)
     api_source = models.CharField(max_length=50, blank=True)
@@ -393,12 +387,9 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        indexes = [
-            models.Index(fields=['api_source', 'api_product_id']),
-        ]
+        indexes = [models.Index(fields=['api_source', 'api_product_id'])]
 
     def save(self, *args, **kwargs):
-        """Auto-generate slug from title if not provided."""
         if not self.slug:
             from django.utils.text import slugify
             base_slug = slugify(self.title)
@@ -450,16 +441,16 @@ class Coupon(models.Model):
         ('percent', 'Percentage'),
     ]
 
-    code = models.CharField(max_length=20, unique=True, help_text="Coupon code (entered by customer)")
+    code = models.CharField(max_length=20, unique=True)
     discount_type = models.CharField(max_length=10, choices=DISCOUNT_TYPE_CHOICES, default='flat')
-    discount_value = models.DecimalField(max_digits=10, decimal_places=2, help_text="Flat amount or percentage value")
-    min_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Minimum order subtotal to use this coupon")
-    max_uses = models.PositiveIntegerField(null=True, blank=True, help_text="Maximum number of times this coupon can be used (null = unlimited)")
-    used_count = models.PositiveIntegerField(default=0, help_text="How many times this coupon has been used")
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
+    min_order_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    max_uses = models.PositiveIntegerField(null=True, blank=True)
+    used_count = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     valid_from = models.DateTimeField(default=timezone.now)
     valid_to = models.DateTimeField()
-    description = models.TextField(blank=True, help_text="Display description for the coupon")
+    description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -530,19 +521,18 @@ class Order(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
-    order_id = models.CharField(max_length=20, unique=True, blank=True, null=True, help_text="Auto-generated friendly order ID like GH-1001")
+    order_id = models.CharField(max_length=20, unique=True, blank=True, null=True)
     stripe_session_id = models.CharField(max_length=255, blank=True)
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='stripe')
-    transaction_id = models.CharField(max_length=255, blank=True, help_text="Payment gateway transaction ID")
+    transaction_id = models.CharField(max_length=255, blank=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    coupon_code = models.CharField(max_length=20, blank=True, help_text="Coupon code used for this order")
+    coupon_code = models.CharField(max_length=20, blank=True)
     shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    # Shipping and location fields
     address = models.TextField(blank=True)
     latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
@@ -556,11 +546,10 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Notification delivery status
-    email_sent = models.BooleanField(default=False, help_text="Whether confirmation email has been sent")
-    sms_sent = models.BooleanField(default=False, help_text="Whether confirmation SMS has been sent")
-    notification_sent = models.BooleanField(default=False, help_text="Whether all notifications have been sent")
-    notification_sent_at = models.DateTimeField(null=True, blank=True, help_text="When notifications were sent")
+    email_sent = models.BooleanField(default=False)
+    sms_sent = models.BooleanField(default=False)
+    notification_sent = models.BooleanField(default=False)
+    notification_sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -573,7 +562,6 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.order_id:
-            # Generate a friendly order ID like GH-1001
             last_order = Order.objects.order_by('-id').first()
             next_id = (last_order.id + 1) if last_order else 1
             self.order_id = f"GH{next_id:04d}"
@@ -582,8 +570,9 @@ class Order(models.Model):
     def __str__(self):
         return f"Order {self.order_id or self.id} - {self.user.username}"
 
+
 class OrderAddress(models.Model):
-    order = models.OneToOneField('Order', on_delete=models.CASCADE, related_name='shipping_address')
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='shipping_address')
     full_name = models.CharField(max_length=128)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=15, blank=True)
@@ -625,6 +614,7 @@ class OrderAddress(models.Model):
             lines.append(self.country)
         return '\n'.join(lines)
 
+
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -639,122 +629,75 @@ class OrderItem(models.Model):
 
 
 class InvoiceHistory(models.Model):
-    """Tracks invoice generation history for orders."""
     INVOICE_TYPE_CHOICES = [
         ('original', 'Original'),
         ('regenerated', 'Regenerated'),
     ]
 
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='invoice_history')
-    invoice_number = models.CharField(max_length=50, help_text="Auto-generated invoice number")
-    invoice_type = models.CharField(max_length=20, choices=INVOICE_TYPE_CHOICES, default='original', help_text="Type of invoice generation")
-    generated_by = models.CharField(max_length=100, blank=True, help_text="Who generated this invoice")
+    invoice_number = models.CharField(max_length=50)
+    invoice_type = models.CharField(max_length=20, choices=INVOICE_TYPE_CHOICES, default='original')
+    generated_by = models.CharField(max_length=100, blank=True)
     ip_address = models.GenericIPAddressField(blank=True, null=True)
-    notes = models.TextField(blank=True, help_text="Optional notes about this invoice generation")
+    notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Invoice History'
         verbose_name_plural = 'Invoice Histories'
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['order', '-created_at']),
-            models.Index(fields=['invoice_number']),
-        ]
 
     def __str__(self):
         return f"Invoice {self.invoice_number} - Order {self.order.order_id}"
 
 
 class OrderStatusHistory(models.Model):
-    """Maintains a complete audit trail of all order status changes."""
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='status_history')
-    previous_status = models.CharField(max_length=20, blank=True, help_text="Previous status before the change")
-    new_status = models.CharField(max_length=20, help_text="New status after the change")
+    previous_status = models.CharField(max_length=20, blank=True)
+    new_status = models.CharField(max_length=20)
     changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_status_changes')
-    changed_by_name = models.CharField(max_length=100, blank=True, help_text="Name of the person who made the change")
-    notes = models.TextField(blank=True, help_text="Optional notes about why the status changed")
+    changed_by_name = models.CharField(max_length=100, blank=True)
+    notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Order Status History'
         verbose_name_plural = 'Order Status Histories'
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['order', '-created_at']),
-        ]
 
     def __str__(self):
         return f"Order {self.order.order_id or self.order.id}: {self.previous_status} → {self.new_status}"
 
 
 class NotificationLog(models.Model):
-    """Tracks delivery status of order confirmation notifications."""
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='notification_logs')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notification_logs')
     email_status = models.CharField(
         max_length=20,
-        choices=[
-            ('pending', 'Pending'),
-            ('sent', 'Sent'),
-            ('failed', 'Failed'),
-            ('skipped', 'Skipped'),
-        ],
+        choices=[('pending', 'Pending'), ('sent', 'Sent'), ('failed', 'Failed'), ('skipped', 'Skipped')],
         default='pending',
-        help_text="Status of email delivery"
     )
     sms_status = models.CharField(
         max_length=20,
-        choices=[
-            ('pending', 'Pending'),
-            ('sent', 'Sent'),
-            ('failed', 'Failed'),
-            ('skipped', 'Skipped'),
-        ],
+        choices=[('pending', 'Pending'), ('sent', 'Sent'), ('failed', 'Failed'), ('skipped', 'Skipped')],
         default='pending',
-        help_text="Status of SMS delivery"
     )
-    email_sent_at = models.DateTimeField(null=True, blank=True, help_text="When the email was successfully sent")
-    sms_sent_at = models.DateTimeField(null=True, blank=True, help_text="When the SMS was successfully sent")
-    email_error_message = models.TextField(blank=True, help_text="Error message if email sending failed")
-    sms_error_message = models.TextField(blank=True, help_text="Error message if SMS sending failed")
-    created_at = models.DateTimeField(auto_now_add=True, help_text="When this log entry was created")
+    email_sent_at = models.DateTimeField(null=True, blank=True)
+    sms_sent_at = models.DateTimeField(null=True, blank=True)
+    email_error_message = models.TextField(blank=True)
+    sms_error_message = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Notification Log'
         verbose_name_plural = 'Notification Logs'
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['order', 'created_at']),
-        ]
 
     def __str__(self):
-        return f"Notification #{self.id} - Order #{self.order_id} - Email: {self.email_status}, SMS: {self.sms_status}"
+        return f"Notification #{self.id} - Order #{self.order_id}"
 
-    @property
-    def is_email_delivered(self):
-        return self.email_status == 'sent'
-
-    @property
-    def is_sms_delivered(self):
-        return self.sms_status == 'sent'
-
-    @property
-    def is_fully_delivered(self):
-        return self.is_email_delivered and self.is_sms_delivered
-
-    @property
-    def has_any_error(self):
-        return self.email_status == 'failed' or self.sms_status == 'failed'
-
-
-# ============================================================
-# Order Tracking / Delivery Tracking Models
-# ============================================================
 
 class OrderTracking(models.Model):
-    """Tracks the delivery status and location of an order."""
-
     TRACKING_STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('confirmed', 'Confirmed'),
@@ -766,25 +709,18 @@ class OrderTracking(models.Model):
     ]
 
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='tracking')
-    status = models.CharField(
-        max_length=20,
-        choices=TRACKING_STATUS_CHOICES,
-        default='pending',
-    )
-    tracking_number = models.CharField(max_length=100, blank=True, help_text="Courier tracking number")
-    delivery_partner = models.CharField(max_length=100, blank=True, help_text="Courier partner name (e.g., Delhivery, Blue Dart)")
-    current_location = models.CharField(max_length=255, blank=True, help_text="Current location of the package")
-    notes = models.TextField(blank=True, help_text="Internal delivery notes")
-    estimated_delivery_date = models.DateField(null=True, blank=True, help_text="Expected delivery date")
+    status = models.CharField(max_length=20, choices=TRACKING_STATUS_CHOICES, default='pending')
+    tracking_number = models.CharField(max_length=100, blank=True)
+    delivery_partner = models.CharField(max_length=100, blank=True)
+    current_location = models.CharField(max_length=255, blank=True)
+    notes = models.TextField(blank=True)
+    estimated_delivery_date = models.DateField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'Order Tracking'
         verbose_name_plural = 'Order Tracking'
-        indexes = [
-            models.Index(fields=['status']),
-            models.Index(fields=['tracking_number']),
-        ]
+        indexes = [models.Index(fields=['status']), models.Index(fields=['tracking_number'])]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -802,73 +738,17 @@ class OrderTracking(models.Model):
     def __str__(self):
         return f"Tracking for Order #{self.order_id} - {self.get_status_display()}"
 
-    def get_progress_percentage(self):
-        """Return the progress percentage for the current status."""
-        progress_map = {
-            'pending': 10,
-            'confirmed': 25,
-            'packed': 50,
-            'shipped': 75,
-            'out_for_delivery': 90,
-            'delivered': 100,
-            'cancelled': 0,
-        }
-        return progress_map.get(self.status, 0)
-
-    def get_status_order(self):
-        """Return the numeric order of the current status for comparison."""
-        status_order = {
-            'pending': 0,
-            'confirmed': 1,
-            'packed': 2,
-            'shipped': 3,
-            'out_for_delivery': 4,
-            'delivered': 5,
-            'cancelled': -1,
-        }
-        return status_order.get(self.status, 0)
-
-    def is_status_completed(self, status_key):
-        """Check if a given status is completed based on current status."""
-        if self.status == 'cancelled':
-            return False
-        status_order = {
-            'pending': 0,
-            'confirmed': 1,
-            'packed': 2,
-            'shipped': 3,
-            'out_for_delivery': 4,
-            'delivered': 5,
-        }
-        current = status_order.get(self.status, 0)
-        target = status_order.get(status_key, 0)
-        return target < current
-
-    def is_current_status(self, status_key):
-        """Check if a given status is the current active status."""
-        return self.status == status_key
-
 
 class OrderTrackingHistory(models.Model):
-    """Stores the history of status changes for an order's tracking."""
-
-    tracking = models.ForeignKey(
-        OrderTracking, on_delete=models.CASCADE, related_name='history'
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=OrderTracking.TRACKING_STATUS_CHOICES,
-    )
-    description = models.TextField(blank=True, help_text="Description of this status update")
+    tracking = models.ForeignKey(OrderTracking, on_delete=models.CASCADE, related_name='history')
+    status = models.CharField(max_length=20, choices=OrderTracking.TRACKING_STATUS_CHOICES)
+    description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Order Tracking History'
         verbose_name_plural = 'Order Tracking Histories'
         ordering = ['created_at']
-        indexes = [
-            models.Index(fields=['tracking', 'created_at']),
-        ]
 
     def __str__(self):
         return f"#{self.tracking.order_id} - {self.get_status_display()} @ {self.created_at.strftime('%d %b %Y %I:%M %p')}"
@@ -891,9 +771,7 @@ class Notification(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['user', 'is_read', '-created_at']),
-        ]
+        indexes = [models.Index(fields=['user', 'is_read', '-created_at'])]
 
     def __str__(self):
         return f"[{self.get_notification_type_display()}] {self.title} - {self.user.username}"
@@ -901,7 +779,7 @@ class Notification(models.Model):
 
 class SavedAddress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_addresses')
-    label = models.CharField(max_length=64, blank=True, help_text="e.g. Home, Work, Office")
+    label = models.CharField(max_length=64, blank=True)
     full_address = models.TextField(blank=True)
     house_number = models.CharField(max_length=100, blank=True)
     street = models.CharField(max_length=255, blank=True)
@@ -917,7 +795,7 @@ class SavedAddress(models.Model):
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     place_id = models.CharField(max_length=100, blank=True)
-    bounding_box = models.CharField(max_length=255, blank=True, help_text="Comma-separated bounding box coordinates")
+    bounding_box = models.CharField(max_length=255, blank=True)
     display_name = models.TextField(blank=True)
     osm_type = models.CharField(max_length=20, blank=True)
     osm_id = models.CharField(max_length=50, blank=True)
@@ -927,24 +805,11 @@ class SavedAddress(models.Model):
 
     class Meta:
         ordering = ['-is_default', '-updated_at']
-        indexes = [
-            models.Index(fields=['user', 'is_default']),
-            models.Index(fields=['user', '-updated_at']),
-        ]
         verbose_name = 'Saved Address'
         verbose_name_plural = 'Saved Addresses'
 
     def __str__(self):
         return f"{self.label or 'Address'} - {self.full_address[:60]}"
-
-    def get_coordinates(self):
-        if self.latitude and self.longitude:
-            return float(self.latitude), float(self.longitude)
-        return None
-
-    @property
-    def coordinates(self):
-        return self.get_coordinates()
 
 
 class ContactMessage(models.Model):
@@ -972,13 +837,6 @@ class ContactMessage(models.Model):
     def __str__(self):
         return f"{self.name} - {self.subject}"
 
-    def save(self, *args, **kwargs):
-        if self.status == 'read' and not self.is_read:
-            self.is_read = True
-        elif self.status == 'new' and self.is_read:
-            self.is_read = False
-        super().save(*args, **kwargs)
-
 
 class Quotation(models.Model):
     STATUS_CHOICES = [
@@ -989,17 +847,13 @@ class Quotation(models.Model):
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='quotations')
-    quotation_id = models.CharField(max_length=20, unique=True, blank=True, null=True, help_text="Auto-generated friendly quotation ID like QT-1001")
+    quotation_id = models.CharField(max_length=20, unique=True, blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    
-    # Financial fields
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-
-    # Shipping and location fields
     full_name = models.CharField(max_length=128, blank=True)
     email = models.EmailField(blank=True)
     phone = models.CharField(max_length=15, blank=True)
@@ -1009,13 +863,8 @@ class Quotation(models.Model):
     state = models.CharField(max_length=2, choices=IndianState.choices, blank=True)
     pincode = models.CharField(max_length=10, blank=True)
     delivery_notes = models.TextField(blank=True)
-    
-    # Expiry for the quotation
     valid_until = models.DateTimeField(null=True, blank=True)
-    
-    # Linked order once converted
     converted_order = models.OneToOneField('Order', on_delete=models.SET_NULL, null=True, blank=True, related_name='source_quotation')
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1024,7 +873,6 @@ class Quotation(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.quotation_id:
-            # Generate a friendly quotation ID like QT-1001
             last_quotation = Quotation.objects.order_by('-id').first()
             next_id = (last_quotation.id + 1) if last_quotation else 1
             self.quotation_id = f"QT{next_id:04d}"
@@ -1044,4 +892,50 @@ class QuotationItem(models.Model):
         return f"{self.product.title} x {self.quantity} in {self.quotation.quotation_id}"
 
     def total_price(self):
-        return self.unit_price * self.quantity
+        return self.unit_price * self.quantity
+
+
+class NewsletterSubscriber(models.Model):
+    email = models.EmailField(unique=True)
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Newsletter Subscriber'
+        verbose_name_plural = 'Newsletter Subscribers'
+        ordering = ['-subscribed_at']
+
+    def __str__(self):
+        return self.email
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    if hasattr(instance, 'userprofile'):
+        instance.userprofile.save()
+
+
+@receiver(post_save, sender=Profile)
+def sync_profile_phone_to_user_profile(sender, instance, **kwargs):
+    """Automatically sync Profile.phone_number → UserProfile.phone_number."""
+    try:
+        user_profile = UserProfile.objects.get(user=instance.user)
+        if instance.phone_number and instance.phone_number != 'pending':
+            if user_profile.phone_number != instance.phone_number:
+                user_profile.phone_number = instance.phone_number
+                user_profile.save(update_fields=['phone_number'])
+    except UserProfile.DoesNotExist:
+        pass
+
+
+@receiver(post_save, sender=User)
+def generate_initial_otp(sender, instance, created, **kwargs):
+    """Generate OTP for new users if not active."""
+    if created and not instance.is_active:
+        from .signals import create_otp
+        create_otp(instance)

@@ -10,7 +10,7 @@ from .models import (
     Profile, PhoneOTP, Review, UserProfile, Category,
     Subcategory, SubSubCategory, Product, CartItem, Order, OrderItem, OrderAddress, OTP,
     NotificationLog, NewsletterSubscriber, OrderTracking, OrderTrackingHistory, Notification,
-    ContactMessage, OrderStatusHistory, Quotation, QuotationItem, SavedAddress
+    ContactMessage, OrderStatusHistory, Quotation, QuotationItem, SavedAddress, LoginActivity
 )
 
 
@@ -783,25 +783,116 @@ class NotificationLogAdmin(admin.ModelAdmin):
         return False
 
 
-# Inline profile in User admin
-class UserProfileInline(admin.StackedInline):
-    model = UserProfile
-    can_delete = False
-    fields = ['phone_number', 'age', 'address', 'state', 'profile_image', 'account_status']
-    readonly_fields = ['created_at', 'updated_at']
+# ---------- Login Activity Admin ----------
 
-
-class CustomUserAdmin(UserAdmin):
-    inlines = (UserProfileInline,)
+@admin.register(LoginActivity)
+class LoginActivityAdmin(admin.ModelAdmin):
     list_display = [
-        'username', 'first_name', 'last_name', 'email',
-        'is_active', 'is_staff', 'date_joined',
+        'id', 'user_link', 'login_date', 'login_time', 'device_type',
+        'browser', 'operating_system', 'ip_address', 'location_display',
+        'login_method', 'security_status_badge', 'is_new_device', 'is_new_browser',
+        'is_new_location', 'email_sent_badge', 'sms_sent_badge', 'created_at',
     ]
-    search_fields = ['username', 'first_name', 'last_name', 'email']
+    list_filter = [
+        'security_status', 'login_method', 'device_type', 'country', 'city',
+        'is_new_device', 'is_new_browser', 'is_new_location', 'email_sent', 'sms_sent',
+        'created_at',
+    ]
+    search_fields = [
+        'user__username', 'user__email', 'user__first_name', 'user__last_name',
+        'ip_address', 'city', 'state', 'country', 'browser', 'operating_system',
+    ]
+    list_select_related = ['user']
+    date_hierarchy = 'created_at'
+    readonly_fields = [
+        'user', 'login_date', 'login_time', 'device_type', 'browser',
+        'operating_system', 'ip_address', 'city', 'state', 'country',
+        'login_method', 'security_status', 'is_new_device', 'is_new_browser',
+        'is_new_location', 'email_sent', 'sms_sent', 'email_error',
+        'sms_error', 'user_agent', 'created_at',
+    ]
+    ordering = ['-created_at']
+    list_per_page = 50
 
+    fieldsets = (
+        ('User', {
+            'fields': ('user',),
+        }),
+        ('Login Details', {
+            'fields': ('login_date', 'login_time', 'login_method', 'security_status'),
+        }),
+        ('Device & Browser', {
+            'fields': ('device_type', 'browser', 'operating_system', 'user_agent'),
+        }),
+        ('Location', {
+            'fields': ('ip_address', 'city', 'state', 'country'),
+        }),
+        ('Security Flags', {
+            'fields': ('is_new_device', 'is_new_browser', 'is_new_location'),
+        }),
+        ('Notification Status', {
+            'fields': ('email_sent', 'sms_sent', 'email_error', 'sms_error'),
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',),
+        }),
+    )
 
-admin.site.unregister(User)
-admin.site.register(User, CustomUserAdmin)
+    def user_link(self, obj):
+        if obj.user:
+            url = reverse('admin:auth_user_change', args=[obj.user.id])
+            return format_html('<a href="{}">{}</a>', url, obj.user.username)
+        return format_html('<span style="color: #6c757d;">Deleted User</span>')
+    user_link.short_description = 'User'
+    user_link.admin_order_field = 'user__username'
+
+    def location_display(self, obj):
+        return obj.location_display
+    location_display.short_description = 'Location'
+    location_display.admin_order_field = 'city'
+
+    def security_status_badge(self, obj):
+        colors = {
+            'success': '#10b981',
+            'new_device': '#f59e0b',
+            'new_browser': '#f59e0b',
+            'new_location': '#f59e0b',
+            'suspicious': '#dc3545',
+        }
+        color = colors.get(obj.security_status, '#6b7280')
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color, obj.get_security_status_display().upper(),
+        )
+    security_status_badge.short_description = 'Security Status'
+    security_status_badge.admin_order_field = 'security_status'
+
+    def email_sent_badge(self, obj):
+        if obj.email_sent:
+            return format_html('<span style="color: #198754;">✅ Sent</span>')
+        elif obj.email_error:
+            return format_html('<span style="color: #dc3545;">❌ Failed</span>')
+        return format_html('<span style="color: #6c757d;">⏳ Pending</span>')
+    email_sent_badge.short_description = 'Email'
+    email_sent_badge.admin_order_field = 'email_sent'
+
+    def sms_sent_badge(self, obj):
+        if obj.sms_sent:
+            return format_html('<span style="color: #198754;">✅ Sent</span>')
+        elif obj.sms_error:
+            return format_html('<span style="color: #dc3545;">❌ Failed</span>')
+        return format_html('<span style="color: #6c757d;">⏳ Pending</span>')
+    sms_sent_badge.short_description = 'SMS'
+    sms_sent_badge.admin_order_field = 'sms_sent'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 # ---------- Order Tracking Admin ----------
@@ -856,8 +947,8 @@ class OrderTrackingAdmin(admin.ModelAdmin):
 
     def order_link(self, obj):
         url = reverse('admin:store_order_change', args=[obj.order.id])
-        return format_html('<a href="{}">Order #{}</a>', url, obj.order.id)
-    order_link.short_description = 'Order'
+        return format_html('<a href="{}">Tracking #{} (Order #{})</a>', url, obj.id, obj.order.id)
+    order_link.short_description = 'Tracking'
     order_link.admin_order_field = 'order__id'
 
     def customer_name(self, obj):
@@ -976,6 +1067,9 @@ class OrderTrackingHistoryAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 # ---------- Notification Admin ----------
 
@@ -999,91 +1093,32 @@ class NotificationAdmin(admin.ModelAdmin):
 
     def mark_as_read(self, request, queryset):
         queryset.update(is_read=True)
-    mark_as_read.short_description = 'Mark selected as read'
+        self.message_user(request, "Selected notifications marked as read.")
+    mark_as_read.short_description = "Mark selected as Read"
 
     def mark_as_unread(self, request, queryset):
         queryset.update(is_read=False)
-    mark_as_unread.short_description = 'Mark selected as unread'
+        self.message_user(request, "Selected notifications marked as unread.")
+    mark_as_unread.short_description = "Mark selected as Unread"
 
 
-# ---------- Contact Message Admin ----------
+# ---------- Inline profile in User admin ----------
 
-@admin.register(ContactMessage)
-class ContactMessageAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'phone', 'subject', 'created_at', 'colored_status')
-    list_filter = ('status', 'created_at')
-    search_fields = ('name', 'email', 'phone', 'subject', 'message')
-    readonly_fields = ('created_at', 'ip_address')
-    actions = ['mark_as_new', 'mark_as_read', 'mark_as_replied']
-    list_display_links = ('name', 'subject')
-    list_per_page = 25
-    date_hierarchy = 'created_at'
-
-    fieldsets = (
-        ('Customer Information', {
-            'fields': ('name', 'email', 'phone')
-        }),
-        ('Message Details', {
-            'fields': ('subject', 'message')
-        }),
-        ('Status & Metadata', {
-            'fields': ('status', 'ip_address', 'created_at')
-        }),
-    )
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).defer('message')
-
-    def colored_status(self, obj):
-        colors = {
-            'new': '#16A34A',
-            'read': '#2563EB',
-            'replied': '#9333EA',
-        }
-        color = colors.get(obj.status, '#6B7280')
-        return format_html(
-            '<span style="color: {}; font-weight: 600;">{}</span>',
-            color, obj.get_status_display()
-        )
-    colored_status.short_description = 'Status'
-    colored_status.admin_order_field = 'status'
-
-    def mark_as_new(self, request, queryset):
-        queryset.update(status='new', is_read=False)
-    mark_as_new.short_description = 'Mark selected as New'
-
-    def mark_as_read(self, request, queryset):
-        queryset.update(status='read', is_read=True)
-    mark_as_read.short_description = 'Mark selected as Read'
-
-    def mark_as_replied(self, request, queryset):
-        queryset.update(status='replied', is_read=True)
-    mark_as_replied.short_description = 'Mark selected as Replied'
+class UserProfileInline(admin.StackedInline):
+    model = UserProfile
+    can_delete = False
+    fields = ['phone_number', 'age', 'address', 'state', 'profile_image', 'account_status']
+    readonly_fields = ['created_at', 'updated_at']
 
 
-class QuotationItemInline(admin.TabularInline):
-    model = QuotationItem
-    extra = 0
-    readonly_fields = ('product', 'quantity', 'unit_price', 'total_price_display')
-
-    def total_price_display(self, obj):
-        return f"Rs. {obj.total_price()}"
-    total_price_display.short_description = 'Total Price'
-
-
-@admin.register(Quotation)
-class QuotationAdmin(admin.ModelAdmin):
-    list_display = ('quotation_id', 'user', 'status', 'total_amount', 'created_at')
-    list_filter = ('status', 'created_at')
-    search_fields = ('quotation_id', 'user__username', 'full_name', 'email', 'phone')
-    inlines = [QuotationItemInline]
-    date_hierarchy = 'created_at'
+class CustomUserAdmin(UserAdmin):
+    inlines = (UserProfileInline,)
+    list_display = [
+        'username', 'first_name', 'last_name', 'email',
+        'is_active', 'is_staff', 'date_joined',
+    ]
+    search_fields = ['username', 'first_name', 'last_name', 'email']
 
 
-@admin.register(SavedAddress)
-class SavedAddressAdmin(admin.ModelAdmin):
-    list_display = ('user', 'label', 'city', 'state', 'country', 'is_default', 'created_at')
-    list_filter = ('is_default', 'country', 'state', 'created_at')
-    search_fields = ('user__username', 'user__email', 'full_address', 'city', 'state', 'postal_code')
-    readonly_fields = ('created_at', 'updated_at')
-    list_select_related = ('user',)
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)

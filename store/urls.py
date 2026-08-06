@@ -36,10 +36,15 @@ urlpatterns = [
     path('cart/count/', views.cart_count, name='cart_count'),
     path('cart/summary/', views.cart_summary, name='cart_summary'),
     
-    # Auth
+    # Auth - New signup method selection flow
+    path('signup/method/', views.signup_method_view, name='signup_method'),
+    path('signup/email/', views.signup_email_view, name='signup_email'),
+    path('signup/phone/', views.signup_phone_form_view, name='signup_phone'),
+    path('signup/phone/verify/', views.signup_verify_phone_otp_view, name='signup_verify_phone_otp'),
+    path('signup/phone/resend/', views.signup_resend_phone_otp_view, name='signup_resend_phone_otp'),
     path('login/', views.normal_login_view, name='login'),
-    path('signup/phone/', views.signup_phone_view, name='signup_phone'),
-    path('signup/verify/', views.signup_verify_otp_view, name='signup_verify_phone_otp'),
+    path('signup/phone/legacy/', views.signup_phone_view, name='signup_phone_legacy'),
+    path('signup/verify/', views.signup_verify_otp_view, name='signup_verify_phone_otp_legacy'),
     path('signup/resend/', views.signup_resend_otp_view, name='signup_resend_phone_otp'),
     path('signup/success/', views.signup_success, name='signup_success'),
     path('phone-login/', views.login_with_phone_view, name='phone_login'),
@@ -87,6 +92,16 @@ urlpatterns = [
     # Profile Verification
     path('profile/send-otp/', views.profile_send_otp, name='profile_send_otp'),
     path('profile/verify-otp/', views.profile_verify_otp, name='profile_verify_otp'),
+
+    # Profile Email Change Verification
+    path('profile/email/send-otp/', views.profile_send_email_otp, name='profile_send_email_otp'),
+    path('profile/email/verify-otp/', views.profile_verify_email_otp, name='profile_verify_email_otp'),
+    path('profile/email/resend-otp/', views.profile_resend_email_otp, name='profile_resend_email_otp'),
+
+    # Profile Phone Change Verification
+    path('profile/phone/send-otp/', views.profile_send_phone_otp, name='profile_send_phone_otp'),
+    path('profile/phone/verify-otp/', views.profile_verify_phone_otp, name='profile_verify_phone_otp'),
+    path('profile/phone/resend-otp/', views.profile_resend_phone_otp, name='profile_resend_phone_otp'),
 
     # Invoice URLs
     path('orders/<int:order_id>/invoice/', views.order_invoice_view, name='order_invoice'),

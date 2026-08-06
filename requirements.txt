@@ -11,4 +11,6 @@ waitress==3.0.0
 whitenoise==6.12.0
 requests==2.32.3
 celery==5.6.3
+redis==5.2.1
+django-celery-results==2.6.0
 reportlab==4.4.10

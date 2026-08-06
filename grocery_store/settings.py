@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'crispy_forms',
     'crispy_bootstrap5',
+    'django_celery_results',
     'store.apps.StoreConfig',
     'api_settings',
 ]
@@ -202,6 +203,9 @@ TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID')
 TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
 TWILIO_PHONE_NUMBER = os.getenv('TWILIO_PHONE_NUMBER')
 
+# Site URL for email links
+SITE_URL = os.getenv('SITE_URL', 'http://localhost:8000')
+
 # Support contact
 SUPPORT_PHONE_NUMBER = os.getenv('SUPPORT_PHONE_NUMBER', '+91-XXXXX-XXXXX')
 
@@ -212,6 +216,73 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
+
+# ---------------------------------------------------------------------------
+# Celery Configuration
+# ---------------------------------------------------------------------------
+# For development on Windows without Redis/RabbitMQ installed, the broker URL
+# can be left empty or set to a memory/DB transport. However, for production
+# you MUST install Redis (recommended) or RabbitMQ and set a proper broker URL.
+#
+# Installation guides:
+#   - Redis on Windows: Install WSL2 + Ubuntu, then `sudo apt install redis`
+#   - Redis on Linux/macOS: `sudo apt install redis` or `brew install redis`
+#   - RabbitMQ: https://www.rabbitmq.com/download.html
+#
+# Recommended broker URL formats:
+#   Redis (local):    redis://localhost:6379/0
+#   Redis (auth):     redis://:password@host:port/0
+#   RabbitMQ (local): amqp://guest:guest@localhost:5672//
+#   RabbitMQ (cloud): amqp://user:pass@host:port/vhost
+#   AWS SQS:          sqs://aws_key:aws_secret@
+#   Azure SB:         azureservicebus://connection_string
+#
+# If you do NOT have a broker running, Celery tasks will still be dispatched
+# safely. The `safe_delay` helper in store/tasks.py will catch the broker
+# connection error, log it, and fall back gracefully WITHOUT crashing the
+# request-response cycle.
+#
+# The broker_connection_retry_on_startup=False prevents the worker itself
+# from crashing if the broker is unavailable at worker startup time.
+
+import ast
+
+# Resolve broker URL: use REDIS_URL if set, else CELERY_BROKER_URL from env
+# If no broker URL is configured, use 'cache+memory://' for development
+# which requires no external service.
+_CELERY_BROKER_URL = os.getenv('REDIS_URL') or os.getenv('CELERY_BROKER_URL', '')
+
+# If no broker URL is configured at all, use an in-memory cache-based
+# transport. This works out of the box with no external dependencies.
+# For production: set REDIS_URL or CELERY_BROKER_URL in .env
+if not _CELERY_BROKER_URL:
+    _CELERY_BROKER_URL = 'cache+memory://'  # In-memory transport, no external service needed
+
+CELERY_BROKER_URL = _CELERY_BROKER_URL
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'django-db')
+CELERY_ACCEPT_CONTENT = ast.literal_eval(os.getenv('CELERY_ACCEPT_CONTENT', "['json']"))
+CELERY_TASK_SERIALIZER = os.getenv('CELERY_TASK_SERIALIZER', 'json')
+CELERY_RESULT_SERIALIZER = os.getenv('CELERY_RESULT_SERIALIZER', 'json')
+CELERY_TIMEZONE = os.getenv('CELERY_TIMEZONE', 'Asia/Kolkata')
+CELERY_ENABLE_UTC = os.getenv('CELERY_ENABLE_UTC', 'True').lower() in ('1', 'true', 'yes', 'on')
+
+# Retry policy for Celery broker connection
+# If the broker is temporarily down, Celery will retry connecting
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = os.getenv(
+    'CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP', 'False'
+).lower() in ('1', 'true', 'yes', 'on')
+
+# Task routing — send auth-related tasks to a specific queue (optional)
+CELERY_TASK_DEFAULT_QUEUE = os.getenv('CELERY_TASK_DEFAULT_QUEUE', 'default')
+CELERY_TASK_DEFAULT_EXCHANGE = os.getenv('CELERY_TASK_DEFAULT_EXCHANGE', 'default')
+CELERY_TASK_DEFAULT_ROUTING_KEY = os.getenv('CELERY_TASK_DEFAULT_ROUTING_KEY', 'default')
+
+# Worker configuration
+CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.getenv('CELERY_WORKER_MAX_TASKS_PER_CHILD', '50'))
+CELERY_WORKER_SEND_TASK_EVENTS = os.getenv('CELERY_WORKER_SEND_TASK_EVENTS', 'True').lower() in ('1', 'true', 'yes', 'on')
+
+# Task result expiration (in seconds) — 1 day default
+CELERY_RESULT_EXPIRES = int(os.getenv('CELERY_RESULT_EXPIRES', '86400'))
 
 # Logging configuration
 LOGGING = {
@@ -242,6 +313,11 @@ LOGGING = {
             'filename': BASE_DIR / 'notifications.log',
             'formatter': 'verbose',
         },
+        'celery_file': {
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'celery.log',
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'api_settings': {
@@ -269,6 +345,25 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'store.auth_emails': {
+            'handlers': ['console', 'notification_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'store.tasks': {
+            'handlers': ['console', 'celery_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'celery': {
+            'handlers': ['console', 'celery_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'kombu': {
+            'handlers': ['console', 'celery_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
     },
 }
-

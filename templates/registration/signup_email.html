@@ -1,0 +1,428 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block title %}Sign Up with Email - GroceryHub{% endblock %}
+{% block content %}
+<style>
+  .auth-page {
+    position: relative;
+    isolation: isolate;
+    min-height: 82vh;
+    display: grid;
+    place-items: center;
+    padding: 64px 16px 86px;
+    color: #16231d;
+    background:
+      radial-gradient(circle at 12% 16%, rgba(250, 204, 21, 0.2), transparent 23rem),
+      radial-gradient(circle at 88% 10%, rgba(45, 212, 191, 0.16), transparent 22rem),
+      linear-gradient(135deg, #fbfff8 0%, #eef8ef 48%, #fffaf0 100%);
+  }
+
+  .auth-shell {
+    width: min(1160px, 100%);
+    display: grid;
+    grid-template-columns: minmax(360px, 0.92fr) minmax(0, 1.08fr);
+    overflow: hidden;
+    border: 1px solid rgba(21, 128, 61, 0.16);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 28px 70px rgba(15, 81, 50, 0.16);
+    backdrop-filter: blur(14px);
+  }
+
+  .auth-story {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 740px;
+    padding: clamp(28px, 5vw, 46px);
+    color: #fff;
+    background:
+      linear-gradient(145deg, rgba(12, 58, 37, 0.94), rgba(21, 128, 61, 0.8) 52%, rgba(249, 115, 22, 0.58)),
+      url("https://images.unsplash.com/photo-1573246123716-6b1782bfc499?auto=format&fit=crop&w=1300&q=85") center/cover;
+  }
+
+  .auth-story::after {
+    content: "";
+    position: absolute;
+    inset: auto -18% -22% 16%;
+    height: 280px;
+    background: rgba(255, 255, 255, 0.14);
+    transform: rotate(-8deg);
+    border-radius: 8px;
+  }
+
+  .auth-story > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.4rem;
+    font-weight: 950;
+    width: fit-content;
+  }
+
+  .brand-mark i {
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #183523;
+    background: #facc15;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.18);
+  }
+
+  .story-title {
+    margin: 0;
+    max-width: 520px;
+    font-size: clamp(2.5rem, 5vw, 4.35rem);
+    font-weight: 950;
+    line-height: 0.98;
+  }
+
+  .story-copy {
+    max-width: 470px;
+    margin: 20px 0 0;
+    color: rgba(255, 255, 255, 0.86);
+    line-height: 1.75;
+    font-size: 1.03rem;
+  }
+
+  .story-points {
+    display: grid;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .story-point {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(8px);
+    font-weight: 700;
+  }
+
+  .story-point i {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border-radius: 8px;
+    color: #facc15;
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .auth-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: clamp(30px, 5vw, 56px);
+  }
+
+  .auth-icon {
+    width: 68px;
+    height: 68px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #fff;
+    background: linear-gradient(135deg, #0f5132, #15803d 58%, #2dd4bf);
+    box-shadow: 0 14px 28px rgba(25, 135, 84, 0.22);
+    font-size: 2rem;
+  }
+
+  .auth-title {
+    margin: 18px 0 8px;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 950;
+    line-height: 1.05;
+  }
+
+  .auth-subtitle {
+    color: #66736c;
+    margin-bottom: 26px;
+    line-height: 1.65;
+  }
+
+  .auth-card form .form-control,
+  .auth-card form .form-select {
+    width: 100%;
+    min-height: 54px;
+    border: 1px solid rgba(21, 128, 61, 0.18);
+    border-radius: 8px;
+    background: #fbfefc;
+    color: #16231d;
+    box-shadow: 0 8px 20px rgba(15, 81, 50, 0.04);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  }
+
+  .auth-card form .form-control:focus,
+  .auth-card form .form-select:focus {
+    border-color: rgba(21, 128, 61, 0.62);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.16), 0 12px 26px rgba(15, 81, 50, 0.08);
+  }
+
+  .auth-card form label {
+    margin-bottom: 7px;
+    color: #0f5132;
+    font-weight: 800;
+  }
+
+  .auth-card form .form-text,
+  .auth-card form .invalid-feedback,
+  .auth-card form .alert {
+    font-size: 0.92rem;
+  }
+
+  .password-toggle-wrap {
+    position: relative;
+  }
+
+  .password-toggle-wrap .form-control {
+    padding-right: 86px;
+  }
+
+  .password-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    min-width: 68px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 1px solid rgba(21, 128, 61, 0.18);
+    border-radius: 8px;
+    color: #0f5132;
+    background: rgba(255, 255, 255, 0.92);
+    font-size: 0.82rem;
+    font-weight: 850;
+    transform: translateY(-50%);
+    transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+  }
+
+  .password-toggle-btn:hover,
+  .password-toggle-btn:focus {
+    border-color: rgba(21, 128, 61, 0.44);
+    color: #15803d;
+    background: #f4fff8;
+  }
+
+  .password-toggle-btn:focus {
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.18);
+  }
+
+  .auth-submit {
+    width: 100%;
+    min-height: 56px;
+    border: 0;
+    border-radius: 8px;
+    color: #fff;
+    background: linear-gradient(135deg, #0f5132, #15803d 55%, #18b981);
+    font-weight: 950;
+    box-shadow: 0 16px 32px rgba(21, 128, 61, 0.24);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    white-space: normal;
+  }
+
+  .auth-submit:hover {
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 22px 40px rgba(21, 128, 61, 0.28);
+    filter: saturate(1.08);
+  }
+
+  .auth-submit:active {
+    transform: translateY(0);
+  }
+
+  .auth-switch {
+    margin-top: 20px;
+    padding: 16px 18px;
+    border: 1px solid rgba(21, 128, 61, 0.16);
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f9fff7, #fffdf4);
+    color: #66736c;
+    text-align: center;
+  }
+
+  .auth-switch a {
+    color: #15803d;
+    font-weight: 950;
+    text-decoration: none;
+  }
+
+  .auth-switch a:hover {
+    color: #0f5132;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (max-width: 900px) {
+    .auth-shell {
+      grid-template-columns: 1fr;
+    }
+    .auth-story {
+      min-height: auto;
+      gap: 38px;
+      padding: 34px;
+      background-position: center 42%;
+    }
+    .auth-card {
+      padding: 34px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .auth-page {
+      padding: 18px 10px 38px;
+    }
+    .auth-story,
+    .auth-card {
+      padding: 22px;
+    }
+    .auth-card form .form-control,
+    .auth-card form .form-select {
+      min-height: 50px;
+    }
+    .password-toggle-wrap .form-control {
+      padding-right: 76px;
+    }
+    .password-toggle-btn {
+      right: 8px;
+      min-width: 60px;
+      height: 32px;
+      font-size: 0.76rem;
+    }
+  }
+</style>
+
+<div class="auth-page">
+  <div class="auth-shell">
+    <aside class="auth-story">
+      <a href="{% url 'store:home' %}" class="brand-mark">
+        <i class="bi bi-basket2-fill"></i>
+        GrocHub
+      </a>
+      <div>
+        <h1 class="story-title">Sign up with email.</h1>
+        <p class="story-copy">
+          Verify your account with an OTP sent to your email. Fast, secure, and easy.
+        </p>
+        <div class="story-points">
+          <div class="story-point">
+            <i class="bi bi-envelope-check"></i>
+            Email OTP verification
+          </div>
+          <div class="story-point">
+            <i class="bi bi-shield-check"></i>
+            Secure account creation
+          </div>
+          <div class="story-point">
+            <i class="bi bi-basket2"></i>
+            Faster checkout next time
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="auth-card">
+      <span class="auth-icon"><i class="bi bi-envelope-check"></i></span>
+      <h2 class="auth-title">Create account</h2>
+      <p class="auth-subtitle">Join GroceryHub and keep fresh essentials a few clicks away.</p>
+
+      <form method="post" action="{% url 'store:signup_email' %}" id="signup-form">
+        {% csrf_token %}
+        {{ form.first_name|as_crispy_field }}
+        {{ form.username|as_crispy_field }}
+        {{ form.email|as_crispy_field }}
+        {{ form.password1|as_crispy_field }}
+        {{ form.password2|as_crispy_field }}
+
+        <button type="submit" class="auth-submit">
+          <i class="bi bi-person-plus me-2"></i>Create Account
+        </button>
+      </form>
+
+      <div class="auth-switch">
+        Already have an account?
+        <a href="{% url 'store:login' %}">Sign in</a>
+      </div>
+      <div class="auth-switch" style="margin-top:10px;">
+        <a href="{% url 'store:signup_method' %}">Choose another method</a>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("signup-form");
+    if (!form) return;
+
+    form.querySelectorAll('input[type="password"]').forEach((input, index) => {
+      const wrapper = document.createElement("div");
+      const button = document.createElement("button");
+
+      wrapper.className = "password-toggle-wrap";
+      input.parentNode.insertBefore(wrapper, input);
+      wrapper.appendChild(input);
+
+      button.type = "button";
+      button.className = "password-toggle-btn";
+      button.setAttribute("aria-label", `Show password ${index + 1}`);
+      button.innerHTML = '<i class="bi bi-eye"></i><span>Show</span>';
+      wrapper.appendChild(button);
+
+      button.addEventListener("click", function () {
+        const isHidden = input.type === "password";
+        input.type = isHidden ? "text" : "password";
+        button.setAttribute("aria-label", `${isHidden ? "Hide" : "Show"} password ${index + 1}`);
+        button.innerHTML = isHidden
+          ? '<i class="bi bi-eye-slash"></i><span>Hide</span>'
+          : '<i class="bi bi-eye"></i><span>Show</span>';
+        input.focus();
+      });
+    });
+  });
+</script>
+{% endblock %}
+
+</parameter>
+<task_progress>
+- [x] Analyze existing project structure and models
+- [x] Update User model with email/phone fields
+- [x] Create registration method selection view and template
+- [ ] Create email registration form, view, and template
+- [ ] Create phone registration form, view, and template
+- [ ] Implement email verification system
+- [ ] Implement phone OTP verification system
+- [ ] Update login system for email/phone authentication
+- [ ] Update URLs configuration
+- [ ] Add CSS styling for responsive UI
+- [ ] Test the complete flow
+</parameter>
+</write_to_file>

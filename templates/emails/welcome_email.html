@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to GrocHub – Your Account Has Been Created Successfully!</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f4f6f8;
+            padding: 0;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        .header {
+            background: linear-gradient(135deg, #198754, #20c997);
+            padding: 36px 30px 30px;
+            text-align: center;
+            color: white;
+        }
+        .header .logo {
+            margin-bottom: 12px;
+        }
+        .header .logo img {
+            max-width: 140px;
+            height: auto;
+        }
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        .header p {
+            font-size: 15px;
+            opacity: 0.92;
+        }
+        .success-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            margin-bottom: 16px;
+            font-size: 36px;
+        }
+        .content { padding: 28px 30px; }
+        .greeting { font-size: 16px; margin-bottom: 16px; }
+        .greeting strong { color: #198754; }
+
+        .account-card {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .account-card .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 14px;
+            border-bottom: 1px solid #e8f5e9;
+        }
+        .account-card .row:last-child { border-bottom: none; }
+        .account-card .row .label { color: #555; font-weight: 600; }
+        .account-card .row .value { color: #222; font-weight: 500; }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #198754;
+            margin: 20px 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #bbf7d0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .feature-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px 14px;
+            text-align: center;
+            border: 1px solid #e8f5e9;
+        }
+        .feature-item .feature-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        .feature-item .feature-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #198754;
+        }
+
+        .cta-buttons {
+            text-align: center;
+            margin: 24px 0;
+        }
+        .cta-buttons .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #198754, #20c997);
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: 0.3px;
+            margin: 6px;
+        }
+        .cta-buttons .btn-outline {
+            display: inline-block;
+            padding: 12px 28px;
+            border: 2px solid #198754;
+            color: #198754;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 6px;
+            background: transparent;
+        }
+
+        .support-section {
+            background: #fff8e1;
+            border: 1px solid #ffe082;
+            border-radius: 10px;
+            padding: 18px 20px;
+            margin-top: 20px;
+        }
+        .support-section h4 {
+            color: #856404;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        .support-section p {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.8;
+        }
+        .support-section a { color: #198754; text-decoration: none; }
+
+        .footer {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #eee;
+        }
+        .footer a { color: #198754; text-decoration: none; }
+
+        @media (max-width: 480px) {
+            .container { margin: 10px; border-radius: 8px; }
+            .header { padding: 24px 18px 20px; }
+            .header h1 { font-size: 20px; }
+            .content { padding: 20px 16px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .cta-buttons .btn, .cta-buttons .btn-outline { display: block; margin: 8px 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="success-icon">&#10003;</div>
+            <div class="logo">
+                <img src="https://img.icons8.com/color/96/null/grocery-store.png"
+                     alt="GrocHub"
+                     style="max-width: 140px; height: auto;"
+                     width="140">
+            </div>
+            <h1>Welcome to GrocHub!</h1>
+            <p>Your account has been created successfully</p>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Dear <strong>{{ user_name }}</strong>,</p>
+            <p style="margin-bottom: 18px; font-size: 15px; color: #444;">
+                Thank you for joining <strong>GrocHub</strong>! We are thrilled to have you on board.
+                Your account has been created successfully and you can now start exploring everything we have to offer.
+            </p>
+
+            <div class="section-title">Account Details</div>
+            <div class="account-card">
+                <div class="row">
+                    <span class="label">Registered Email</span>
+                    <span class="value">{{ email }}</span>
+                </div>
+                <div class="row">
+                    <span class="label">Account Created</span>
+                    <span class="value">{{ created_at }}</span>
+                </div>
+                {% if user_name %}
+                <div class="row">
+                    <span class="label">Name</span>
+                    <span class="value">{{ user_name }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="section-title">What You Can Do at GrocHub</div>
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">&#x1F6D2;</div>
+                    <div class="feature-label">Online Grocery Shopping</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">&#x1F510;</div>
+                    <div class="feature-label">Secure Orders</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">&#x1F4CD;</div>
+                    <div class="feature-label">Order Tracking</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">&#x2764;&#xFE0F;</div>
+                    <div class="feature-label">Wishlist</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">&#x1F69A;</div>
+                    <div class="feature-label">Fast Delivery</div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">&#x1F4B3;</div>
+                    <div class="feature-label">Secure Payments</div>
+                </div>
+            </div>
+
+            <p style="font-size: 14px; color: #555; text-align: center; margin-bottom: 12px;">
+                No action is required. You can start shopping right away!
+            </p>
+
+            <div class="cta-buttons">
+                <a href="{{ login_url }}" class="btn">&#x1F510; Login to Your Account</a>
+                <a href="{{ home_url }}" class="btn-outline">&#x1F3E0; Visit Home Page</a>
+            </div>
+
+            <div class="support-section">
+                <h4>Need Help? Contact Us</h4>
+                <p>
+                    <strong>GrocHub Customer Support</strong><br>
+                    Email: <a href="mailto:{{ support_email }}">{{ support_email }}</a><br>
+                    We are here to help you with any questions or concerns.
+                </p>
+            </div>
+
+            <p style="margin-top: 20px; font-size: 13px; color: #888; text-align: center;">
+                We look forward to serving you with the freshest groceries and the best shopping experience.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; {% now "Y" %} GrocHub. Fresh groceries delivered to your door.</p>
+            <p style="margin-top: 4px;">
+                <a href="#">Privacy Policy</a> &bull;
+                <a href="#">Terms of Service</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -34,7 +34,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
-from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm, ContactForm, QuotationShippingForm
+from .forms import CustomUserCreationForm, ProfileForm, ChangePasswordForm, CheckoutShippingForm, OTPVerificationForm, PhoneLoginForm, PhoneOTPForm, PhoneSignupForm, ContactForm, QuotationShippingForm, EmailSignupForm
 from .models import (Category, Subcategory, Order, OrderAddress, OrderItem, Product, Review, UserProfile, CartItem,
                      Profile, PhoneOTP, OTP, NewsletterSubscriber, OrderTracking, OrderTrackingHistory, Notification,
                      OrderStatusHistory, Quotation, QuotationItem, Coupon)
@@ -42,6 +42,8 @@ from .notifications import send_order_notifications as trigger_order_notificatio
 from .signals import create_otp, generate_and_send_otp, send_otp_email
 from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_products
 from . import invoice_utils
+from services.email_service import send_welcome_email, send_login_notification_email
+from store.tasks import send_welcome_sms_task, send_login_sms_task, safe_delay
 
 logger = logging.getLogger(__name__)
 PHONE_OTP_RESEND_COOLDOWN_SECONDS = 30
@@ -206,7 +208,20 @@ def normal_login_view(request):
                 else:
                     # Set session expiry to browser close
                     request.session.set_expiry(0)
-                messages.success(request, f"Welcome back, {username}!")
+
+                # Send login notification email (non-blocking)
+                try:
+                    result = send_login_notification_email(user, request)
+                    if result['status'] == 'success':
+                        logger.info('Login notification sent to %s', user.email)
+                    elif result['status'] == 'skipped':
+                        logger.info('Login notification skipped for %s: %s', user.email, result.get('reason', ''))
+                    else:
+                        logger.warning('Login notification failed for %s: %s', user.email, result.get('error', ''))
+                except Exception as exc:
+                    logger.exception('Login notification exception for %s: %s', user.email, exc)
+
+                messages.success(request, f"✅ Login successful! A security notification has been sent to your registered email address.")
                 next_url = request.GET.get('next')
                 if next_url:
                     return redirect(next_url)
@@ -365,7 +380,27 @@ def verify_otp_view(request):
 
             login(request, user)
             request.session.pop('phone_for_otp', None)
-            messages.success(request, 'Logged in successfully using OTP!')
+
+            # Send login notification email (non-blocking)
+            try:
+                result = send_login_notification_email(user, request)
+                if result['status'] == 'success':
+                    logger.info('Login notification sent to %s after OTP login', user.email)
+                elif result['status'] == 'skipped':
+                    logger.info('Login notification skipped for %s: %s', user.email, result.get('reason', ''))
+                else:
+                    logger.warning('Login notification failed for %s: %s', user.email, result.get('error', ''))
+            except Exception as exc:
+                logger.exception('Login notification exception for %s: %s', user.email, exc)
+
+            # Send login notification SMS asynchronously (non-blocking — errors logged, never interrupt user)
+            try:
+                send_login_sms_task.delay(user.id, {'HTTP_USER_AGENT': request.META.get('HTTP_USER_AGENT', '')})
+                logger.info('Login SMS task dispatched for user %s', user.id)
+            except Exception as exc:
+                logger.exception('Login SMS dispatch failed for user %s: %s', user.id, exc)
+
+            messages.success(request, '✅ Login successful! A security notification SMS has been sent to your registered mobile number.')
             return redirect('store:dashboard')
     else:
         form = PhoneOTPForm()
@@ -431,7 +466,15 @@ def signup_verify_otp_view(request):
             login(request, user)
             request.session.pop('signup_phone', None)
             request.session.pop('signup_otp_sent_at', None)
-            messages.success(request, 'Phone verified successfully! You are now logged in.')
+
+            # Send welcome SMS asynchronously (non-blocking — errors logged, never interrupt user)
+            try:
+                send_welcome_sms_task.delay(user.id)
+                logger.info('Welcome SMS task dispatched for user %s', user.id)
+            except Exception as exc:
+                logger.exception('Welcome SMS dispatch failed for user %s: %s', user.id, exc)
+
+            messages.success(request, '🎉 Your GrocHub account has been created successfully! A confirmation SMS has been sent to your registered mobile number.')
             return redirect('store:signup_success')
     else:
         form = PhoneOTPForm()
@@ -1077,6 +1120,18 @@ def verify_email_otp_view(request):
                 request.session.pop('email_otp_resend_at', None)
                 request.session.pop('verification_method', None)
 
+                # Send welcome email (non-blocking — log errors but don't interrupt the user)
+                try:
+                    result = send_welcome_email(user)
+                    if result['status'] == 'success':
+                        logger.info('Welcome email sent to %s after email verification', user.email)
+                    elif result['status'] == 'skipped':
+                        logger.info('Welcome email skipped for %s: %s', user.email, result.get('reason', ''))
+                    else:
+                        logger.warning('Welcome email failed for %s: %s', user.email, result.get('error', ''))
+                except Exception as exc:
+                    logger.exception('Welcome email exception for %s: %s', user.email, exc)
+
                 Notification.objects.create(
                     user=user,
                     title='Account activated',
@@ -1084,7 +1139,7 @@ def verify_email_otp_view(request):
                     notification_type='auth',
                 )
 
-                messages.success(request, 'Email verified and account activated. Welcome to GroceryHub!')
+                messages.success(request, '🎉 Your GrocHub account has been created successfully! A welcome email has been sent to your registered email address.')
                 return redirect('store:dashboard')
             else:
                 # Phone was chosen, but email was still verified — proceed to phone OTP
@@ -1222,6 +1277,18 @@ def verify_phone_otp_view(request):
             request.session.pop('signup_phone_otp_phone', None)
             request.session.pop('verification_method', None)
 
+            # Send welcome email (non-blocking — log errors but don't interrupt the user)
+            try:
+                result = send_welcome_email(user)
+                if result['status'] == 'success':
+                    logger.info('Welcome email sent to %s after phone+email verification', user.email)
+                elif result['status'] == 'skipped':
+                    logger.info('Welcome email skipped for %s: %s', user.email, result.get('reason', ''))
+                else:
+                    logger.warning('Welcome email failed for %s: %s', user.email, result.get('error', ''))
+            except Exception as exc:
+                logger.exception('Welcome email exception for %s: %s', user.email, exc)
+
             Notification.objects.create(
                 user=user,
                 title='Account activated',
@@ -1229,7 +1296,7 @@ def verify_phone_otp_view(request):
                 notification_type='auth',
             )
 
-            messages.success(request, 'Phone verified and account activated. Welcome to GroceryHub!')
+            messages.success(request, '🎉 Your GrocHub account has been created successfully! A welcome email has been sent to your registered email address.')
             return redirect('store:dashboard')
     else:
         form = PhoneOTPForm()
@@ -1398,6 +1465,15 @@ def profile(request):
 def edit_profile(request):
     """Allow users to update their profile information."""
     user_profile = request.user.userprofile
+    # If UserProfile.phone_number is empty, try to copy from Profile
+    if not user_profile.phone_number:
+        phone_profile = getattr(request.user, 'phone_profile', None)
+        if phone_profile and phone_profile.phone_number and phone_profile.phone_number != 'pending':
+            user_profile.phone_number = phone_profile.phone_number
+            user_profile.save(update_fields=['phone_number'])
+            # Refresh from DB
+            user_profile.refresh_from_db()
+
     if request.method == 'POST':
         form = ProfileForm(request.POST, request.FILES, instance=user_profile)
         if form.is_valid():
@@ -1414,7 +1490,19 @@ def edit_profile(request):
             messages.error(request, 'Please correct the errors below.')
     else:
         form = ProfileForm(instance=user_profile)
-    return render(request, 'edit_profile.html', {'form': form, 'profile': user_profile})
+
+    # Determine if the phone number should be read-only (it came from auth Profile)
+    has_phone_from_auth = bool(user_profile.phone_number) and (
+        getattr(request.user, 'phone_profile', None) and
+        request.user.phone_profile.phone_number == user_profile.phone_number
+    )
+
+    return render(request, 'edit_profile.html', {
+        'form': form,
+        'profile': user_profile,
+        'phone_number': user_profile.phone_number or '',
+        'phone_linked_to_auth': has_phone_from_auth,
+    })
 
 
 @login_required
@@ -2431,6 +2519,436 @@ def profile_verify_otp(request):
     })
 
 
+# ============================================================
+# Profile Contact Info Change Verification
+# ============================================================
+
+@login_required
+@require_POST
+def profile_send_email_otp(request):
+    """Send OTP to new email address for verification before updating."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)
+
+    new_email = data.get('email', '').strip().lower()
+    if not new_email:
+        return JsonResponse({'success': False, 'error': 'Email address is required.'}, status=400)
+
+    # Validate email format
+    try:
+        from django.core.validators import validate_email
+        validate_email(new_email)
+    except ValidationError:
+        return JsonResponse({'success': False, 'error': 'Please enter a valid email address.'}, status=400)
+
+    # Check if email is the same as current
+    if new_email == request.user.email.lower():
+        return JsonResponse({'success': False, 'error': 'This is already your current email address.'}, status=400)
+
+    # Check if email is already taken by another user
+    if User.objects.filter(email__iexact=new_email).exclude(pk=request.user.pk).exists():
+        return JsonResponse({'success': False, 'error': 'This email address is already registered to another account.'}, status=409)
+
+    # Rate limiting: check session for last OTP send time
+    last_sent = request.session.get('profile_email_otp_sent_at')
+    if last_sent:
+        try:
+            last_sent_dt = timezone.datetime.fromisoformat(last_sent)
+            elapsed = (timezone.now() - last_sent_dt).total_seconds()
+            if elapsed < 30:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Please wait {int(30 - elapsed)} seconds before requesting a new OTP.',
+                }, status=429)
+        except (ValueError, TypeError):
+            pass
+
+    # Generate OTP
+    otp_code = generate_otp()
+    expires_at = timezone.now() + timedelta(minutes=5)
+    
+    # Invalidate old OTPs for this user
+    OTP.objects.filter(user=request.user, is_latest=True).update(is_latest=False)
+    otp = OTP.objects.create(user=request.user, otp=otp_code, expires_at=expires_at, is_latest=True)
+
+    # Store pending email in session
+    request.session['profile_pending_email'] = new_email
+    request.session['profile_email_otp_sent_at'] = timezone.now().isoformat()
+    request.session['profile_email_otp_attempts'] = 0
+
+    # Send email
+    try:
+        subject = 'Verify Your Email Address - GroceryHub'
+        html_message = render_to_string('emails/otp_email.html', {
+            'user': request.user,
+            'otp': otp_code,
+            'expires_in': '5 minutes',
+            'purpose': 'email_change'
+        })
+        plain_message = strip_tags(html_message)
+        send_mail(
+            subject,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [new_email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        logger.info('Email change OTP sent to %s for user %s', new_email, request.user.id)
+    except Exception as exc:
+        logger.warning('Failed to send email change OTP to %s: %s', new_email, exc)
+        return JsonResponse({'success': False, 'error': 'Could not send verification email. Please try again later.'}, status=500)
+
+    return JsonResponse({
+        'success': True,
+        'message': f'Verification code sent to {new_email}',
+        'email': new_email,
+    })
+
+
+@login_required
+@require_POST
+def profile_verify_email_otp(request):
+    """Verify email OTP and update user email."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)
+
+    otp_input = data.get('otp', '').strip()
+    if not otp_input:
+        return JsonResponse({'success': False, 'error': 'Please enter the verification code.'}, status=400)
+
+    # Get pending email from session
+    new_email = request.session.get('profile_pending_email')
+    if not new_email:
+        return JsonResponse({'success': False, 'error': 'No pending email change found. Please try again.'}, status=400)
+
+    # Rate limiting on attempts
+    attempts = request.session.get('profile_email_otp_attempts', 0)
+    if attempts >= 5:
+        return JsonResponse({'success': False, 'error': 'Too many failed attempts. Please request a new OTP.'}, status=429)
+
+    # Get latest OTP
+    latest_otp = OTP.objects.filter(user=request.user, is_latest=True).first()
+    if not latest_otp:
+        return JsonResponse({'success': False, 'error': 'No OTP found. Please request a new one.'}, status=400)
+
+    # Check expiry
+    if latest_otp.is_expired:
+        return JsonResponse({'success': False, 'error': 'Verification code has expired. Please request a new one.'}, status=400)
+
+    # Verify OTP
+    if latest_otp.otp != otp_input:
+        request.session['profile_email_otp_attempts'] = attempts + 1
+        remaining = max(0, 5 - (attempts + 1))
+        return JsonResponse({
+            'success': False,
+            'error': f'Invalid verification code. You have {remaining} attempt(s) left.',
+        }, status=400)
+
+    # OTP verified - update email atomically
+    try:
+        with transaction.atomic():
+            user = request.user
+            old_email = user.email
+            user.email = new_email
+            user.save(update_fields=['email'])
+
+            # Update UserProfile if needed
+            user_profile = getattr(user, 'userprofile', None)
+            if user_profile:
+                user_profile.save()
+
+            # Mark OTP as used
+            latest_otp.is_used = True
+            latest_otp.save()
+
+            # Clear session data
+            for key in ['profile_pending_email', 'profile_email_otp_sent_at', 
+                       'profile_email_otp_attempts']:
+                request.session.pop(key, None)
+
+            # Create notification
+            Notification.objects.create(
+                user=user,
+                title='Email updated',
+                message=f'Your email address has been successfully changed from {old_email} to {new_email}.',
+                notification_type='profile',
+            )
+
+            logger.info('Email updated for user %s: %s -> %s', user.id, old_email, new_email)
+
+            # If the email changed, we should log the user out or refresh the session
+            # For security, we'll keep them logged in but update the session
+            update_session_auth_hash(request, user)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Email address updated successfully!',
+        })
+    except Exception as exc:
+        logger.error('Failed to update email for user %s: %s', request.user.id, exc)
+        return JsonResponse({'success': False, 'error': 'Failed to update email. Please try again.'}, status=500)
+
+
+@login_required
+@require_POST
+def profile_resend_email_otp(request):
+    """Resend email verification OTP."""
+    new_email = request.session.get('profile_pending_email')
+    if not new_email:
+        return JsonResponse({'success': False, 'error': 'No pending email change found. Please try again.'}, status=400)
+
+    # Rate limiting
+    last_sent = request.session.get('profile_email_otp_sent_at')
+    if last_sent:
+        try:
+            last_sent_dt = timezone.datetime.fromisoformat(last_sent)
+            elapsed = (timezone.now() - last_sent_dt).total_seconds()
+            if elapsed < 30:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Please wait {int(30 - elapsed)} seconds before resending.',
+                }, status=429)
+        except (ValueError, TypeError):
+            pass
+
+    # Generate new OTP
+    otp_code = generate_otp()
+    expires_at = timezone.now() + timedelta(minutes=5)
+    OTP.objects.filter(user=request.user, is_latest=True).update(is_latest=False)
+    otp = OTP.objects.create(user=request.user, otp=otp_code, expires_at=expires_at, is_latest=True)
+
+    request.session['profile_email_otp_sent_at'] = timezone.now().isoformat()
+    request.session['profile_email_otp_attempts'] = 0
+
+    try:
+        subject = 'Verify Your Email Address - GroceryHub'
+        html_message = render_to_string('emails/otp_email.html', {
+            'user': request.user,
+            'otp': otp_code,
+            'expires_in': '5 minutes',
+            'purpose': 'email_change'
+        })
+        plain_message = strip_tags(html_message)
+        send_mail(
+            subject,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [new_email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        return JsonResponse({'success': True, 'message': 'Verification code resent successfully.'})
+    except Exception as exc:
+        logger.warning('Failed to resend email OTP to %s: %s', new_email, exc)
+        return JsonResponse({'success': False, 'error': 'Could not resend verification email. Please try again later.'}, status=500)
+
+
+@login_required
+@require_POST
+def profile_send_phone_otp(request):
+    """Send OTP to new phone number for verification before updating."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)
+
+    raw_phone = data.get('phone', '').strip()
+    if not raw_phone:
+        return JsonResponse({'success': False, 'error': 'Phone number is required.'}, status=400)
+
+    # Normalize phone number
+    new_phone = normalize_phone_number(raw_phone)
+    if not new_phone:
+        return JsonResponse({'success': False, 'error': 'Please enter a valid phone number.'}, status=400)
+
+    # Check if phone is the same as current
+    current_phone = getattr(request.user, 'userprofile', None)
+    current_phone = getattr(current_phone, 'phone_number', None) if current_phone else None
+    if not current_phone:
+        phone_profile = getattr(request.user, 'phone_profile', None)
+        current_phone = getattr(phone_profile, 'phone_number', None) if phone_profile else None
+    
+    if new_phone == current_phone:
+        return JsonResponse({'success': False, 'error': 'This is already your current phone number.'}, status=400)
+
+    # Check if phone is already taken by another user
+    if Profile.objects.filter(phone_number=new_phone).exclude(user=request.user).exists():
+        return JsonResponse({'success': False, 'error': 'This phone number is already registered to another account.'}, status=409)
+    if UserProfile.objects.filter(phone_number=new_phone).exclude(user=request.user).exists():
+        return JsonResponse({'success': False, 'error': 'This phone number is already registered to another account.'}, status=409)
+
+    # Rate limiting: check session for last OTP send time
+    last_sent = request.session.get('profile_phone_otp_sent_at')
+    if last_sent:
+        try:
+            last_sent_dt = timezone.datetime.fromisoformat(last_sent)
+            elapsed = (timezone.now() - last_sent_dt).total_seconds()
+            if elapsed < 30:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Please wait {int(30 - elapsed)} seconds before requesting a new OTP.',
+                }, status=429)
+        except (ValueError, TypeError):
+            pass
+
+    # Generate OTP
+    otp_code = generate_otp()
+    
+    # Store pending phone in session
+    request.session['profile_pending_phone'] = new_phone
+    request.session['profile_phone_otp_sent_at'] = timezone.now().isoformat()
+    request.session['profile_phone_otp_attempts'] = 0
+
+    # Send OTP via Twilio
+    try:
+        send_otp_via_twilio(new_phone, otp_code)
+        create_or_update_phone_otp(new_phone, otp_code)
+        logger.info('Phone change OTP sent to %s for user %s', new_phone, request.user.id)
+    except Exception as exc:
+        logger.warning('Failed to send phone change OTP to %s: %s', new_phone, exc)
+        return JsonResponse({'success': False, 'error': 'Could not send OTP. Please try again later.'}, status=500)
+
+    return JsonResponse({
+        'success': True,
+        'message': f'OTP sent to {new_phone}',
+        'phone': new_phone,
+    })
+
+
+@login_required
+@require_POST
+def profile_verify_phone_otp(request):
+    """Verify phone OTP and update user phone number."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)
+
+    otp_input = data.get('otp', '').strip()
+    if not otp_input:
+        return JsonResponse({'success': False, 'error': 'Please enter the OTP.'}, status=400)
+
+    # Get pending phone from session
+    new_phone = request.session.get('profile_pending_phone')
+    if not new_phone:
+        return JsonResponse({'success': False, 'error': 'No pending phone change found. Please try again.'}, status=400)
+
+    # Rate limiting on attempts
+    attempts = request.session.get('profile_phone_otp_attempts', 0)
+    if attempts >= 5:
+        return JsonResponse({'success': False, 'error': 'Too many failed attempts. Please request a new OTP.'}, status=429)
+
+    # Get latest OTP
+    latest_otp = PhoneOTP.objects.filter(phone=new_phone).first()
+    if not latest_otp:
+        return JsonResponse({'success': False, 'error': 'No OTP found. Please request a new one.'}, status=400)
+
+    # Check expiry
+    if latest_otp.is_expired:
+        return JsonResponse({'success': False, 'error': 'OTP has expired. Please request a new one.'}, status=400)
+
+    # Check attempts
+    if latest_otp.attempts >= 3:
+        return JsonResponse({'success': False, 'error': 'Maximum OTP attempts reached. Please request a new OTP.'}, status=400)
+
+    # Verify OTP
+    if latest_otp.otp != otp_input:
+        latest_otp.attempts += 1
+        latest_otp.save()
+        request.session['profile_phone_otp_attempts'] = attempts + 1
+        remaining = max(0, 3 - latest_otp.attempts)
+        return JsonResponse({
+            'success': False,
+            'error': f'Invalid OTP. You have {remaining} attempt(s) left.',
+        }, status=400)
+
+    # OTP verified - update phone atomically
+    try:
+        with transaction.atomic():
+            user = request.user
+            
+            # Update UserProfile
+            user_profile, _ = UserProfile.objects.get_or_create(user=user)
+            old_phone = user_profile.phone_number
+            user_profile.phone_number = new_phone
+            user_profile.save(update_fields=['phone_number'])
+
+            # Update Profile (phone auth profile)
+            phone_profile, _ = Profile.objects.get_or_create(user=user)
+            phone_profile.phone_number = new_phone
+            phone_profile.is_phone_verified = True
+            phone_profile.save(update_fields=['phone_number', 'is_phone_verified'])
+
+            # Mark OTP as used
+            latest_otp.attempts += 1
+            latest_otp.save()
+
+            # Clear session data
+            for key in ['profile_pending_phone', 'profile_phone_otp_sent_at', 
+                       'profile_phone_otp_attempts']:
+                request.session.pop(key, None)
+
+            # Create notification
+            Notification.objects.create(
+                user=user,
+                title='Phone number updated',
+                message=f'Your phone number has been successfully changed from {old_phone or "none"} to {new_phone}.',
+                notification_type='profile',
+            )
+
+            logger.info('Phone updated for user %s: %s -> %s', user.id, old_phone, new_phone)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Phone number updated successfully!',
+        })
+    except Exception as exc:
+        logger.error('Failed to update phone for user %s: %s', request.user.id, exc)
+        return JsonResponse({'success': False, 'error': 'Failed to update phone number. Please try again.'}, status=500)
+
+
+@login_required
+@require_POST
+def profile_resend_phone_otp(request):
+    """Resend phone verification OTP."""
+    new_phone = request.session.get('profile_pending_phone')
+    if not new_phone:
+        return JsonResponse({'success': False, 'error': 'No pending phone change found. Please try again.'}, status=400)
+
+    # Rate limiting
+    last_sent = request.session.get('profile_phone_otp_sent_at')
+    if last_sent:
+        try:
+            last_sent_dt = timezone.datetime.fromisoformat(last_sent)
+            elapsed = (timezone.now() - last_sent_dt).total_seconds()
+            if elapsed < 30:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Please wait {int(30 - elapsed)} seconds before resending.',
+                }, status=429)
+        except (ValueError, TypeError):
+            pass
+
+    # Generate new OTP
+    otp_code = generate_otp()
+    
+    request.session['profile_phone_otp_sent_at'] = timezone.now().isoformat()
+    request.session['profile_phone_otp_attempts'] = 0
+
+    try:
+        send_otp_via_twilio(new_phone, otp_code)
+        create_or_update_phone_otp(new_phone, otp_code)
+        return JsonResponse({'success': True, 'message': 'OTP resent successfully.'})
+    except Exception as exc:
+        logger.warning('Failed to resend phone OTP to %s: %s', new_phone, exc)
+        return JsonResponse({'success': False, 'error': 'Could not resend OTP. Please try again later.'}, status=500)
+
+
 @require_POST
 def newsletter_subscribe(request):
     """
@@ -3187,6 +3705,578 @@ def api_delete_address(request, address_id):
         return JsonResponse({'success': True})
     except SavedAddress.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'Address not found.'}, status=404)
+
+
+# ============================================================
+# NEW: Registration Method Selection
+# ============================================================
+
+def signup_method_view(request):
+    """Display registration method selection page."""
+    if request.user.is_authenticated:
+        return redirect('store:dashboard')
+    return render(request, 'registration/signup_method.html')
+
+
+# ============================================================
+# NEW: Email-based Registration (clean, simplified flow)
+# ============================================================
+
+def signup_email_view(request):
+    """Handle email-based registration with OTP verification."""
+    if request.user.is_authenticated:
+        return redirect('store:dashboard')
+
+    if request.method == 'POST':
+        form = EmailSignupForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+            UserProfile.objects.get_or_create(user=user)
+            Profile.objects.get_or_create(
+                user=user,
+                defaults={'verification_method': 'email', 'phone_number': 'pending'}
+            )
+            request.session['signup_user_id'] = user.id
+            request.session['verification_method'] = 'email'
+            _, email_sent, _ = deliver_email_otp(user, request=request)
+            if email_sent:
+                messages.success(request, 'Account created! Please verify your email with the code we sent.')
+            else:
+                messages.warning(request, 'Account created, but could not send the email OTP. Please use resend OTP.')
+            return redirect('store:verify_email_otp')
+    else:
+        form = EmailSignupForm()
+    return render(request, 'registration/signup_email.html', {'form': form})
+
+
+# ============================================================
+# NEW: Phone-based Registration (clean, simplified flow)
+# ============================================================
+
+def signup_phone_form_view(request):
+    """Handle phone-based registration with OTP verification."""
+    if request.user.is_authenticated:
+        return redirect('store:dashboard')
+
+    if request.method == 'POST':
+        form = PhoneSignupForm(request.POST)
+        if form.is_valid():
+            first_name = form.cleaned_data['first_name']
+            username = form.cleaned_data['username']
+            phone = form.cleaned_data['phone_number']
+            password = form.cleaned_data['password1']
+
+            if Profile.objects.filter(phone_number=phone).exists():
+                messages.warning(request, 'This phone number is already registered. Please log in instead.')
+                return render(request, 'registration/signup_phone.html', {'form': form})
+
+            latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+            if latest_otp and not latest_otp.can_resend:
+                wait_seconds = 30 - int((timezone.now() - latest_otp.created_at).total_seconds())
+                messages.warning(request, f'Please wait {wait_seconds}s before requesting a new OTP.')
+                return render(request, 'registration/signup_phone.html', {'form': form})
+
+            otp_code = generate_otp()
+            try:
+                send_otp_via_twilio(phone, otp_code)
+            except Exception:
+                logger.exception('Twilio send failed for %s', phone)
+                messages.error(request, 'Unable to send OTP. Please try again later.')
+                return render(request, 'registration/signup_phone.html', {'form': form})
+
+            create_or_update_phone_otp(phone, otp_code)
+            request.session['signup_phone_data'] = {
+                'first_name': first_name, 'username': username,
+                'phone': phone, 'password': password,
+            }
+            request.session['signup_phone'] = phone
+            request.session['signup_otp_sent_at'] = timezone.now().isoformat()
+            messages.success(request, f'OTP sent to {phone}. Verify within 5 minutes.')
+            return redirect('store:signup_verify_phone_otp')
+    else:
+        form = PhoneSignupForm()
+    return render(request, 'registration/signup_phone.html', {'form': form})
+
+
+def signup_verify_phone_otp_view(request):
+    """Verify phone OTP and create user account."""
+    phone = request.session.get('signup_phone')
+    if not phone:
+        messages.error(request, 'Session expired. Please enter your phone number again.')
+        return redirect('store:signup_phone')
+
+    latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+    if not latest_otp:
+        messages.error(request, 'No OTP request found. Please request a new OTP.')
+        return redirect('store:signup_phone')
+
+    if request.method == 'POST':
+        form = PhoneOTPForm(request.POST)
+        if form.is_valid():
+            otp_input = form.cleaned_data['otp']
+            if latest_otp.is_expired:
+                messages.error(request, 'OTP expired. Please resend a new code.')
+                return render(request, 'registration/verify_phone_otp.html', {'form': form, 'phone': phone, 'change_number_url_name': 'store:signup_phone', 'resend_url_name': 'store:signup_resend_phone_otp'})
+            if latest_otp.attempts >= 3:
+                messages.error(request, 'Max OTP attempts reached. Please resend.')
+                return render(request, 'registration/verify_phone_otp.html', {'form': form, 'phone': phone, 'change_number_url_name': 'store:signup_phone', 'resend_url_name': 'store:signup_resend_phone_otp'})
+            if otp_input != latest_otp.otp:
+                latest_otp.attempts += 1
+                latest_otp.save()
+                remaining = max(0, 3 - latest_otp.attempts)
+                messages.error(request, f'Invalid OTP. {remaining} attempt(s) left.')
+                return render(request, 'registration/verify_phone_otp.html', {'form': form, 'phone': phone, 'change_number_url_name': 'store:signup_phone', 'resend_url_name': 'store:signup_resend_phone_otp'})
+
+            signup_data = request.session.get('signup_phone_data', {})
+            username = signup_data.get('username', build_username_from_phone(phone))
+            password = signup_data.get('password')
+            first_name = signup_data.get('first_name', '')
+
+            user = User.objects.create(username=username, first_name=first_name)
+            if password:
+                user.set_password(password)
+            else:
+                user.set_unusable_password()
+            user.is_active = True
+            user.save()
+
+            Profile.objects.create(user=user, phone_number=phone, is_phone_verified=True, verification_method='phone')
+            user_profile, _ = UserProfile.objects.get_or_create(user=user)
+            user_profile.phone_number = phone
+            user_profile.save()
+
+            login(request, user)
+            request.session.pop('signup_phone', None)
+            request.session.pop('signup_otp_sent_at', None)
+            request.session.pop('signup_phone_data', None)
+
+            # Send welcome SMS asynchronously (non-blocking — errors logged, never interrupt user)
+            try:
+                send_welcome_sms_task.delay(user.id)
+                logger.info('Welcome SMS task dispatched for user %s', user.id)
+            except Exception as exc:
+                logger.exception('Welcome SMS dispatch failed for user %s: %s', user.id, exc)
+
+            messages.success(request, '🎉 Your GrocHub account has been created successfully! A confirmation SMS has been sent to your registered mobile number.')
+            return redirect('store:signup_success')
+    else:
+        form = PhoneOTPForm()
+    return render(request, 'registration/verify_phone_otp.html', {'form': form, 'phone': phone, 'change_number_url_name': 'store:signup_phone', 'resend_url_name': 'store:signup_resend_phone_otp'})
+
+
+@require_POST
+def signup_resend_phone_otp_view(request):
+    """Resend phone OTP for signup verification."""
+    phone = request.session.get('signup_phone')
+    if not phone:
+        return JsonResponse({'success': False, 'error': 'Session expired. Please start again.'}, status=400)
+    latest_otp = PhoneOTP.objects.filter(phone=phone).first()
+    if latest_otp and not latest_otp.can_resend:
+        wait_seconds = 30 - int((timezone.now() - latest_otp.created_at).total_seconds())
+        return JsonResponse({'success': False, 'error': f'Please wait {wait_seconds}s before resending.'}, status=429)
+    otp_code = generate_otp()
+    try:
+        send_otp_via_twilio(phone, otp_code)
+    except Exception:
+        logger.exception('Twilio resend failed for %s', phone)
+        return JsonResponse({'success': False, 'error': 'Unable to resend OTP.'}, status=500)
+    create_or_update_phone_otp(phone, otp_code)
+    request.session['signup_otp_sent_at'] = timezone.now().isoformat()
+    return JsonResponse({'success': True, 'message': 'OTP resent successfully.'})
+
+
+# ============================================================
+# Profile Contact Info Change Verification
+# ============================================================
+
+@login_required
+@require_POST
+def profile_send_email_otp(request):
+    """Send OTP to new email address for verification before updating."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)
+
+    new_email = data.get('email', '').strip().lower()
+    if not new_email:
+        return JsonResponse({'success': False, 'error': 'Email address is required.'}, status=400)
+
+    # Validate email format
+    try:
+        validate_email(new_email)
+    except ValidationError:
+        return JsonResponse({'success': False, 'error': 'Please enter a valid email address.'}, status=400)
+
+    # Check if email is the same as current
+    if new_email == request.user.email.lower():
+        return JsonResponse({'success': False, 'error': 'This is already your current email address.'}, status=400)
+
+    # Check if email is already taken by another user
+    if User.objects.filter(email__iexact=new_email).exclude(pk=request.user.pk).exists():
+        return JsonResponse({'success': False, 'error': 'This email address is already registered to another account.'}, status=409)
+
+    # Rate limiting
+    last_sent = request.session.get('profile_email_otp_sent_at')
+    if last_sent:
+        try:
+            last_sent_dt = timezone.datetime.fromisoformat(last_sent)
+            elapsed = (timezone.now() - last_sent_dt).total_seconds()
+            if elapsed < 30:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Please wait {int(30 - elapsed)} seconds before requesting a new OTP.',
+                }, status=429)
+        except (ValueError, TypeError):
+            pass
+
+    # Generate OTP
+    otp_code = generate_otp()
+    expires_at = timezone.now() + timedelta(minutes=5)
+    OTP.objects.filter(user=request.user, is_latest=True).update(is_latest=False)
+    otp = OTP.objects.create(user=request.user, otp=otp_code, expires_at=expires_at, is_latest=True)
+
+    # Store pending email in session
+    request.session['profile_pending_email'] = new_email
+    request.session['profile_email_otp_sent_at'] = timezone.now().isoformat()
+    request.session['profile_email_otp_attempts'] = 0
+
+    # Send email
+    try:
+        subject = 'Verify Your Email Address - GroceryHub'
+        html_message = render_to_string('emails/otp_email.html', {
+            'user': request.user,
+            'otp': otp_code,
+            'expires_in': '5 minutes',
+            'purpose': 'email_change'
+        })
+        plain_message = strip_tags(html_message)
+        send_mail(
+            subject,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [new_email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        logger.info('Email change OTP sent to %s for user %s', new_email, request.user.id)
+    except Exception as exc:
+        logger.warning('Failed to send email change OTP to %s: %s', new_email, exc)
+        return JsonResponse({'success': False, 'error': 'Could not send verification email. Please try again later.'}, status=500)
+
+    return JsonResponse({
+        'success': True,
+        'message': f'Verification code sent to {new_email}',
+        'email': new_email,
+    })
+
+
+@login_required
+@require_POST
+def profile_verify_email_otp(request):
+    """Verify email OTP and update user email."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)
+
+    otp_input = data.get('otp', '').strip()
+    if not otp_input:
+        return JsonResponse({'success': False, 'error': 'Please enter the verification code.'}, status=400)
+
+    new_email = request.session.get('profile_pending_email')
+    if not new_email:
+        return JsonResponse({'success': False, 'error': 'No pending email change found. Please try again.'}, status=400)
+
+    attempts = request.session.get('profile_email_otp_attempts', 0)
+    if attempts >= 5:
+        return JsonResponse({'success': False, 'error': 'Too many failed attempts. Please request a new OTP.'}, status=429)
+
+    latest_otp = OTP.objects.filter(user=request.user, is_latest=True).first()
+    if not latest_otp:
+        return JsonResponse({'success': False, 'error': 'No OTP found. Please request a new one.'}, status=400)
+
+    if latest_otp.is_expired:
+        return JsonResponse({'success': False, 'error': 'Verification code has expired. Please request a new one.'}, status=400)
+
+    if latest_otp.otp != otp_input:
+        request.session['profile_email_otp_attempts'] = attempts + 1
+        remaining = max(0, 5 - (attempts + 1))
+        return JsonResponse({
+            'success': False,
+            'error': f'Invalid verification code. You have {remaining} attempt(s) left.',
+        }, status=400)
+
+    # OTP verified - update email atomically
+    try:
+        with transaction.atomic():
+            user = request.user
+            old_email = user.email
+            user.email = new_email
+            user.save(update_fields=['email'])
+
+            user_profile = getattr(user, 'userprofile', None)
+            if user_profile:
+                user_profile.save()
+
+            latest_otp.is_used = True
+            latest_otp.save()
+
+            for key in ['profile_pending_email', 'profile_email_otp_sent_at', 'profile_email_otp_attempts']:
+                request.session.pop(key, None)
+
+            Notification.objects.create(
+                user=user,
+                title='Email updated',
+                message=f'Your email address has been successfully changed from {old_email} to {new_email}.',
+                notification_type='profile',
+            )
+
+            logger.info('Email updated for user %s: %s -> %s', user.id, old_email, new_email)
+            update_session_auth_hash(request, user)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Email address updated successfully!',
+        })
+    except Exception as exc:
+        logger.error('Failed to update email for user %s: %s', request.user.id, exc)
+        return JsonResponse({'success': False, 'error': 'Failed to update email. Please try again.'}, status=500)
+
+
+@login_required
+@require_POST
+def profile_resend_email_otp(request):
+    """Resend email verification OTP."""
+    new_email = request.session.get('profile_pending_email')
+    if not new_email:
+        return JsonResponse({'success': False, 'error': 'No pending email change found. Please try again.'}, status=400)
+
+    last_sent = request.session.get('profile_email_otp_sent_at')
+    if last_sent:
+        try:
+            last_sent_dt = timezone.datetime.fromisoformat(last_sent)
+            elapsed = (timezone.now() - last_sent_dt).total_seconds()
+            if elapsed < 30:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Please wait {int(30 - elapsed)} seconds before resending.',
+                }, status=429)
+        except (ValueError, TypeError):
+            pass
+
+    otp_code = generate_otp()
+    expires_at = timezone.now() + timedelta(minutes=5)
+    OTP.objects.filter(user=request.user, is_latest=True).update(is_latest=False)
+    otp = OTP.objects.create(user=request.user, otp=otp_code, expires_at=expires_at, is_latest=True)
+
+    request.session['profile_email_otp_sent_at'] = timezone.now().isoformat()
+    request.session['profile_email_otp_attempts'] = 0
+
+    try:
+        subject = 'Verify Your Email Address - GroceryHub'
+        html_message = render_to_string('emails/otp_email.html', {
+            'user': request.user,
+            'otp': otp_code,
+            'expires_in': '5 minutes',
+            'purpose': 'email_change'
+        })
+        plain_message = strip_tags(html_message)
+        send_mail(
+            subject,
+            plain_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [new_email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+        return JsonResponse({'success': True, 'message': 'Verification code resent successfully.'})
+    except Exception as exc:
+        logger.warning('Failed to resend email OTP to %s: %s', new_email, exc)
+        return JsonResponse({'success': False, 'error': 'Could not resend verification email. Please try again later.'}, status=500)
+
+
+@login_required
+@require_POST
+def profile_send_phone_otp(request):
+    """Send OTP to new phone number for verification before updating."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)
+
+    raw_phone = data.get('phone', '').strip()
+    if not raw_phone:
+        return JsonResponse({'success': False, 'error': 'Phone number is required.'}, status=400)
+
+    new_phone = normalize_phone_number(raw_phone)
+    if not new_phone:
+        return JsonResponse({'success': False, 'error': 'Please enter a valid phone number.'}, status=400)
+
+    # Check if phone is the same as current
+    current_phone = getattr(request.user, 'userprofile', None)
+    current_phone = getattr(current_phone, 'phone_number', None) if current_phone else None
+    if not current_phone:
+        phone_profile = getattr(request.user, 'phone_profile', None)
+        current_phone = getattr(phone_profile, 'phone_number', None) if phone_profile else None
+
+    if new_phone == current_phone:
+        return JsonResponse({'success': False, 'error': 'This is already your current phone number.'}, status=400)
+
+    # Check if phone is already taken by another user
+    if Profile.objects.filter(phone_number=new_phone).exclude(user=request.user).exists():
+        return JsonResponse({'success': False, 'error': 'This phone number is already registered to another account.'}, status=409)
+    if UserProfile.objects.filter(phone_number=new_phone).exclude(user=request.user).exists():
+        return JsonResponse({'success': False, 'error': 'This phone number is already registered to another account.'}, status=409)
+
+    # Rate limiting
+    last_sent = request.session.get('profile_phone_otp_sent_at')
+    if last_sent:
+        try:
+            last_sent_dt = timezone.datetime.fromisoformat(last_sent)
+            elapsed = (timezone.now() - last_sent_dt).total_seconds()
+            if elapsed < 30:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Please wait {int(30 - elapsed)} seconds before requesting a new OTP.',
+                }, status=429)
+        except (ValueError, TypeError):
+            pass
+
+    otp_code = generate_otp()
+    request.session['profile_pending_phone'] = new_phone
+    request.session['profile_phone_otp_sent_at'] = timezone.now().isoformat()
+    request.session['profile_phone_otp_attempts'] = 0
+
+    try:
+        send_otp_via_twilio(new_phone, otp_code)
+        create_or_update_phone_otp(new_phone, otp_code)
+        logger.info('Phone change OTP sent to %s for user %s', new_phone, request.user.id)
+    except Exception as exc:
+        logger.warning('Failed to send phone change OTP to %s: %s', new_phone, exc)
+        return JsonResponse({'success': False, 'error': 'Could not send OTP. Please try again later.'}, status=500)
+
+    return JsonResponse({
+        'success': True,
+        'message': f'OTP sent to {new_phone}',
+        'phone': new_phone,
+    })
+
+
+@login_required
+@require_POST
+def profile_verify_phone_otp(request):
+    """Verify phone OTP and update user phone number."""
+    try:
+        data = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid request.'}, status=400)
+
+    otp_input = data.get('otp', '').strip()
+    if not otp_input:
+        return JsonResponse({'success': False, 'error': 'Please enter the OTP.'}, status=400)
+
+    new_phone = request.session.get('profile_pending_phone')
+    if not new_phone:
+        return JsonResponse({'success': False, 'error': 'No pending phone change found. Please try again.'}, status=400)
+
+    attempts = request.session.get('profile_phone_otp_attempts', 0)
+    if attempts >= 5:
+        return JsonResponse({'success': False, 'error': 'Too many failed attempts. Please request a new OTP.'}, status=429)
+
+    latest_otp = PhoneOTP.objects.filter(phone=new_phone).first()
+    if not latest_otp:
+        return JsonResponse({'success': False, 'error': 'No OTP found. Please request a new one.'}, status=400)
+
+    if latest_otp.is_expired:
+        return JsonResponse({'success': False, 'error': 'OTP has expired. Please request a new one.'}, status=400)
+
+    if latest_otp.attempts >= 3:
+        return JsonResponse({'success': False, 'error': 'Maximum OTP attempts reached. Please request a new OTP.'}, status=400)
+
+    if latest_otp.otp != otp_input:
+        latest_otp.attempts += 1
+        latest_otp.save()
+        request.session['profile_phone_otp_attempts'] = attempts + 1
+        remaining = max(0, 3 - latest_otp.attempts)
+        return JsonResponse({
+            'success': False,
+            'error': f'Invalid OTP. You have {remaining} attempt(s) left.',
+        }, status=400)
+
+    # OTP verified - update phone atomically
+    try:
+        with transaction.atomic():
+            user = request.user
+
+            user_profile, _ = UserProfile.objects.get_or_create(user=user)
+            old_phone = user_profile.phone_number
+            user_profile.phone_number = new_phone
+            user_profile.save(update_fields=['phone_number'])
+
+            phone_profile, _ = Profile.objects.get_or_create(user=user)
+            phone_profile.phone_number = new_phone
+            phone_profile.is_phone_verified = True
+            phone_profile.save(update_fields=['phone_number', 'is_phone_verified'])
+
+            latest_otp.attempts += 1
+            latest_otp.save()
+
+            for key in ['profile_pending_phone', 'profile_phone_otp_sent_at', 'profile_phone_otp_attempts']:
+                request.session.pop(key, None)
+
+            Notification.objects.create(
+                user=user,
+                title='Phone number updated',
+                message=f'Your phone number has been successfully changed from {old_phone or "none"} to {new_phone}.',
+                notification_type='profile',
+            )
+
+            logger.info('Phone updated for user %s: %s -> %s', user.id, old_phone, new_phone)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Phone number updated successfully!',
+        })
+    except Exception as exc:
+        logger.error('Failed to update phone for user %s: %s', request.user.id, exc)
+        return JsonResponse({'success': False, 'error': 'Failed to update phone number. Please try again.'}, status=500)
+
+
+@login_required
+@require_POST
+def profile_resend_phone_otp(request):
+    """Resend phone verification OTP."""
+    new_phone = request.session.get('profile_pending_phone')
+    if not new_phone:
+        return JsonResponse({'success': False, 'error': 'No pending phone change found. Please try again.'}, status=400)
+
+    last_sent = request.session.get('profile_phone_otp_sent_at')
+    if last_sent:
+        try:
+            last_sent_dt = timezone.datetime.fromisoformat(last_sent)
+            elapsed = (timezone.now() - last_sent_dt).total_seconds()
+            if elapsed < 30:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Please wait {int(30 - elapsed)} seconds before resending.',
+                }, status=429)
+        except (ValueError, TypeError):
+            pass
+
+    otp_code = generate_otp()
+    request.session['profile_phone_otp_sent_at'] = timezone.now().isoformat()
+    request.session['profile_phone_otp_attempts'] = 0
+
+    try:
+        send_otp_via_twilio(new_phone, otp_code)
+        create_or_update_phone_otp(new_phone, otp_code)
+        return JsonResponse({'success': True, 'message': 'OTP resent successfully.'})
+    except Exception as exc:
+        logger.warning('Failed to resend phone OTP to %s: %s', new_phone, exc)
+        return JsonResponse({'success': False, 'error': 'Could not resend OTP. Please try again later.'}, status=500)
 
 
 @login_required

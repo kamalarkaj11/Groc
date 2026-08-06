@@ -1,4 +1,4 @@
-i{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}Edit Profile - GroceryHub{% endblock %}
@@ -149,7 +149,7 @@ i{% extends 'base.html' %}
     border-radius: 8px;
     padding: 12px 14px;
     font-size: 0.95rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
     background: var(--ep-soft);
   }
 
@@ -158,6 +158,12 @@ i{% extends 'base.html' %}
     border-color: var(--ep-green);
     box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.15);
     background: #fff;
+  }
+
+  .form-group .form-control[readonly] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+    opacity: 0.8;
   }
 
   .form-group .helptext {
@@ -225,6 +231,62 @@ i{% extends 'base.html' %}
     color: var(--ep-ink);
   }
 
+  /* Action buttons for individual fields */
+  .ep-field-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .ep-btn-add {
+    background: var(--ep-green);
+    color: #fff;
+  }
+
+  .ep-btn-add:hover {
+    background: #157347;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+  }
+
+  .ep-btn-change {
+    background: var(--ep-yellow);
+    color: #183523;
+  }
+
+  .ep-btn-change:hover {
+    background: #ffd775;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 200, 87, 0.4);
+  }
+
+  .ep-field-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .ep-field-wrapper .form-control {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .ep-field-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 2px;
+  }
+
   .error-list {
     list-style: none;
     padding: 0;
@@ -243,8 +305,302 @@ i{% extends 'base.html' %}
     .form-row { grid-template-columns: 1fr; }
     .ep-avatar-section { flex-direction: column; text-align: center; }
     .ep-submit { flex-direction: column; }
+    .ep-field-wrapper {
+      flex-direction: column;
+    }
+    .ep-field-actions {
+      flex-direction: row;
+      width: 100%;
+    }
+    .ep-field-actions .ep-field-action {
+      flex: 1;
+    }
+  }
+
+  /* ── Premium Email Change Modal ── */
+  .ep-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    pointer-events: none;
+    padding: 20px;
+  }
+
+  .ep-modal-backdrop.active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .ep-modal-backdrop .ep-modal-content {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+    transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1), 
+                transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .ep-modal-backdrop.active .ep-modal-content {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  .ep-modal-content {
+    position: relative;
+    width: 100%;
+    max-width: 550px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+  }
+
+  .ep-modal-content .ep-modal-body {
+    padding: 32px;
+    overflow-y: auto;
+    flex: 1 1 auto;
+  }
+
+  .ep-modal-content .ep-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 32px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #ffffff;
+  }
+
+  .ep-modal-content .ep-modal-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .ep-modal-content .ep-modal-title i {
+    color: #198754;
+    font-size: 24px;
+  }
+
+  .ep-modal-description {
+    color: #6B7280;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0 0 24px 0;
+    font-weight: 400;
+  }
+
+  .ep-modal-close-btn {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background: #f3f4f6;
+    color: #6B7280;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .ep-modal-close-btn:hover {
+    background: #e5e7eb;
+    color: #1F2937;
+    transform: rotate(90deg);
+  }
+
+  .ep-modal-content .form-group {
+    margin-bottom: 20px;
+  }
+
+  .ep-modal-content .form-group label {
+    display: block;
+    font-weight: 600;
+    color: #1F2937;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .ep-modal-content .form-control {
+    width: 100%;
+    height: 56px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0 16px;
+    font-size: 15px;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    color: #1F2937;
+  }
+
+  .ep-modal-content .form-control:focus {
+    outline: none;
+    border-color: #198754;
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.1);
+    background: #ffffff;
+  }
+
+  .ep-modal-content .form-control::placeholder {
+    color: #9CA3AF;
+  }
+
+  .ep-modal-btn-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    height: 52px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #198754, #20c997);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 14px rgba(25, 135, 84, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ep-modal-btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(25, 135, 84, 0.4);
+    background: linear-gradient(135deg, #157347, #1ab394);
+  }
+
+  .ep-modal-btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .ep-modal-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .ep-modal-btn-primary .spinner-border {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
+  }
+
+  .ep-modal-error {
+    display: none;
+    padding: 12px 16px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    color: #dc2626;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ep-modal-error.show {
+    display: flex;
+  }
+
+  .ep-modal-error i {
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .ep-modal-success-toast {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 1000000;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid #198754;
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    max-width: calc(100vw - 48px);
+  }
+
+  .ep-modal-success-toast.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  .ep-modal-success-toast i {
+    font-size: 20px;
+    color: #198754;
+    flex-shrink: 0;
+  }
+
+  .ep-modal-success-toast span {
+    color: #1F2937;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 575px) {
+    .ep-modal-content {
+      max-width: 95vw;
+      max-height: 95vh;
+      border-radius: 16px;
+    }
+    .ep-modal-content .ep-modal-header {
+      padding: 20px 24px;
+    }
+    .ep-modal-content .ep-modal-body {
+      padding: 24px;
+    }
+    .ep-modal-content .ep-modal-title {
+      font-size: 22px;
+    }
+    .ep-modal-content .form-control {
+      height: 52px;
+    }
+    .ep-modal-btn-primary {
+      height: 50px;
+    }
+  }
+
+  @media (min-width: 576px) and (max-width: 991px) {
+    .ep-modal-content {
+      max-width: 90vw;
+    }
+  }
+
+  @media (min-width: 992px) {
+    .ep-modal-content {
+      max-width: 550px;
+    }
   }
 </style>
+
 
 <div class="edit-page">
   <div class="ep-container">
@@ -278,33 +634,131 @@ i{% extends 'base.html' %}
           </div>
 
           <div class="form-row">
+            <!-- First Name with conditional Add/Change button -->
             <div class="form-group">
               <label for="id_first_name">First Name</label>
-              <input type="text" name="first_name" id="id_first_name" class="form-control"
-                     value="{{ form.first_name.value|default:'' }}" placeholder="First name">
+              <div class="ep-field-wrapper">
+                <input type="text" name="first_name" id="id_first_name" class="form-control"
+                       value="{{ form.first_name.value|default:'' }}" 
+                       placeholder="First name"
+                       {% if not form.first_name.value %}readonly{% endif %}>
+                <div class="ep-field-actions">
+                  {% if form.first_name.value %}
+                    <button type="button" class="ep-field-action ep-btn-change" onclick="enableField('id_first_name')">
+                      <i class="bi bi-pencil"></i> Change
+                    </button>
+                  {% else %}
+                    <button type="button" class="ep-field-action ep-btn-add" onclick="enableField('id_first_name')">
+                      <i class="bi bi-plus"></i> Add
+                    </button>
+                  {% endif %}
+                </div>
+              </div>
               {% if form.first_name.errors %}
               <ul class="error-list">{% for e in form.first_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>
               {% endif %}
             </div>
+
+            <!-- Last Name with conditional Add/Change button -->
             <div class="form-group">
               <label for="id_last_name">Last Name</label>
-              <input type="text" name="last_name" id="id_last_name" class="form-control"
-                     value="{{ form.last_name.value|default:'' }}" placeholder="Last name">
+              <div class="ep-field-wrapper">
+                <input type="text" name="last_name" id="id_last_name" class="form-control"
+                       value="{{ form.last_name.value|default:'' }}" 
+                       placeholder="Last name"
+                       {% if not form.last_name.value %}readonly{% endif %}>
+                <div class="ep-field-actions">
+                  {% if form.last_name.value %}
+                    <button type="button" class="ep-field-action ep-btn-change" onclick="enableField('id_last_name')">
+                      <i class="bi bi-pencil"></i> Change
+                    </button>
+                  {% else %}
+                    <button type="button" class="ep-field-action ep-btn-add" onclick="enableField('id_last_name')">
+                      <i class="bi bi-plus"></i> Add
+                    </button>
+                  {% endif %}
+                </div>
+              </div>
               {% if form.last_name.errors %}
               <ul class="error-list">{% for e in form.last_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>
               {% endif %}
             </div>
           </div>
 
+          <!-- Email Address with conditional Add/Change button -->
           <div class="form-group">
-            <label for="id_email">Email Address <span class="text-danger">*</span></label>
-            <input type="email" name="email" id="id_email" class="form-control"
-                   value="{{ user.email|default:'' }}" placeholder="Email address"
-                   readonly style="background-color: #e9ecef; cursor: not-allowed;">
+            <label for="id_email_display">Email Address</label>
+            <div class="ep-field-wrapper">
+              <input type="email" id="id_email_display" class="form-control"
+                     value="{{ user.email|default:'' }}" 
+                     placeholder="Email address"
+                     readonly>
+              <div class="ep-field-actions">
+                {% if user.email %}
+                  <button type="button" class="ep-field-action ep-btn-change" id="btnChangeEmail">
+                    <i class="bi bi-pencil"></i> Change
+                  </button>
+                {% else %}
+                  <button type="button" class="ep-field-action ep-btn-add" id="btnChangeEmail">
+                    <i class="bi bi-plus"></i> Add Email
+                  </button>
+                {% endif %}
+              </div>
+            </div>
             <small class="helptext" style="color: var(--ep-muted);">
               <i class="bi bi-shield-lock" style="color: var(--ep-green);"></i>
-              Email can only be changed through email verification. Contact support to update your email.
+              Changing your email requires verification via a one-time code sent to the new address.
             </small>
+          </div>
+
+          <!-- Email Change Verification Modal (Premium Design) -->
+          <div class="ep-modal-backdrop" id="emailChangeModal" role="dialog" aria-modal="true" aria-labelledby="emailChangeModalTitle" aria-hidden="true">
+            <div class="ep-modal-content">
+              <div class="ep-modal-header">
+                <h2 class="ep-modal-title" id="emailChangeModalTitle">
+                  <i class="bi bi-envelope"></i>
+                  Change Email Address
+                </h2>
+                <button type="button" class="ep-modal-close-btn" id="btnCloseEmailModal" aria-label="Close modal">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+              <div class="ep-modal-body">
+                <div id="emailChangeStep1">
+                  <p class="ep-modal-description">Enter your new email address. We'll send a verification code to verify ownership before updating your account.</p>
+                  <div class="form-group">
+                    <label for="id_new_email">New Email Address</label>
+                    <input type="email" id="id_new_email" class="form-control" placeholder="Enter your new email address" autocomplete="email">
+                  </div>
+                  <div id="emailChangeError" class="ep-modal-error" role="alert"></div>
+                  <button type="button" class="ep-modal-btn-primary" id="btnSendEmailOtp">
+                    <i class="bi bi-send"></i>
+                    <span id="btnSendEmailOtpText">Add Email</span>
+                  </button>
+                </div>
+                <div id="emailChangeStep2" style="display: none;">
+                  <p class="ep-modal-description">Enter the 6-digit code sent to <strong id="emailSentTo" style="color: #1F2937;"></strong>.</p>
+                  <div class="form-group">
+                    <label for="id_email_otp">Verification Code</label>
+                    <input type="text" id="id_email_otp" class="form-control" placeholder="Enter 6-digit code" maxlength="6" autocomplete="one-time-code">
+                  </div>
+                  <div id="emailVerifyError" class="ep-modal-error" role="alert"></div>
+                  <button type="button" class="ep-modal-btn-primary" id="btnVerifyEmailOtp">
+                    <i class="bi bi-check-circle"></i>
+                    Verify & Update Email
+                  </button>
+                  <button type="button" class="ep-btn-cancel" id="btnResendEmailOtp" style="width: 100%; margin-top: 12px; height: 48px; border-radius: 12px;">
+                    <i class="bi bi-arrow-clockwise"></i> Resend Code
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Success Toast Notification -->
+          <div class="ep-modal-success-toast" id="emailSuccessToast" role="alert" aria-live="polite">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>Verification code sent successfully.</span>
           </div>
 
           <!-- Contact Section -->
@@ -314,9 +768,33 @@ i{% extends 'base.html' %}
 
           <div class="form-group">
             <label for="id_phone_number">Phone Number {% if not profile.phone_number %}<span class="text-danger">*</span>{% endif %}</label>
-            <input type="tel" name="phone_number" id="id_phone_number" class="form-control"
-                   value="{{ form.phone_number.value|default:'' }}" placeholder="+91XXXXXXXXXX">
-            {% if not profile.phone_number %}
+            <div class="ep-field-wrapper">
+              <input type="tel" name="phone_number" id="id_phone_number" class="form-control"
+                     value="{{ phone_number|default:form.phone_number.value|default:'' }}"
+                     placeholder="+91XXXXXXXXXX"
+                     {% if phone_linked_to_auth %}readonly{% endif %}>
+              <div class="ep-field-actions">
+                {% if phone_linked_to_auth %}
+                  <button type="button" class="ep-field-action ep-btn-change" id="btnChangePhone">
+                    <i class="bi bi-pencil"></i> Change
+                  </button>
+                {% elif profile.phone_number %}
+                  <button type="button" class="ep-field-action ep-btn-change" id="btnChangePhone">
+                    <i class="bi bi-pencil"></i> Change
+                  </button>
+                {% else %}
+                  <button type="button" class="ep-field-action ep-btn-add" id="btnChangePhone">
+                    <i class="bi bi-plus"></i> Add Phone
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+            {% if phone_linked_to_auth %}
+            <small class="helptext" style="color: var(--ep-muted);">
+              <i class="bi bi-shield-lock" style="color: var(--ep-green);"></i>
+              This phone number is linked to your authentication method and cannot be changed here.
+            </small>
+            {% elif not profile.phone_number %}
             <small class="helptext" style="color: #dc3545;">
               <i class="bi bi-exclamation-circle"></i> Phone number is required for order delivery notifications.
             </small>
@@ -324,6 +802,76 @@ i{% extends 'base.html' %}
             {% if form.phone_number.errors %}
             <ul class="error-list">{% for e in form.phone_number.errors %}<li>{{ e }}</li>{% endfor %}</ul>
             {% endif %}
+
+            {% if phone_linked_to_auth %}
+            <div style="margin-top: 12px;">
+              <small class="helptext" style="color: var(--ep-muted); display: block; margin-top: 4px;">
+                <i class="bi bi-shield-lock" style="color: var(--ep-green);"></i>
+                Changing your phone number requires OTP verification via SMS.
+              </small>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Phone Change Verification Modal (Premium Design) -->
+          <div class="ep-modal-backdrop" id="phoneChangeModal" role="dialog" aria-modal="true" aria-labelledby="phoneChangeModalTitle" aria-hidden="true">
+            <div class="ep-modal-content">
+              <div class="ep-modal-header">
+                <h2 class="ep-modal-title" id="phoneChangeModalTitle">
+                  <i class="bi bi-telephone"></i>
+                  Change Phone Number
+                </h2>
+                <button type="button" class="ep-modal-close-btn" id="btnClosePhoneModal" aria-label="Close modal">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+              <div class="ep-modal-body">
+                <div id="phoneChangeStep1">
+                  <p class="ep-modal-description">Enter your new mobile number. We'll send a one-time verification code (OTP) via SMS to verify ownership before updating your account.</p>
+                  <div class="form-group">
+                    <label for="id_new_phone">New Phone Number</label>
+                    <div style="display: flex; gap: 8px;">
+                      <select id="id_country_code" class="form-control" style="width: 100px; height: 56px; flex-shrink: 0;">
+                        <option value="+91">🇮🇳 +91</option>
+                        <option value="+1">🇺🇸 +1</option>
+                        <option value="+44">🇬🇧 +44</option>
+                        <option value="+61">🇦🇺 +61</option>
+                        <option value="+971">🇦🇪 +971</option>
+                        <option value="+65">🇸🇬 +65</option>
+                        <option value="+60">🇲🇾 +60</option>
+                      </select>
+                      <input type="tel" id="id_new_phone" class="form-control" placeholder="9876543210" style="flex: 1;" autocomplete="tel">
+                    </div>
+                  </div>
+                  <div id="phoneChangeError" class="ep-modal-error" role="alert"></div>
+                  <button type="button" class="ep-modal-btn-primary" id="btnSendPhoneOtp">
+                    <i class="bi bi-send"></i>
+                    <span id="btnSendPhoneOtpText">Add Phone Number</span>
+                  </button>
+                </div>
+                <div id="phoneChangeStep2" style="display: none;">
+                  <p class="ep-modal-description">Enter the 6-digit code sent to <strong id="phoneSentTo" style="color: #1F2937;"></strong>.</p>
+                  <div class="form-group">
+                    <label for="id_phone_otp">Verification Code</label>
+                    <input type="text" id="id_phone_otp" class="form-control" placeholder="Enter 6-digit code" maxlength="6" autocomplete="one-time-code">
+                  </div>
+                  <div id="phoneVerifyError" class="ep-modal-error" role="alert"></div>
+                  <button type="button" class="ep-modal-btn-primary" id="btnVerifyPhoneOtp">
+                    <i class="bi bi-check-circle"></i>
+                    Verify & Update Phone
+                  </button>
+                  <button type="button" class="ep-btn-cancel" id="btnResendPhoneOtp" style="width: 100%; margin-top: 12px; height: 48px; border-radius: 12px;">
+                    <i class="bi bi-arrow-clockwise"></i> Resend Code
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Phone Success Toast Notification -->
+          <div class="ep-modal-success-toast" id="phoneSuccessToast" role="alert" aria-live="polite">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>OTP has been sent successfully to your mobile number.</span>
           </div>
 
           <div class="form-group">
@@ -424,6 +972,646 @@ function previewAvatar(input) {
     reader.readAsDataURL(input.files[0]);
   }
 }
+
+// Enable a read-only field when Add/Change button is clicked
+function enableField(fieldId) {
+  const field = document.getElementById(fieldId);
+  if (field) {
+    field.removeAttribute('readonly');
+    field.focus();
+  }
+}
+
+  // ===== Premium Email Change Modal =====
+  (function() {
+    var btnChangeEmail = document.getElementById('btnChangeEmail');
+    var modalEl = document.getElementById('emailChangeModal');
+    var closeBtn = document.getElementById('btnCloseEmailModal');
+    var btnSendEmailOtp = document.getElementById('btnSendEmailOtp');
+    var btnSendEmailOtpText = document.getElementById('btnSendEmailOtpText');
+    var emailInput = document.getElementById('id_new_email');
+    var focusableSelectors = [
+      'button:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      'a[href]',
+      '[tabindex]:not([tabindex="-1"])'
+    ];
+    var lastFocusedEl = null;
+    var escapeHandler = null;
+    var keydownHandler = null;
+    var bodyOverflow = '';
+
+    function getFocusableElements(container) {
+      return container.querySelectorAll(focusableSelectors.join(','));
+    }
+
+    function showEmailModal() {
+      lastFocusedEl = document.activeElement;
+      bodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      modalEl.classList.add('active');
+      modalEl.setAttribute('aria-hidden', 'false');
+
+      // Reset form state
+      document.getElementById('emailChangeStep1').style.display = 'block';
+      document.getElementById('emailChangeStep2').style.display = 'none';
+      emailInput.value = '';
+      document.getElementById('id_email_otp').value = '';
+      document.getElementById('emailChangeError').classList.remove('show');
+      document.getElementById('emailVerifyError').classList.remove('show');
+      updateButtonText();
+
+      // Move focus to the email input
+      setTimeout(function() { 
+        emailInput.focus(); 
+      }, 100);
+
+      // Trap focus inside the modal
+      function trapFocus(e) {
+        if (e.key !== 'Tab') return;
+        var focusable = getFocusableElements(modalEl);
+        if (focusable.length === 0) return;
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+      keydownHandler = trapFocus;
+      document.addEventListener('keydown', keydownHandler);
+
+      // Close on Escape
+      function onEscape(e) {
+        if (e.key === 'Escape') {
+          closeEmailModal();
+        }
+      }
+      escapeHandler = onEscape;
+      document.addEventListener('keydown', escapeHandler);
+    }
+
+    function closeEmailModal() {
+      modalEl.classList.remove('active');
+      modalEl.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = bodyOverflow;
+
+      if (keydownHandler) {
+        document.removeEventListener('keydown', keydownHandler);
+        keydownHandler = null;
+      }
+      if (escapeHandler) {
+        document.removeEventListener('keydown', escapeHandler);
+        escapeHandler = null;
+      }
+
+      // Return focus to the Change Email button
+      if (lastFocusedEl) {
+        setTimeout(function() { lastFocusedEl.focus(); }, 50);
+      }
+    }
+
+    function updateButtonText() {
+      var email = emailInput.value.trim();
+      if (!email) {
+        btnSendEmailOtpText.textContent = 'Add Email';
+      } else {
+        btnSendEmailOtpText.textContent = 'Send Verification Code';
+      }
+    }
+
+    function showSuccessToast() {
+      var toast = document.getElementById('emailSuccessToast');
+      toast.classList.add('show');
+      setTimeout(function() {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function validateEmail(email) {
+      var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    // Update button text on input
+    emailInput.addEventListener('input', updateButtonText);
+
+    // Open modal
+    btnChangeEmail.addEventListener('click', function() {
+      showEmailModal();
+    });
+
+    // Close via X button
+    closeBtn.addEventListener('click', closeEmailModal);
+
+    // Close when clicking outside the modal content
+    modalEl.addEventListener('click', function(e) {
+      if (e.target === modalEl) {
+        closeEmailModal();
+      }
+    });
+
+    // Expose functions for use in verification callbacks
+    window.closeEmailModal = closeEmailModal;
+    window.showEmailSuccessToast = showSuccessToast;
+  })();
+
+
+document.getElementById('btnSendEmailOtp').addEventListener('click', function() {
+  var newEmail = document.getElementById('id_new_email').value.trim();
+  var errorEl = document.getElementById('emailChangeError');
+  var btn = document.getElementById('btnSendEmailOtp');
+  var btnText = document.getElementById('btnSendEmailOtpText');
+
+  // Clear previous errors
+  errorEl.classList.remove('show');
+
+  // Validation
+  if (!newEmail) {
+    errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Please enter your email address.';
+    errorEl.classList.add('show');
+    emailInput.focus();
+    return;
+  }
+
+  if (!validateEmail(newEmail)) {
+    errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Please enter a valid email address.';
+    errorEl.classList.add('show');
+    emailInput.focus();
+    return;
+  }
+
+  // Disable button and show loading state
+  btn.disabled = true;
+  var originalText = btnText.textContent;
+  btnText.textContent = 'Sending...';
+  btn.querySelector('i').style.display = 'none';
+  var spinner = document.createElement('span');
+  spinner.className = 'spinner-border spinner-border-sm';
+  spinner.setAttribute('role', 'status');
+  btn.insertBefore(spinner, btnText);
+
+  fetch("{% url 'store:profile_send_email_otp' %}", {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: newEmail })
+  })
+  .then(r => r.json())
+  .then(data => {
+    // Re-enable button
+    btn.disabled = false;
+    btnText.textContent = originalText;
+    btn.querySelector('.spinner-border').remove();
+    btn.querySelector('i').style.display = 'inline';
+
+    if (data.success) {
+      document.getElementById('emailSentTo').textContent = newEmail;
+      document.getElementById('emailChangeStep1').style.display = 'none';
+      document.getElementById('emailChangeStep2').style.display = 'block';
+      
+      // Show success toast
+      if (typeof window.showEmailSuccessToast === 'function') {
+        window.showEmailSuccessToast();
+      }
+    } else {
+      errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + (data.error || 'Failed to send verification code. Please try again.');
+      errorEl.classList.add('show');
+    }
+  })
+  .catch(err => {
+    btn.disabled = false;
+    btnText.textContent = originalText;
+    btn.querySelector('.spinner-border').remove();
+    btn.querySelector('i').style.display = 'inline';
+    errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Network error. Please check your connection and try again.';
+    errorEl.classList.add('show');
+  });
+});
+
+document.getElementById('btnVerifyEmailOtp').addEventListener('click', function() {
+  var otp = document.getElementById('id_email_otp').value.trim();
+  var errorEl = document.getElementById('emailVerifyError');
+  var btn = document.getElementById('btnVerifyEmailOtp');
+
+  // Clear previous errors
+  errorEl.classList.remove('show');
+
+  // Validation
+  if (!otp) {
+    errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Please enter the verification code.';
+    errorEl.classList.add('show');
+    document.getElementById('id_email_otp').focus();
+    return;
+  }
+
+  if (otp.length !== 6 || !/^\d+$/.test(otp)) {
+    errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Please enter a valid 6-digit code.';
+    errorEl.classList.add('show');
+    document.getElementById('id_email_otp').focus();
+    return;
+  }
+
+  // Disable button and show loading state
+  btn.disabled = true;
+  var originalHTML = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Verifying...';
+
+  fetch("{% url 'store:profile_verify_email_otp' %}", {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ otp: otp })
+  })
+  .then(r => r.json())
+  .then(data => {
+    // Re-enable button
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+
+    if (data.success) {
+      if (typeof window.closeEmailModal === 'function') {
+        window.closeEmailModal();
+      }
+      // Show success message and reload
+      setTimeout(function() {
+        location.reload();
+      }, 500);
+    } else {
+      errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + (data.error || 'Verification failed. Please try again.');
+      errorEl.classList.add('show');
+    }
+  })
+  .catch(err => {
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+    errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Network error. Please check your connection and try again.';
+    errorEl.classList.add('show');
+  });
+});
+
+document.getElementById('btnResendEmailOtp').addEventListener('click', function() {
+  var btn = document.getElementById('btnResendEmailOtp');
+  var errorEl = document.getElementById('emailVerifyError');
+
+  // Clear previous errors
+  errorEl.classList.remove('show');
+
+  // Disable button and show loading state
+  btn.disabled = true;
+  var originalHTML = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Resending...';
+
+  fetch("{% url 'store:profile_resend_email_otp' %}", {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    // Re-enable button
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+
+    if (!data.success) {
+      errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + (data.error || 'Failed to resend code. Please try again.');
+      errorEl.classList.add('show');
+    }
+  })
+  .catch(err => {
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+    errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Network error. Please check your connection and try again.';
+    errorEl.classList.add('show');
+  });
+});
+
+  // ===== Premium Phone Change Modal =====
+  (function() {
+    var btnChangePhone = document.getElementById('btnChangePhone');
+    var modalEl = document.getElementById('phoneChangeModal');
+    var closeBtn = document.getElementById('btnClosePhoneModal');
+    var btnSendPhoneOtp = document.getElementById('btnSendPhoneOtp');
+    var btnSendPhoneOtpText = document.getElementById('btnSendPhoneOtpText');
+    var phoneInput = document.getElementById('id_new_phone');
+    var countryCodeSelect = document.getElementById('id_country_code');
+    var focusableSelectors = [
+      'button:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      'a[href]',
+      '[tabindex]:not([tabindex="-1"])'
+    ];
+    var lastFocusedEl = null;
+    var escapeHandler = null;
+    var keydownHandler = null;
+    var bodyOverflow = '';
+
+    function getFocusableElements(container) {
+      return container.querySelectorAll(focusableSelectors.join(','));
+    }
+
+    function showPhoneModal() {
+      lastFocusedEl = document.activeElement;
+      bodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      modalEl.classList.add('active');
+      modalEl.setAttribute('aria-hidden', 'false');
+
+      // Reset form state
+      document.getElementById('phoneChangeStep1').style.display = 'block';
+      document.getElementById('phoneChangeStep2').style.display = 'none';
+      phoneInput.value = '';
+      document.getElementById('id_phone_otp').value = '';
+      document.getElementById('phoneChangeError').classList.remove('show');
+      document.getElementById('phoneVerifyError').classList.remove('show');
+      updateButtonText();
+
+      // Move focus to the phone input
+      setTimeout(function() { 
+        phoneInput.focus(); 
+      }, 100);
+
+      // Trap focus inside the modal
+      function trapFocus(e) {
+        if (e.key !== 'Tab') return;
+        var focusable = getFocusableElements(modalEl);
+        if (focusable.length === 0) return;
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+      keydownHandler = trapFocus;
+      document.addEventListener('keydown', keydownHandler);
+
+      // Close on Escape
+      function onEscape(e) {
+        if (e.key === 'Escape') {
+          closePhoneModal();
+        }
+      }
+      escapeHandler = onEscape;
+      document.addEventListener('keydown', escapeHandler);
+    }
+
+    function closePhoneModal() {
+      modalEl.classList.remove('active');
+      modalEl.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = bodyOverflow;
+
+      if (keydownHandler) {
+        document.removeEventListener('keydown', keydownHandler);
+        keydownHandler = null;
+      }
+      if (escapeHandler) {
+        document.removeEventListener('keydown', escapeHandler);
+        escapeHandler = null;
+      }
+
+      // Return focus to the Change Phone button
+      if (lastFocusedEl) {
+        setTimeout(function() { lastFocusedEl.focus(); }, 50);
+      }
+    }
+
+    function updateButtonText() {
+      var phone = phoneInput.value.trim();
+      if (!phone) {
+        btnSendPhoneOtpText.textContent = 'Add Phone Number';
+      } else {
+        btnSendPhoneOtpText.textContent = 'Send OTP';
+      }
+    }
+
+    function showPhoneSuccessToast() {
+      var toast = document.getElementById('phoneSuccessToast');
+      toast.classList.add('show');
+      setTimeout(function() {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function validatePhone(phone) {
+      // Remove all non-numeric characters
+      var cleaned = phone.replace(/\D/g, '');
+      // Check if it's a valid length (typically 10 digits for Indian numbers)
+      return cleaned.length >= 10 && cleaned.length <= 12;
+    }
+
+    // Update button text on input
+    phoneInput.addEventListener('input', function() {
+      // Allow only numbers
+      this.value = this.value.replace(/\D/g, '');
+      updateButtonText();
+    });
+
+    // Open modal
+    btnChangePhone.addEventListener('click', function() {
+      showPhoneModal();
+    });
+
+    // Close via X button
+    closeBtn.addEventListener('click', closePhoneModal);
+
+    // Close when clicking outside the modal content
+    modalEl.addEventListener('click', function(e) {
+      if (e.target === modalEl) {
+        closePhoneModal();
+      }
+    });
+
+    // Expose functions for use in verification callbacks
+    window.closePhoneModal = closePhoneModal;
+    window.showPhoneSuccessToast = showPhoneSuccessToast;
+  })();
+
+  document.getElementById('btnSendPhoneOtp').addEventListener('click', function() {
+    var countryCode = document.getElementById('id_country_code').value;
+    var newPhone = document.getElementById('id_new_phone').value.trim();
+    var errorEl = document.getElementById('phoneChangeError');
+    var btn = document.getElementById('btnSendPhoneOtp');
+    var btnText = document.getElementById('btnSendPhoneOtpText');
+
+    // Clear previous errors
+    errorEl.classList.remove('show');
+
+    // Validation
+    if (!newPhone) {
+      errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Phone number is required.';
+      errorEl.classList.add('show');
+      phoneInput.focus();
+      return;
+    }
+
+    if (!validatePhone(newPhone)) {
+      errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Please enter a valid phone number (10-12 digits).';
+      errorEl.classList.add('show');
+      phoneInput.focus();
+      return;
+    }
+
+    var fullPhone = countryCode + newPhone;
+
+    // Disable button and show loading state
+    btn.disabled = true;
+    var originalText = btnText.textContent;
+    btnText.textContent = 'Sending...';
+    btn.querySelector('i').style.display = 'none';
+    var spinner = document.createElement('span');
+    spinner.className = 'spinner-border spinner-border-sm';
+    spinner.setAttribute('role', 'status');
+    btn.insertBefore(spinner, btnText);
+
+    fetch("{% url 'store:profile_send_phone_otp' %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: fullPhone })
+    })
+    .then(r => r.json())
+    .then(data => {
+      // Re-enable button
+      btn.disabled = false;
+      btnText.textContent = originalText;
+      btn.querySelector('.spinner-border').remove();
+      btn.querySelector('i').style.display = 'inline';
+
+      if (data.success) {
+        document.getElementById('phoneSentTo').textContent = data.phone || fullPhone;
+        document.getElementById('phoneChangeStep1').style.display = 'none';
+        document.getElementById('phoneChangeStep2').style.display = 'block';
+        
+        // Show success toast
+        if (typeof window.showPhoneSuccessToast === 'function') {
+          window.showPhoneSuccessToast();
+        }
+      } else {
+        errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + (data.error || 'Failed to send OTP. Please try again.');
+        errorEl.classList.add('show');
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btnText.textContent = originalText;
+      btn.querySelector('.spinner-border').remove();
+      btn.querySelector('i').style.display = 'inline';
+      errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Network error. Please check your connection and try again.';
+      errorEl.classList.add('show');
+    });
+  });
+
+  document.getElementById('btnVerifyPhoneOtp').addEventListener('click', function() {
+    var otp = document.getElementById('id_phone_otp').value.trim();
+    var errorEl = document.getElementById('phoneVerifyError');
+    var btn = document.getElementById('btnVerifyPhoneOtp');
+
+    // Clear previous errors
+    errorEl.classList.remove('show');
+
+    // Validation
+    if (!otp) {
+      errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Please enter the verification code.';
+      errorEl.classList.add('show');
+      document.getElementById('id_phone_otp').focus();
+      return;
+    }
+
+    if (otp.length !== 6 || !/^\d+$/.test(otp)) {
+      errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Please enter a valid 6-digit code.';
+      errorEl.classList.add('show');
+      document.getElementById('id_phone_otp').focus();
+      return;
+    }
+
+    // Disable button and show loading state
+    btn.disabled = true;
+    var originalHTML = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Verifying...';
+
+    fetch("{% url 'store:profile_verify_phone_otp' %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ otp: otp })
+    })
+    .then(r => r.json())
+    .then(data => {
+      // Re-enable button
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+
+      if (data.success) {
+        if (typeof window.closePhoneModal === 'function') {
+          window.closePhoneModal();
+        }
+        // Show success message and reload
+        setTimeout(function() {
+          location.reload();
+        }, 500);
+      } else {
+        errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + (data.error || 'Verification failed. Please try again.');
+        errorEl.classList.add('show');
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+      errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Network error. Please check your connection and try again.';
+      errorEl.classList.add('show');
+    });
+  });
+
+  document.getElementById('btnResendPhoneOtp').addEventListener('click', function() {
+    var btn = document.getElementById('btnResendPhoneOtp');
+    var errorEl = document.getElementById('phoneVerifyError');
+
+    // Clear previous errors
+    errorEl.classList.remove('show');
+
+    // Disable button and show loading state
+    btn.disabled = true;
+    var originalHTML = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Resending...';
+
+    fetch("{% url 'store:profile_resend_phone_otp' %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
+      // Re-enable button
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+
+      if (!data.success) {
+        errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> ' + (data.error || 'Failed to resend code. Please try again.');
+        errorEl.classList.add('show');
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+      errorEl.innerHTML = '<i class="bi bi-exclamation-circle"></i> Network error. Please check your connection and try again.';
+      errorEl.classList.add('show');
+    });
+  });
 </script>
 <script src="{% static 'js/current_location.js' %}"></script>
 {% endblock %}
