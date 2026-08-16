@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New Contact Form Submission - {{ website_name }}</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
@@ -14,34 +19,43 @@
             padding: 0;
             margin: 0;
         }
+
         .container {
             max-width: 600px;
             margin: 20px auto;
             background: #ffffff;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
         }
+
         .header {
             background: linear-gradient(135deg, #16A34A, #22c55e);
             padding: 36px 30px 30px;
             text-align: center;
             color: white;
         }
+
         .header .logo {
             margin-bottom: 12px;
         }
+
         .header h1 {
             font-size: 24px;
             font-weight: 700;
             margin-bottom: 4px;
             letter-spacing: 0.5px;
         }
+
         .header p {
             font-size: 14px;
             opacity: 0.92;
         }
-        .content { padding: 28px 30px; }
+
+        .content {
+            padding: 28px 30px;
+        }
+
         .section-title {
             font-size: 16px;
             font-weight: 700;
@@ -50,6 +64,7 @@
             padding-bottom: 6px;
             border-bottom: 2px solid #dcfce7;
         }
+
         .info-card {
             background: #f0fdf4;
             border: 1px solid #bbf7d0;
@@ -57,20 +72,24 @@
             padding: 18px 20px;
             margin-bottom: 16px;
         }
+
         .info-row {
             display: flex;
             padding: 6px 0;
             font-size: 14px;
         }
+
         .info-row .label {
             min-width: 120px;
             color: #555;
             font-weight: 600;
         }
+
         .info-row .value {
             color: #222;
             font-weight: 500;
         }
+
         .message-box {
             background: #f8f9fa;
             border-left: 4px solid #16A34A;
@@ -81,6 +100,7 @@
             line-height: 1.7;
             white-space: pre-wrap;
         }
+
         .footer {
             background: #f8f9fa;
             padding: 20px 30px;
@@ -89,24 +109,43 @@
             color: #999;
             border-top: 1px solid #eee;
         }
+
         @media (max-width: 480px) {
-            .container { margin: 10px; border-radius: 8px; }
-            .header { padding: 24px 18px 20px; }
-            .header h1 { font-size: 20px; }
-            .content { padding: 20px 16px; }
-            .info-row { flex-direction: column; padding: 4px 0; }
-            .info-row .label { min-width: auto; }
+            .container {
+                margin: 10px;
+                border-radius: 8px;
+            }
+
+            .header {
+                padding: 24px 18px 20px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .content {
+                padding: 20px 16px;
+            }
+
+            .info-row {
+                flex-direction: column;
+                padding: 4px 0;
+            }
+
+            .info-row .label {
+                min-width: auto;
+            }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <div class="logo">
-                <img src="https://img.icons8.com/color/96/null/grocery-store.png"
-                     alt="{{ website_name }}"
-                     style="max-width: 120px; height: auto;"
-                     width="120">
+                <img src="https://img.icons8.com/color/96/null/grocery-store.png" alt="{{ website_name }}"
+                    style="max-width: 120px; height: auto;" width="120">
             </div>
             <h1>New Contact Form Submission</h1>
             <p>{{ website_name }} - Customer Inquiry</p>
@@ -125,7 +164,8 @@
                 </div>
                 <div class="info-row">
                     <span class="label">Email Address</span>
-                    <span class="value"><a href="mailto:{{ contact.email }}" style="color: #16A34A;">{{ contact.email }}</a></span>
+                    <span class="value"><a href="mailto:{{ contact.email }}" style="color: #16A34A;">{{ contact.email
+                            }}</a></span>
                 </div>
                 <div class="info-row">
                     <span class="label">Phone Number</span>
@@ -144,7 +184,8 @@
             <div class="section-title">Message</div>
             <div class="message-box">{{ contact.message }}</div>
 
-            <div style="background: #fff8e1; border: 1px solid #ffe082; border-radius: 10px; padding: 16px 20px; margin-top: 20px;">
+            <div
+                style="background: #fff8e1; border: 1px solid #ffe082; border-radius: 10px; padding: 16px 20px; margin-top: 20px;">
                 <p style="font-size: 13px; color: #856404; line-height: 1.7;">
                     <strong>How to respond:</strong><br>
                     Reply directly to this email or log in to the admin panel to manage this message.
@@ -158,4 +199,5 @@
         </div>
     </div>
 </body>
+
 </html>
