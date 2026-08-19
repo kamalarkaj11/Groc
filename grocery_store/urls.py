@@ -20,12 +20,23 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('', include('store.urls')),
     path('accounts/', include('django.contrib.auth.urls')),  # login/logout/password_change etc.
     path('profile/', include('django.contrib.auth.urls')),  # For password change
     path('api-settings/', include('api_settings.urls')),
 ]
+
+# ---------------------------------------------------------------------------
+# Django Admin panel
+#
+# The admin panel is registered ONLY in non-production environments
+# (equivalent to settings.DEBUG being True). In production the entire
+# /admin/ URL tree is never registered at all, so /admin/, /admin/login/,
+# /admin/logout/ and every other admin sub-path fall through to Django's
+# normal 404 handler instead of exposing the admin interface.
+# ---------------------------------------------------------------------------
+if not settings.IS_PRODUCTION:
+    urlpatterns.insert(0, path('admin/', admin.site.urls))
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -27,10 +27,41 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+# ---------------------------------------------------------------------------
+# Environment detection
+#
+# The running environment is controlled by the DJANGO_ENV variable
+# (ENVIRONMENT is honoured as an alias):
+#   - development (default)  -> DEBUG=True,  Django Admin enabled
+#   - production             -> DEBUG=False, Django Admin disabled
+#
+# If DJANGO_ENV / ENVIRONMENT is not set, the DEBUG env variable is used.
+# If neither is set, the project falls back to local development
+# (DEBUG=True), preserving the previous behaviour for `runserver`.
+# ---------------------------------------------------------------------------
+_DJANGO_ENV = os.getenv('DJANGO_ENV', os.getenv('ENVIRONMENT', '')).strip().lower()
+if _DJANGO_ENV:
+    # Production-style environments disable DEBUG (never expose the debug
+    # error page publicly) and, in turn, disable the Django Admin panel.
+    IS_PRODUCTION = _DJANGO_ENV in ('production', 'prod')
+    DEBUG = not IS_PRODUCTION
+else:
+    DEBUG = os.getenv('DEBUG', 'True').strip().lower() in ('1', 'true', 'yes', 'on')
+    IS_PRODUCTION = not DEBUG
+
+# Hosts allowed to serve the site. Defaults cover local development plus the
+# Railway production domain. Override with a comma-separated ALLOWED_HOSTS
+# env variable if the site is exposed under a custom domain.
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        'ALLOWED_HOSTS',
+        'localhost,127.0.0.1,groc-production-6c7e.up.railway.app,.railway.app',
+    ).split(',')
+    if host.strip()
+]
+
 CSRF_TRUSTED_ORIGINS = [
     "https://groc-production-6c7e.up.railway.app",
     "https://*.railway.app",
