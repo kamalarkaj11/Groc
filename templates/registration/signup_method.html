@@ -5,137 +5,60 @@
 
 <style>
   /* ═══════════════════════════════════════════════════════════════════
-     ROOT VARIABLES — THEME SYSTEM
+     GROCHUB SIGNUP METHOD — THEME SYSTEM (Green + Yellow + White)
      ═══════════════════════════════════════════════════════════════════ */
   :root {
-    --primary: #4F46E5;
-    --secondary: #7C3AED;
-    --accent: #06B6D4;
-    --background: #F8FAFC;
-    --surface: #FFFFFF;
-    --surface-alt: #F1F5F9;
-    --border: #E2E8F0;
-    --text: #0F172A;
-    --text-secondary: #64748B;
-    --success: #10B981;
-    --warning: #F59E0B;
-    --danger: #EF4444;
-    --glass-bg: rgba(255, 255, 255, 0.78);
-    --glass-border: rgba(226, 232, 240, 0.85);
-    --glass-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
-    --card-shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
-    --card-hover-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
-    --text-muted: #64748B;
-    --input-bg: rgba(248, 250, 252, 0.9);
-    --bg-page: #F8FAFC;
-    --bg-gradient-1: rgba(79, 70, 229, 0.12);
-    --bg-gradient-2: rgba(124, 58, 237, 0.1);
-    --bg-gradient-3: rgba(6, 182, 212, 0.08);
-    --transition-base: 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-    --transition-fast: 0.18s cubic-bezier(0.22, 1, 0.36, 1);
-    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --g-primary: #087443;
+    --g-primary-dark: #075C36;
+    --g-primary-light: #1FA968;
+    --g-secondary: #0F8F58;
+    --g-accent: #FFC83D;
+    --g-accent-dark: #F4B400;
+
+    --g-bg: #F7FAF7;
+    --g-surface: #FFFFFF;
+    --g-surface-soft: #F1F7F3;
+
+    --g-border: #DDE8E1;
+
+    --g-text: #14221B;
+    --g-text-2: #64736A;
+    --g-text-3: #89958E;
+
+    --g-success: #159B5B;
+    --g-danger: #DC3545;
+
+    --g-input: #FFFFFF;
+
+    --g-shadow-sm: 0 4px 14px rgba(20, 50, 35, 0.06);
+    --g-shadow-md: 0 12px 32px rgba(20, 50, 35, 0.10);
+    --g-shadow-lg: 0 24px 60px rgba(20, 50, 35, 0.14);
+
+    --g-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --g-transition: 0.22s ease;
+  }
+
+  /* Make this page full width (override base container) */
+  main.container {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
   }
 
   /* ═══════════════════════════════════════════════════════════════════
-     BASE / RESET
+     PAGE
      ═══════════════════════════════════════════════════════════════════ */
   .signup-page {
-    font-family: var(--font-display);
-    background: var(--bg-page);
-    color: var(--text);
+    font-family: var(--g-font);
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(31, 169, 104, 0.055), transparent 60%),
+      var(--g-bg);
+    color: var(--g-text);
     min-height: 100vh;
-    position: relative;
-    overflow: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition: background var(--transition-base), color var(--transition-base);
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     ANIMATED AI-THEMED BACKGROUND
-     ═══════════════════════════════════════════════════════════════════ */
-  .ai-bg {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    overflow: hidden;
-  }
-
-  /* Animated gradient mesh */
-  .ai-bg::before {
-    content: '';
-    position: absolute;
-    inset: -50%;
-    background:
-      radial-gradient(ellipse at 20% 20%, var(--bg-gradient-1) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 30%, var(--bg-gradient-2) 0%, transparent 45%),
-      radial-gradient(ellipse at 50% 80%, var(--bg-gradient-3) 0%, transparent 50%),
-      radial-gradient(ellipse at 90% 90%, var(--bg-gradient-1) 0%, transparent 40%);
-    animation: mesh 20s ease-in-out infinite alternate;
-  }
-
-  /* Glowing orbs */
-  .ai-orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.35;
-    animation: aiFloat 18s ease-in-out infinite;
-  }
-  .ai-orb--1 {
-    width: 500px;
-    height: 500px;
-    background: var(--primary);
-    top: -150px;
-    right: -100px;
-  }
-  .ai-orb--2 {
-    width: 400px;
-    height: 400px;
-    background: var(--secondary);
-    bottom: -120px;
-    left: -80px;
-    animation-delay: -6s;
-  }
-  .ai-orb--3 {
-    width: 300px;
-    height: 300px;
-    background: var(--accent);
-    top: 40%;
-    left: 30%;
-    opacity: 0.2;
-    animation-delay: -12s;
-  }
-
-  /* Floating particles */
-  .ai-particle {
-    position: absolute;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    opacity: 0.15;
-    animation: aiParticle 12s ease-in-out infinite;
-  }
-  .ai-particle--1 { width: 6px; height: 6px; top: 15%; left: 10%; animation-delay: 0s; }
-  .ai-particle--2 { width: 4px; height: 4px; top: 30%; left: 80%; animation-delay: -2s; }
-  .ai-particle--3 { width: 8px; height: 8px; top: 65%; left: 15%; animation-delay: -4s; }
-  .ai-particle--4 { width: 5px; height: 5px; top: 80%; left: 70%; animation-delay: -6s; }
-  .ai-particle--5 { width: 3px; height: 3px; top: 45%; left: 45%; animation-delay: -8s; }
-  .ai-particle--6 { width: 7px; height: 7px; top: 10%; left: 60%; animation-delay: -10s; }
-  .ai-particle--7 { width: 4px; height: 4px; top: 75%; left: 35%; animation-delay: -3s; }
-  .ai-particle--8 { width: 6px; height: 6px; top: 50%; left: 90%; animation-delay: -7s; }
-
-  /* AI network grid pattern */
-  .ai-grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(var(--border) 1px, transparent 1px),
-      linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 60px 60px;
-    opacity: 0.4;
-    mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
-    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
   }
 
   /* ═══════════════════════════════════════════════════════════════════
@@ -144,12 +67,10 @@
   .signup-split {
     display: flex;
     min-height: 100vh;
-    position: relative;
-    z-index: 1;
   }
 
   /* ═══════════════════════════════════════════════════════════════════
-     LEFT — BRAND SECTION
+     LEFT — BRAND PANEL
      ═══════════════════════════════════════════════════════════════════ */
   .brand-section {
     flex: 0 0 50%;
@@ -157,346 +78,206 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 60px 56px 60px 64px;
+    padding: 64px 56px 64px 64px;
     position: relative;
-    z-index: 1;
+    overflow: hidden;
+    color: #fff;
+    background:
+      radial-gradient(900px 600px at 15% 0%, rgba(255, 200, 61, 0.10), transparent 55%),
+      linear-gradient(145deg, #075C36 0%, #087443 50%, #159B5B 100%);
   }
 
   .brand-inner {
-    position: relative;
-    z-index: 1;
     max-width: 520px;
-    animation: fadeSlideUp 0.8s var(--transition-base) both;
+    animation: gFadeUp 0.5s ease both;
   }
 
-  /* Brand Logo */
+  /* Brand logo */
   .brand-logo {
     display: inline-flex;
     align-items: center;
     gap: 14px;
     text-decoration: none;
-    margin-bottom: 48px;
-    transition: transform var(--transition-base);
+    margin-bottom: 40px;
+    transition: transform var(--g-transition);
   }
-  .brand-logo:hover {
-    text-decoration: none;
-    transform: scale(1.02);
-  }
+  .brand-logo:hover { transform: translateY(-2px); }
 
   .brand-logo-icon {
-    width: 56px;
-    height: 56px;
+    width: 58px;
+    height: 58px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 16px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary) 50%, var(--accent));
-    color: #fff;
-    font-size: 1.5rem;
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.30);
-    position: relative;
-    overflow: hidden;
-    transition: transform var(--transition-base);
-  }
-  .brand-logo-icon::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
-  }
-  .brand-logo:hover .brand-logo-icon {
-    transform: rotate(-5deg) scale(1.05);
+    border-radius: 14px;
+    background: var(--g-accent);
+    color: var(--g-primary-dark);
+    font-size: 1.55rem;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
   }
 
   .brand-logo-text {
-    font-size: 1.5rem;
+    font-size: 1.85rem;
     font-weight: 800;
     letter-spacing: -0.5px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary) 50%, var(--accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #fff;
   }
 
-  /* Welcome Badge */
+  /* Welcome badge */
   .brand-welcome {
     display: inline-flex;
     align-items: center;
     gap: 8px;
     font-size: 0.82rem;
     font-weight: 600;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    letter-spacing: 2.5px;
-    color: var(--primary);
-    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.92);
     padding: 8px 16px;
-    border-radius: 24px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    animation: fadeSlideUp 0.8s var(--transition-base) 0.1s both;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.08);
+    margin-bottom: 22px;
   }
-  .brand-welcome i {
-    font-size: 0.9rem;
-    animation: welcomePulse 2s ease-in-out infinite;
-  }
+  .brand-welcome i { color: var(--g-accent); }
 
   /* Headline */
   .brand-headline {
-    font-size: clamp(2.2rem, 4vw, 3.4rem);
-    font-weight: 900;
-    line-height: 1.1;
-    letter-spacing: -1.5px;
-    color: var(--text);
-    margin-bottom: 20px;
-    animation: fadeSlideUp 0.8s var(--transition-base) 0.15s both;
-  }
-  .brand-headline .gradient-text {
-    background: linear-gradient(135deg, var(--primary), var(--secondary) 50%, var(--accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    background-size: 200% 200%;
-    animation: gradientShift 6s ease-in-out infinite;
+    margin: 0 0 24px;
+    font-size: clamp(2.8rem, 4.6vw, 4.4rem);
+    font-weight: 800;
+    line-height: 0.98;
+    letter-spacing: -2px;
+    color: #fff;
   }
 
-  /* Subtitle */
+  /* Description */
   .brand-desc {
     font-size: 1.05rem;
     line-height: 1.7;
-    color: var(--text-secondary);
-    margin-bottom: 40px;
-    max-width: 440px;
-    animation: fadeSlideUp 0.8s var(--transition-base) 0.2s both;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 460px;
+    margin: 0 0 36px;
   }
 
-  /* Feature Cards */
+  /* Feature highlights */
   .brand-features {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    animation: fadeSlideUp 0.8s var(--transition-base) 0.25s both;
+    gap: 12px;
+    max-width: 460px;
   }
-
   .brand-feature {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 16px 18px;
-    border-radius: 16px;
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
-    transition: all var(--transition-base);
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
   }
-  .brand-feature:hover {
-    transform: translateY(-3px);
-    border-color: var(--primary);
-    box-shadow: var(--shadow-glow);
-  }
-
   .brand-feature-icon {
-    width: 40px;
-    height: 40px;
-    flex: 0 0 40px;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
+    border-radius: 10px;
     font-size: 1rem;
-    color: #fff;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
-    transition: transform var(--transition-base);
+    color: var(--g-accent);
+    background: rgba(255, 200, 61, 0.16);
   }
-  .brand-feature:hover .brand-feature-icon {
-    transform: scale(1.1) rotate(-5deg);
-  }
-
   .brand-feature-text {
-    font-size: 0.9rem;
+    font-size: 0.98rem;
     font-weight: 700;
-    color: var(--text);
+    color: #fff;
     line-height: 1.3;
-  }
-  .brand-feature-text small {
-    display: block;
-    font-weight: 400;
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    margin-top: 2px;
   }
 
   /* ═══════════════════════════════════════════════════════════════════
-     RIGHT — SIGNUP CARD SECTION
+     RIGHT — SIGNUP PANEL
      ═══════════════════════════════════════════════════════════════════ */
   .signup-section {
     flex: 0 0 50%;
     max-width: 50%;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     padding: 64px 48px;
-    position: relative;
-    z-index: 1;
+    background: var(--g-surface);
   }
 
   .signup-inner {
     width: 100%;
-    max-width: 450px;
-    animation: fadeSlideUp 0.8s var(--transition-base) 0.1s both;
+    max-width: 520px;
+    animation: gFadeUp 0.5s ease 0.08s both;
   }
 
-  /* Glassmorphism Card */
-  .signup-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 40px 36px;
-    box-shadow: var(--glass-shadow);
-    position: relative;
-    overflow: hidden;
-  }
+  .signup-card { background: #fff; }
 
-  /* Card top gradient line */
-  .signup-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent), var(--primary));
-    background-size: 300% 100%;
-    animation: gradientMove 6s ease-in-out infinite;
-  }
-
-  /* Card glow effect */
-  .signup-card::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(circle, var(--bg-gradient-1), transparent 70%);
-    pointer-events: none;
-  }
-
-  /* Card Header */
-  .signup-card-header {
-    text-align: center;
-    margin-bottom: 32px;
-    position: relative;
-    z-index: 1;
-  }
+  /* Header */
+  .signup-card-header { text-align: center; margin-bottom: 34px; }
 
   .signup-card-icon {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 20px;
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 22px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 20px;
-    font-size: 1.6rem;
+    border-radius: 16px;
+    font-size: 1.7rem;
     color: #fff;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.30);
-    position: relative;
-    overflow: hidden;
-    animation: cardPulse 3s ease-in-out infinite;
-  }
-  .signup-card-icon::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+    background: linear-gradient(145deg, var(--g-primary), var(--g-secondary));
+    box-shadow: var(--g-shadow-md);
   }
 
   .signup-heading {
-    font-size: 1.8rem;
+    margin: 0 0 12px;
+    font-size: clamp(2.1rem, 3.5vw, 2.9rem);
     font-weight: 800;
-    letter-spacing: -0.5px;
-    color: var(--text);
-    margin-bottom: 8px;
-    line-height: 1.2;
+    letter-spacing: -1.5px;
+    color: var(--g-text);
+    line-height: 1.05;
   }
 
   .signup-subtitle {
-    font-size: 0.92rem;
-    color: var(--text-secondary);
+    margin: 0;
+    font-size: 1rem;
+    color: var(--g-text-2);
     line-height: 1.6;
-    margin-bottom: 0;
   }
 
-  /* ═══════════════════════════════════════════════════════════════════
-     SIGNUP OPTION CARDS
-     ═══════════════════════════════════════════════════════════════════ */
-  .signup-options {
-    display: grid;
-    gap: 16px;
-    position: relative;
-    z-index: 1;
-  }
+  /* Signup option cards */
+  .signup-options { display: grid; gap: 16px; }
 
   .option-card {
-    position: relative;
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 20px 20px;
-    border-radius: 18px;
+    padding: 20px;
+    border-radius: 16px;
     text-decoration: none;
-    background: var(--input-bg);
-    border: 1.5px solid var(--glass-border);
-    cursor: pointer;
-    transition: all var(--transition-base);
-    overflow: hidden;
-    color: var(--text);
+    background: #fff;
+    border: 1px solid var(--g-border);
+    transition: transform 0.2s ease, border-color 0.2s ease,
+                box-shadow 0.2s ease, background 0.2s ease;
+    color: var(--g-text);
   }
   .option-card:hover {
     text-decoration: none;
-    color: var(--text);
-    transform: translateY(-3px) scale(1.01);
-    border-color: var(--primary);
-    background: var(--card-hover-bg);
-    box-shadow: var(--shadow-glow);
+    color: var(--g-text);
+    border-color: var(--g-success);
+    background: #F8FCF9;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(8, 116, 67, 0.10);
   }
-  .option-card:active {
-    transform: translateY(-1px) scale(0.99);
-    transition-duration: 0.08s;
-  }
+  .option-card:active { transform: translateY(0); transition-duration: 0.08s; }
   .option-card:focus-visible {
-    outline: 3px solid var(--primary);
+    outline: 3px solid var(--g-primary);
     outline-offset: 3px;
-    border-radius: 18px;
   }
 
-  /* Gradient border glow on hover */
-  .option-card::before {
-    content: '';
-    position: absolute;
-    inset: -2px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent), var(--primary));
-    background-size: 300% 300%;
-    z-index: -1;
-    opacity: 0;
-    transition: opacity var(--transition-base);
-    animation: gradientMove 4s ease-in-out infinite;
-  }
-  .option-card:hover::before {
-    opacity: 1;
-  }
-
-  /* Option Icon */
   .option-icon {
     width: 52px;
     height: 52px;
@@ -505,55 +286,32 @@
     align-items: center;
     justify-content: center;
     border-radius: 14px;
-    font-size: 1.3rem;
-    color: #fff;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25);
-    position: relative;
-    overflow: hidden;
-    transition: all var(--transition-base);
-  }
-  .option-icon::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+    font-size: 1.35rem;
+    color: var(--g-primary);
+    background: var(--g-surface-soft);
+    transition: background 0.2s ease, color 0.2s ease;
   }
   .option-card:hover .option-icon {
-    transform: scale(1.08) rotate(-5deg);
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
+    color: var(--g-primary-dark);
+    background: rgba(8, 116, 67, 0.12);
   }
 
-  /* Option Content */
-  .option-content {
-    flex: 1;
-    min-width: 0;
-  }
+  .option-content { flex: 1; min-width: 0; }
 
   .option-title {
     display: block;
     font-size: 1.05rem;
     font-weight: 700;
-    color: var(--text);
+    color: var(--g-text);
     margin-bottom: 3px;
-    transition: color var(--transition-base);
   }
-  .option-card:hover .option-title {
-    color: var(--primary);
-  }
-
   .option-desc {
     display: block;
-    font-size: 0.84rem;
-    color: var(--text-secondary);
+    font-size: 0.86rem;
+    color: var(--g-text-2);
     line-height: 1.5;
-    transition: color var(--transition-base);
-  }
-  .option-card:hover .option-desc {
-    color: var(--text);
   }
 
-  /* Option Arrow */
   .option-arrow {
     width: 36px;
     height: 36px;
@@ -563,227 +321,91 @@
     justify-content: center;
     border-radius: 50%;
     font-size: 1rem;
-    color: var(--primary);
-    background: var(--input-bg);
-    border: 1px solid var(--glass-border);
-    transition: all var(--transition-base);
+    color: var(--g-primary);
+    background: var(--g-surface-soft);
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
   }
   .option-card:hover .option-arrow {
-    transform: translateX(5px);
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    transform: translateX(4px);
+    background: var(--g-primary);
     color: #fff;
-    border-color: transparent;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
   }
 
-  /* Ripple Effect */
-  .option-card .ripple-el {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(79, 70, 229, 0.16);
-    transform: scale(0);
-    animation: rippleAnim 0.6s ease-out forwards;
-    pointer-events: none;
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     DIVIDER
-     ═══════════════════════════════════════════════════════════════════ */
+  /* Divider */
   .divider {
     display: flex;
     align-items: center;
     gap: 16px;
     margin: 28px 0;
-    position: relative;
-    z-index: 1;
   }
   .divider::before,
   .divider::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: linear-gradient(90deg, transparent, var(--glass-border), transparent);
+    background: var(--g-border);
   }
   .divider span {
-    font-size: 0.78rem;
-    font-weight: 600;
-    text-transform: uppercase;
+    font-size: 0.76rem;
+    font-weight: 700;
     letter-spacing: 2px;
-    color: var(--text-muted);
-    padding: 0 4px;
+    text-transform: uppercase;
+    color: var(--g-text-3);
   }
 
-  /* ═══════════════════════════════════════════════════════════════════
-     LOGIN LINK
-     ═══════════════════════════════════════════════════════════════════ */
-  .login-link-wrap {
-    text-align: center;
-    margin-top: 24px;
-    position: relative;
-    z-index: 1;
-  }
-  .login-link-text {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-  }
+  /* Login link */
+  .login-link-wrap { text-align: center; margin-top: 4px; }
+  .login-link-text { color: var(--g-text-2); font-size: 0.98rem; }
   .login-link {
-    display: inline-block;
     font-weight: 700;
-    color: var(--primary);
+    color: var(--g-primary);
     text-decoration: none;
-    position: relative;
-    padding: 2px 0;
-    transition: color var(--transition-base);
-  }
-  .login-link::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--primary), var(--secondary));
-    transition: width var(--transition-base);
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s ease, border-color 0.2s ease;
   }
   .login-link:hover {
-    color: var(--secondary);
-    text-decoration: none;
-  }
-  .login-link:hover::after {
-    width: 100%;
+    color: var(--g-primary-dark);
+    border-bottom-color: currentColor;
   }
   .login-link:focus-visible {
-    outline: 3px solid var(--primary);
-    outline-offset: 3px;
+    outline: 3px solid var(--g-primary);
+    outline-offset: 2px;
     border-radius: 4px;
   }
 
-  /* ═══════════════════════════════════════════════════════════════════
-     BENEFITS SECTION
-     ═══════════════════════════════════════════════════════════════════ */
-  .benefits-section {
-    margin-top: 32px;
-    position: relative;
-    z-index: 1;
-    animation: fadeSlideUp 0.8s var(--transition-base) 0.3s both;
-  }
-  .benefits-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: var(--text-muted);
-    text-align: center;
-    margin-bottom: 16px;
-  }
-  .benefits-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .benefit-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.82rem;
-    color: var(--text-secondary);
-    padding: 10px 14px;
-    border-radius: 12px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: all var(--transition-base);
-  }
-  .benefit-item:hover {
-    color: var(--text);
-    border-color: var(--success);
-    transform: translateX(3px);
-  }
-  .benefit-item i {
-    color: var(--success);
-    font-size: 0.9rem;
-    flex-shrink: 0;
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     TRUST INDICATORS
-     ═══════════════════════════════════════════════════════════════════ */
+  /* Trust badges */
   .trust-badges {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 8px;
-    margin-top: 20px;
-    position: relative;
-    z-index: 1;
-    animation: fadeSlideUp 0.8s var(--transition-base) 0.35s both;
+    gap: 8px 18px;
+    margin-top: 28px;
   }
   .trust-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 0.75rem;
+    font-size: 0.76rem;
     font-weight: 600;
-    color: var(--text-secondary);
-    padding: 6px 14px;
-    border-radius: 20px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: all var(--transition-base);
+    color: var(--g-text-2);
   }
-  .trust-badge:hover {
-    color: var(--text);
-    border-color: var(--success);
-    transform: translateY(-2px);
-  }
-  .trust-badge i {
-    color: var(--success);
-    font-size: 0.8rem;
-  }
+  .trust-badge i { color: var(--g-success); font-size: 0.85rem; }
 
-  /* ═══════════════════════════════════════════════════════════════════
-     SECURITY NOTE
-     ═══════════════════════════════════════════════════════════════════ */
+  /* Security note */
   .security-note {
     display: flex;
     align-items: flex-start;
     gap: 12px;
-    margin-top: 24px;
-    padding: 16px 18px;
-    border-radius: 14px;
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    position: relative;
-    z-index: 1;
-    animation: fadeSlideUp 0.8s var(--transition-base) 0.4s both;
+    margin-top: 28px;
+    padding: 15px 18px;
+    border-radius: 12px;
+    background: var(--g-surface-soft);
+    border: 1px solid #D8EBDD;
   }
-  .security-note-icon {
-    width: 36px;
-    height: 36px;
-    flex: 0 0 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 10px;
-    font-size: 1rem;
-    color: var(--success);
-    background: rgba(16, 185, 129, 0.10);
-    border: 1px solid rgba(16, 185, 129, 0.20);
-  }
-  .security-note-text {
-    font-size: 0.82rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-  }
+  .security-note-icon { color: var(--g-primary); font-size: 1.15rem; line-height: 1.4; }
+  .security-note-text { font-size: 0.84rem; color: var(--g-text-2); line-height: 1.6; }
 
-  /* ═══════════════════════════════════════════════════════════════════
-     LOADING OVERLAY
-     ═══════════════════════════════════════════════════════════════════ */
+  /* Loading overlay */
   .loading-overlay {
     position: fixed;
     inset: 0;
@@ -793,379 +415,66 @@
     align-items: center;
     justify-content: center;
     gap: 16px;
-    background: var(--bg-page);
+    background: #fff;
     opacity: 0;
     visibility: hidden;
-    transition: opacity var(--transition-base), visibility var(--transition-base);
+    transition: opacity 0.25s ease, visibility 0.25s ease;
   }
-  .loading-overlay.active {
-    opacity: 1;
-    visibility: visible;
-  }
+  .loading-overlay.active { opacity: 1; visibility: visible; }
   .loading-spinner {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    border: 3px solid var(--glass-border);
-    border-top-color: var(--primary);
-    animation: spin 0.8s linear infinite;
+    border: 4px solid #E6F2EA;
+    border-top-color: var(--g-primary);
+    animation: gSpin 0.8s linear infinite;
   }
-  .loading-text {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-  }
+  .loading-text { font-size: 0.92rem; font-weight: 600; color: var(--g-text-2); }
 
-  /* ═══════════════════════════════════════════════════════════════════
-     ANIMATIONS
-     ═══════════════════════════════════════════════════════════════════ */
-  @keyframes fadeSlideUp {
-    0% {
-      opacity: 0;
-      transform: translateY(24px);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  /* Animations */
+  @keyframes gFadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
   }
+  @keyframes gSpin { to { transform: rotate(360deg); } }
 
-  @keyframes mesh {
-    0% {
-      transform: translate(0, 0) scale(1);
-    }
-    50% {
-      transform: translate(2%, 3%) scale(1.05);
-    }
-    100% {
-      transform: translate(-2%, -2%) scale(1.02);
-    }
-  }
-
-  @keyframes aiFloat {
-    0%, 100% {
-      transform: translate(0, 0) scale(1);
-    }
-    25% {
-      transform: translate(30px, -30px) scale(1.05);
-    }
-    50% {
-      transform: translate(-20px, 20px) scale(0.95);
-    }
-    75% {
-      transform: translate(15px, -15px) scale(1.02);
-    }
-  }
-
-  @keyframes aiParticle {
-    0%, 100% {
-      transform: translate(0, 0);
-      opacity: 0.15;
-    }
-    25% {
-      transform: translate(20px, -30px);
-      opacity: 0.25;
-    }
-    50% {
-      transform: translate(-15px, 20px);
-      opacity: 0.1;
-    }
-    75% {
-      transform: translate(10px, -15px);
-      opacity: 0.2;
-    }
-  }
-
-  @keyframes gradientMove {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-
-  @keyframes gradientShift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-
-  @keyframes rippleAnim {
-    to {
-      transform: scale(4);
-      opacity: 0;
-    }
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  @keyframes cardPulse {
-    0%, 100% {
-      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.30);
-    }
-    50% {
-      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.45);
-    }
-  }
-
-  @keyframes welcomePulse {
-    0%, 100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    50% {
-      transform: scale(1.15);
-      opacity: 0.7;
-    }
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     RESPONSIVE — TABLET
-     ═══════════════════════════════════════════════════════════════════ */
+  /* ═══════ RESPONSIVE ═══════ */
   @media (max-width: 1024px) {
-    .brand-section {
-      padding: 48px 32px 48px 40px;
-    }
-    .signup-section {
-      padding: 48px 32px;
-    }
-    .brand-headline {
-      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
-    }
-    .brand-features {
-      gap: 12px;
-    }
-    .brand-feature {
-      padding: 14px 16px;
-    }
-    .signup-card {
-      padding: 32px 28px;
-    }
+    .brand-section { flex: 0 0 45%; max-width: 45%; padding: 48px 40px; }
+    .signup-section { flex: 0 0 55%; max-width: 55%; padding: 48px 32px; }
+    .brand-headline { font-size: clamp(2.2rem, 4vw, 3.2rem); }
   }
 
-  /* ═══════════════════════════════════════════════════════════════════
-     RESPONSIVE — MOBILE (STACKED)
-     ═══════════════════════════════════════════════════════════════════ */
   @media (max-width: 768px) {
-    .signup-split {
-      flex-direction: column;
-      min-height: auto;
-    }
+    .signup-split { flex-direction: column; min-height: auto; }
 
     .brand-section {
       flex: 0 0 auto;
       max-width: 100%;
-      min-height: auto;
-      padding: 40px 24px 24px;
+      padding: 32px 22px;
     }
-
-    .brand-inner {
-      max-width: 100%;
-    }
-
-    .brand-logo {
-      margin-bottom: 32px;
-    }
-
-    .brand-headline {
-      font-size: clamp(1.6rem, 5vw, 2.2rem);
-    }
-
-    .brand-desc {
-      font-size: 0.95rem;
-      margin-bottom: 28px;
-    }
-
-    .brand-features {
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .brand-feature {
-      padding: 12px 14px;
-    }
-    .brand-feature-icon {
-      width: 34px;
-      height: 34px;
-      flex: 0 0 34px;
-      font-size: 0.85rem;
-    }
-    .brand-feature-text {
-      font-size: 0.82rem;
-    }
-    .brand-feature-text small {
-      font-size: 0.72rem;
-    }
+    .brand-logo { margin-bottom: 28px; }
+    .brand-headline { font-size: 2.2rem; letter-spacing: -1px; }
+    .brand-desc { font-size: 0.95rem; margin-bottom: 26px; }
 
     .signup-section {
       flex: 0 0 auto;
       max-width: 100%;
-      min-height: auto;
-      padding: 24px 20px 48px;
+      padding: 40px 22px;
+      background: #fff;
     }
-
-    .signup-inner {
-      max-width: 100%;
-    }
-
-    .signup-card {
-      padding: 28px 24px;
-    }
-
-    .signup-heading {
-      font-size: 1.5rem;
-    }
-
-    .signup-subtitle {
-      font-size: 0.88rem;
-    }
-
-    .option-card {
-      padding: 16px 16px;
-      gap: 14px;
-    }
-    .option-icon {
-      width: 46px;
-      height: 46px;
-      flex: 0 0 46px;
-      font-size: 1.1rem;
-    }
-    .option-title {
-      font-size: 0.98rem;
-    }
-    .option-desc {
-      font-size: 0.8rem;
-    }
-    .option-arrow {
-      width: 32px;
-      height: 32px;
-      flex: 0 0 32px;
-      font-size: 0.9rem;
-    }
-
-    .benefits-grid {
-      grid-template-columns: 1fr 1fr;
-    }
-
+    .signup-heading { font-size: 2rem; }
+    .option-card { padding: 18px 16px; gap: 14px; }
+    .option-icon { width: 48px; height: 48px; flex-basis: 48px; font-size: 1.2rem; }
+    .option-title { font-size: 1rem; }
   }
 
-  /* ═══════════════════════════════════════════════════════════════════
-     RESPONSIVE — SMALL MOBILE
-     ═══════════════════════════════════════════════════════════════════ */
   @media (max-width: 480px) {
-    .brand-section {
-      padding: 28px 18px 20px;
-    }
-    .signup-section {
-      padding: 20px 16px 40px;
-    }
-
-    .brand-logo-icon {
-      width: 48px;
-      height: 48px;
-      font-size: 1.25rem;
-    }
-    .brand-logo-text {
-      font-size: 1.25rem;
-    }
-    .brand-welcome {
-      font-size: 0.72rem;
-      letter-spacing: 1.5px;
-      padding: 6px 12px;
-    }
-    .brand-headline {
-      font-size: 1.4rem;
-    }
-    .brand-desc {
-      font-size: 0.88rem;
-    }
-
-    .brand-features {
-      grid-template-columns: 1fr;
-    }
-
-    .signup-card {
-      padding: 24px 18px;
-      border-radius: 20px;
-    }
-
-    .signup-card-icon {
-      width: 56px;
-      height: 56px;
-      font-size: 1.4rem;
-    }
-
-    .signup-heading {
-      font-size: 1.3rem;
-    }
-
-    .option-card {
-      padding: 14px 14px;
-      gap: 10px;
-    }
-    .option-icon {
-      width: 42px;
-      height: 42px;
-      flex: 0 0 42px;
-      font-size: 1rem;
-    }
-    .option-title {
-      font-size: 0.92rem;
-    }
-    .option-desc {
-      font-size: 0.76rem;
-    }
-    .option-arrow {
-      width: 28px;
-      height: 28px;
-      flex: 0 0 28px;
-      font-size: 0.8rem;
-    }
-
-    .benefits-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .trust-badges {
-      gap: 6px;
-    }
-    .trust-badge {
-      font-size: 0.7rem;
-      padding: 5px 10px;
-    }
-
-    .security-note {
-      padding: 14px 14px;
-    }
-    .security-note-text {
-      font-size: 0.78rem;
-    }
+    .brand-headline { font-size: 2rem; }
+    .brand-features { display: none; }
   }
 
-  /* ═══════════════════════════════════════════════════════════════════
-     RESPONSIVE — ULTRA-WIDE
-     ═══════════════════════════════════════════════════════════════════ */
-  @media (min-width: 1600px) {
-    .brand-section {
-      padding: 80px 80px 80px 96px;
-    }
-    .signup-section {
-      padding: 80px 64px;
-    }
-    .brand-inner {
-      max-width: 560px;
-    }
-    .signup-inner {
-      max-width: 480px;
-    }
-    .brand-headline {
-      font-size: clamp(2.4rem, 3.5vw, 3.8rem);
-    }
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     REDUCED MOTION
-     ═══════════════════════════════════════════════════════════════════ */
+  /* ═══════ REDUCED MOTION ═══════ */
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -1178,166 +487,81 @@
 </style>
 
 <!-- ═══════════════════════════════════════════════════════════════════
-     AI-THEMED BACKGROUND
+     GROCHUB SIGNUP METHOD PAGE
      ═══════════════════════════════════════════════════════════════════ -->
 <div class="signup-page" id="signupPage">
 
-  <div class="ai-bg" aria-hidden="true">
-    <div class="ai-grid"></div>
-    <div class="ai-orb ai-orb--1"></div>
-    <div class="ai-orb ai-orb--2"></div>
-    <div class="ai-orb ai-orb--3"></div>
-    <div class="ai-particle ai-particle--1"></div>
-    <div class="ai-particle ai-particle--2"></div>
-    <div class="ai-particle ai-particle--3"></div>
-    <div class="ai-particle ai-particle--4"></div>
-    <div class="ai-particle ai-particle--5"></div>
-    <div class="ai-particle ai-particle--6"></div>
-    <div class="ai-particle ai-particle--7"></div>
-    <div class="ai-particle ai-particle--8"></div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════════
-       SPLIT SCREEN LAYOUT
-       ═══════════════════════════════════════════════════════════ -->
   <div class="signup-split">
 
-    <!-- ══════════ LEFT: BRAND SECTION ══════════ -->
+    <!-- ══════════ LEFT: BRAND PANEL ══════════ -->
     <div class="brand-section">
       <div class="brand-inner">
 
-        <!-- Logo -->
         <a href="{% url 'store:home' %}" class="brand-logo" aria-label="GrocHub Home">
-          <span class="brand-logo-icon">
-            <i class="bi bi-basket2-fill"></i>
-          </span>
+          <span class="brand-logo-icon"><i class="bi bi-basket2-fill"></i></span>
           <span class="brand-logo-text">GrocHub</span>
         </a>
 
-        <!-- Welcome Badge -->
-        <div class="brand-welcome">
-          <i class="bi bi-stars"></i>
-          Welcome to GrocHub
-        </div>
+        <div class="brand-welcome"><i class="bi bi-emoji-smile"></i> Welcome to GrocHub</div>
 
-        <!-- Headline -->
-        <h1 class="brand-headline">
-          Create Your<br>
-          <span class="gradient-text">AI-Powered Grocery</span><br>
-          Workspace
-        </h1>
+        <h1 class="brand-headline">Welcome to<br>GrocHub,<br>Shopper!</h1>
 
-        <!-- Description -->
         <p class="brand-desc">
-          Generate stunning grocery experiences with secure authentication.
-          Join thousands of happy customers who trust GrocHub for their everyday needs.
+          Your everyday groceries, delivered fresh and conveniently to your doorstep.
+          Join thousands of happy customers who shop with GrocHub every week.
         </p>
 
-        <!-- Feature Cards -->
         <div class="brand-features">
-
           <div class="brand-feature">
-            <span class="brand-feature-icon">
-              <i class="bi bi-lightning-charge-fill"></i>
-            </span>
-            <span class="brand-feature-text">
-              Fast Signup
-              <small>Less than a minute</small>
-            </span>
+            <span class="brand-feature-icon"><i class="bi bi-lightning-charge-fill"></i></span>
+            <span class="brand-feature-text">Quick &amp; Easy Signup</span>
           </div>
-
           <div class="brand-feature">
-            <span class="brand-feature-icon">
-              <i class="bi bi-shield-lock-fill"></i>
-            </span>
-            <span class="brand-feature-text">
-              Secure Authentication
-              <small>End-to-end encrypted</small>
-            </span>
+            <span class="brand-feature-icon"><i class="bi bi-shield-check"></i></span>
+            <span class="brand-feature-text">Secure Authentication</span>
           </div>
-
           <div class="brand-feature">
-            <span class="brand-feature-icon">
-              <i class="bi bi-envelope-check-fill"></i>
-            </span>
-            <span class="brand-feature-text">
-              Email Verification
-              <small>Verify your identity</small>
-            </span>
+            <span class="brand-feature-icon"><i class="bi bi-truck"></i></span>
+            <span class="brand-feature-text">Fresh Groceries Delivered</span>
           </div>
-
-          <div class="brand-feature">
-            <span class="brand-feature-icon">
-              <i class="bi bi-phone-vibrate-fill"></i>
-            </span>
-            <span class="brand-feature-text">
-              Phone Verification
-              <small>Instant OTP delivery</small>
-            </span>
-          </div>
-
-          <div class="brand-feature">
-            <span class="brand-feature-icon">
-              <i class="bi bi-gem"></i>
-            </span>
-            <span class="brand-feature-text">
-              GrocHub
-              <small>Unlimited grocery insights</small>
-            </span>
-          </div>
-
         </div>
 
       </div>
     </div>
 
-    <!-- ====== RIGHT: SIGNUP SECTION ====== -->
+    <!-- ══════════ RIGHT: SIGNUP PANEL ══════════ -->
     <div class="signup-section">
       <div class="signup-inner">
 
-        <!-- Glassmorphism Card -->
         <div class="signup-card" role="main" aria-labelledby="signupHeading">
 
           <!-- Card Header -->
           <div class="signup-card-header">
-            <div class="signup-card-icon">
-              <i class="bi bi-person-plus-fill"></i>
-            </div>
+            <div class="signup-card-icon"><i class="bi bi-person-plus-fill"></i></div>
             <h2 class="signup-heading" id="signupHeading">Create Account</h2>
-            <p class="signup-subtitle">Choose your preferred signup method.</p>
+            <p class="signup-subtitle">Choose your preferred signup method to get started.</p>
           </div>
 
           <!-- Signup Options -->
           <div class="signup-options">
 
-            <!-- Option 1: Email Signup -->
             <a href="{% url 'store:signup_email' %}" class="option-card" id="option-email" aria-label="Sign up with email">
-              <span class="option-icon">
-                <i class="bi bi-envelope-fill"></i>
-              </span>
+              <span class="option-icon"><i class="bi bi-envelope-fill"></i></span>
               <span class="option-content">
                 <span class="option-title">Email Signup</span>
                 <span class="option-desc">Sign up using your email address.</span>
               </span>
-              <span class="option-arrow">
-                <i class="bi bi-arrow-right"></i>
-              </span>
+              <span class="option-arrow"><i class="bi bi-arrow-right"></i></span>
             </a>
 
-            <!-- Option 2: Phone Signup -->
             <a href="{% url 'store:signup_phone' %}" class="option-card" id="option-phone" aria-label="Sign up with phone number">
-              <span class="option-icon">
-                <i class="bi bi-phone-fill"></i>
-              </span>
+              <span class="option-icon"><i class="bi bi-phone-fill"></i></span>
               <span class="option-content">
                 <span class="option-title">Phone Signup</span>
                 <span class="option-desc">Verify instantly using OTP.</span>
               </span>
-              <span class="option-arrow">
-                <i class="bi bi-arrow-right"></i>
-              </span>
+              <span class="option-arrow"><i class="bi bi-arrow-right"></i></span>
             </a>
-
 
           </div>
 
@@ -1352,36 +576,22 @@
             <a href="{% url 'store:login' %}" class="login-link">Sign In</a>
           </div>
 
-        </div>
+          <!-- Trust Indicators -->
+          <div class="trust-badges" aria-label="Trust indicators">
+            <span class="trust-badge"><i class="bi bi-shield-lock-fill"></i> Encrypted</span>
+            <span class="trust-badge"><i class="bi bi-lock-fill"></i> Secure Login</span>
+            <span class="trust-badge"><i class="bi bi-incognito"></i> Privacy Protected</span>
+            <span class="trust-badge"><i class="bi bi-patch-check-fill"></i> 100% Safe</span>
+          </div>
 
-        <!-- Trust Indicators -->
-        <div class="trust-badges" aria-label="Trust indicators">
-          <span class="trust-badge">
-            <i class="bi bi-shield-lock-fill"></i>
-            Encrypted
-          </span>
-          <span class="trust-badge">
-            <i class="bi bi-lock-fill"></i>
-            Secure Login
-          </span>
-          <span class="trust-badge">
-            <i class="bi bi-incognito"></i>
-            Privacy Protected
-          </span>
-          <span class="trust-badge">
-            <i class="bi bi-patch-check-fill"></i>
-            100% Safe
-          </span>
-        </div>
+          <!-- Security Note -->
+          <div class="security-note">
+            <span class="security-note-icon"><i class="bi bi-shield-check"></i></span>
+            <span class="security-note-text">
+              Your personal information is encrypted and protected using industry-standard security practices.
+            </span>
+          </div>
 
-        <!-- Security Note -->
-        <div class="security-note">
-          <span class="security-note-icon">
-            <i class="bi bi-shield-check"></i>
-          </span>
-          <span class="security-note-text">
-            Your personal information is encrypted and protected using industry-standard security practices.
-          </span>
         </div>
 
       </div>
@@ -1392,7 +602,7 @@
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
     <div class="loading-spinner"></div>
-    <span class="loading-text">Redirecting...</span>
+    <span class="loading-text">Opening signup...</span>
   </div>
 
 </div>
@@ -1404,78 +614,53 @@
   (function () {
     'use strict';
 
-    /* ───────────── Ripple Effect ─────────────────────────────────── */
+    /* Loading overlay — shown before navigating to a signup method */
+    function activateOverlay() {
+      var overlay = document.getElementById('loadingOverlay');
+      if (overlay) { overlay.classList.add('active'); }
+    }
+
     var cards = document.querySelectorAll('.option-card');
-
     cards.forEach(function (card) {
-      card.addEventListener('click', function (e) {
-        // Create ripple effect
-        var rect = card.getBoundingClientRect();
-        var x = e.clientX - rect.left;
-        var y = e.clientY - rect.top;
-        var ripple = document.createElement('span');
-        ripple.className = 'ripple-el';
-        var size = Math.max(rect.width, rect.height);
-        ripple.style.width = ripple.style.height = size + 'px';
-        ripple.style.left = (x - size / 2) + 'px';
-        ripple.style.top = (y - size / 2) + 'px';
-        card.appendChild(ripple);
-
-        // Remove ripple after animation
-        setTimeout(function () {
-          if (ripple.parentNode) {
-            ripple.parentNode.removeChild(ripple);
-          }
-        }, 600);
-
-        // Show loading overlay before redirect
-        var loadingOverlay = document.getElementById('loadingOverlay');
-        loadingOverlay.classList.add('active');
-      });
+      card.addEventListener('click', activateOverlay);
     });
 
-    /* ───────────── Keyboard Shortcuts ─────────────────────────────── */
+    /* Keyboard shortcuts: Alt + 1 → Email, Alt + 2 → Phone */
     document.addEventListener('keydown', function (e) {
-      // Alt + 1 → Email signup
       if (e.altKey && e.key === '1') {
         e.preventDefault();
-        document.getElementById('option-email').click();
+        activateOverlay();
+        var email = document.getElementById('option-email');
+        if (email) { email.click(); }
       }
-      // Alt + 2 → Phone signup
       if (e.altKey && e.key === '2') {
         e.preventDefault();
-        document.getElementById('option-phone').click();
+        activateOverlay();
+        var phone = document.getElementById('option-phone');
+        if (phone) { phone.click(); }
       }
     });
 
-    /* ───────────── Card Selection Effect ──────────────────────────── */
-    cards.forEach(function (card) {
-      card.addEventListener('mouseenter', function () {
-        // Subtle glow on hover is handled by CSS
-      });
-
-      card.addEventListener('focus', function () {
-        card.style.transform = 'translateY(-3px) scale(1.01)';
-      });
-
-      card.addEventListener('blur', function () {
-        card.style.transform = '';
-      });
-    });
-
-    /* ───────────── Page Fade In ───────────────────────────────────── */
+    /* Page fade-in */
     document.addEventListener('DOMContentLoaded', function () {
       var page = document.getElementById('signupPage');
-      page.style.opacity = '0';
-      page.style.transition = 'opacity 0.4s ease';
-      requestAnimationFrame(function () {
+      if (page) {
+        page.style.opacity = '0';
+        page.style.transition = 'opacity 0.4s ease';
         requestAnimationFrame(function () {
-          page.style.opacity = '1';
+          requestAnimationFrame(function () {
+            page.style.opacity = '1';
+          });
         });
-      });
+      }
     });
 
   })();
 </script>
 
 {% endblock %}
+
+
+
+
+
