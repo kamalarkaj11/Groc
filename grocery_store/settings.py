@@ -54,12 +54,9 @@ else:
 # Railway production domain. Override with a comma-separated ALLOWED_HOSTS
 # env variable if the site is exposed under a custom domain.
 ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.getenv(
-        'ALLOWED_HOSTS',
-        'localhost,127.0.0.1,groc-production-6c7e.up.railway.app,.railway.app',
-    ).split(',')
-    if host.strip()
+    "groc-d9gl.onrender.com",
+    "localhost",
+    "127.0.0.1",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
