@@ -276,15 +276,23 @@ load_dotenv()
 import ast
 
 # Resolve broker URL: use REDIS_URL if set, else CELERY_BROKER_URL from env
-# If no broker URL is configured, use 'cache+memory://' for development
-# which requires no external service.
+# If no broker URL is configured, use 'memory://' for development which
+# requires no external service.
 _CELERY_BROKER_URL = os.getenv('REDIS_URL') or os.getenv('CELERY_BROKER_URL', '')
 
-# If no broker URL is configured at all, use an in-memory cache-based
-# transport. This works out of the box with no external dependencies.
+# Normalize the legacy 'cache+...://' broker format. The installed kombu
+# version no longer ships a 'cache' transport, so 'cache+memory://' raises
+# kombu.transport KeyError: "No such transport: cache". 'memory://' (alias
+# for kombu.transport.memory.Transport) is the built-in drop-in replacement.
+if _CELERY_BROKER_URL.startswith('cache+'):
+    _CELERY_BROKER_URL = 'memory://'
+
+# If no broker URL is configured at all, use an in-memory transport that
+# works out of the box with no external dependencies (no Redis/RabbitMQ
+# process required).
 # For production: set REDIS_URL or CELERY_BROKER_URL in .env
 if not _CELERY_BROKER_URL:
-    _CELERY_BROKER_URL = 'cache+memory://'  # In-memory transport, no external service needed
+    _CELERY_BROKER_URL = 'memory://'  # Built-in in-memory transport, no external service needed
 
 CELERY_BROKER_URL = _CELERY_BROKER_URL
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'django-db')
@@ -293,6 +301,18 @@ CELERY_TASK_SERIALIZER = os.getenv('CELERY_TASK_SERIALIZER', 'json')
 CELERY_RESULT_SERIALIZER = os.getenv('CELERY_RESULT_SERIALIZER', 'json')
 CELERY_TIMEZONE = os.getenv('CELERY_TIMEZONE', 'Asia/Kolkata')
 CELERY_ENABLE_UTC = os.getenv('CELERY_ENABLE_UTC', 'True').lower() in ('1', 'true', 'yes', 'on')
+
+# Task execution strategy:
+# - Development default: the in-memory 'memory://' transport has no worker
+#   process consuming messages, so tasks run synchronously (eagerly) in the
+#   request process. This guarantees login/order notifications are delivered
+#   even when no `celery worker` is running.
+# - Production: set REDIS_URL (or CELERY_BROKER_URL from .env) so a celery
+#   worker consumes the queue; override this per environment if needed.
+CELERY_TASK_ALWAYS_EAGER = os.getenv(
+    'CELERY_TASK_ALWAYS_EAGER',
+    str(_CELERY_BROKER_URL.startswith('memory://')),
+).lower() in ('1', 'true', 'yes', 'on')
 
 # Retry policy for Celery broker connection
 # If the broker is temporarily down, Celery will retry connecting

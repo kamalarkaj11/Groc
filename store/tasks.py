@@ -61,8 +61,8 @@ def safe_delay(task, *args, **kwargs):
     Safely dispatch a Celery task. If the broker is unreachable, executes the
     task synchronously so that the caller never sees a ConnectionRefusedError.
     """
-    broker_url = getattr(settings, 'CELERY_BROKER_URL', 'cache+memory://')
-    local_transports = ('cache+memory://', 'memory://', 'django://', 'sqla+sqlite://')
+    broker_url = getattr(settings, 'CELERY_BROKER_URL', 'memory://')
+    local_transports = ('memory://', 'django://', 'sqla+sqlite://')
     use_local_transport = any(broker_url.startswith(t) for t in local_transports)
 
     if use_local_transport:

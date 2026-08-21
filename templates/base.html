@@ -23,7 +23,11 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
     />
-    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon-16x16.png' %}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon-32x32.png' %}" />
+    <link rel="icon" type="image/png" sizes="48x48" href="{% static 'images/favicon-48x48.png' %}" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="{% static 'images/favicon.svg' %}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/apple-touch-icon.png' %}" />
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
     <style>
       /* ── Page Layout Fix: Prevent Footer Overlapping ── */
@@ -76,6 +80,44 @@
     {% block extra_css %}{% endblock %}
   </head>
   <body>
+<!-- GrocHub branded full-screen loader (visible by default during page load) -->
+    <div
+      id="grochub-loader"
+      class="grochub-loader"
+      role="status"
+      aria-live="polite"
+      aria-label="Loading GrocHub"
+    >
+      <div class="grochub-loader-content">
+        <div class="grochub-loader-badge" aria-hidden="true">
+          <span class="grochub-spinner"></span>
+          <span class="grochub-loader-icon"><i class="bi bi-basket2-fill"></i></span>
+        </div>
+        <div class="grochub-loader-brand">GrocHub</div>
+        <div class="grochub-loader-tagline">Fresh Daily</div>
+        <p class="grochub-loader-text">
+          <span class="grochub-loader-label">Loading GrocHub</span
+          ><span class="grochub-loader-dots" aria-hidden="true"></span>
+        </p>
+      </div>
+    </div>
+
+    <script>
+      // Apply the active theme as early as possible to avoid a load flash.
+      (function () {
+        var loader = document.getElementById('grochub-loader');
+        if (!loader) return;
+        var root = document.documentElement;
+        var dark =
+          root.getAttribute('data-theme') === 'dark' ||
+          root.getAttribute('data-bs-theme') === 'dark' ||
+          (window.localStorage && window.localStorage.getItem('api-dark-mode') === '1');
+        if (dark) loader.classList.add('grochub-dark');
+      })();
+    </script>
+    <noscript>
+      <style>#grochub-loader{display:none !important;}</style>
+    </noscript>
     {% include 'header.html' %}
 
     <div class="page-wrapper">

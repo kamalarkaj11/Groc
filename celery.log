@@ -1,1 +1,27 @@
 [2026-07-22 12:46:21,901] WARNING store.tasks Celery broker is NOT available at django://: 'No such transport: django'
+[2026-08-21 12:56:14,341] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-21 12:56:14,348] INFO store.tasks === LOGIN EMAIL EVENT === User 52 | LoginActivity 14 ===
+[2026-08-21 12:56:14,350] INFO store.tasks Login email task completed for user 52: {'status': 'skipped', 'channel': 'email', 'reason': 'No email address'}
+[2026-08-21 12:56:14,423] INFO celery.app.trace Task store.tasks.send_login_email_task[831873a7-5733-41f0-b6fa-fdb9624585fe] succeeded in 0.07799999999951979s: {'status': 'skipped', 'channel': 'email', 'reason': 'No email address'}
+[2026-08-21 12:56:14,427] INFO store.tasks === LOGIN SMS EVENT === User 52 | LoginActivity 14 ===
+[2026-08-21 12:56:17,469] INFO store.tasks Login SMS task completed for user 52: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SM1710295d84f4326a6bc7cd6540c6af43'}
+[2026-08-21 12:56:17,470] INFO celery.app.trace Task store.tasks.send_login_sms_task[40f0b4d8-eaaf-4265-a83f-51a5b36947d6] succeeded in 3.04700000000048s: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SM1710295d84f4326a6bc7cd6540c6af43'}
+[2026-08-21 20:28:04,352] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-21 20:28:04,369] INFO store.tasks === LOGIN EMAIL EVENT === User 52 | LoginActivity 15 ===
+[2026-08-21 20:28:04,373] INFO store.tasks Login email task completed for user 52: {'status': 'skipped', 'channel': 'email', 'reason': 'No email address'}
+[2026-08-21 20:28:04,570] INFO celery.app.trace Task store.tasks.send_login_email_task[ab3145e9-1d50-4444-8472-1459b8c6e887] succeeded in 0.2039999999999509s: {'status': 'skipped', 'channel': 'email', 'reason': 'No email address'}
+[2026-08-21 20:28:04,580] INFO store.tasks === LOGIN SMS EVENT === User 52 | LoginActivity 15 ===
+[2026-08-21 20:28:07,688] INFO store.tasks Login SMS task completed for user 52: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SM0edd5b01be5d8759e7d50f74c1d2fdf7'}
+[2026-08-21 20:28:07,694] INFO celery.app.trace Task store.tasks.send_login_sms_task[db369c62-8873-433c-8a26-cd3faa0a3dcb] succeeded in 3.125s: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SM0edd5b01be5d8759e7d50f74c1d2fdf7'}
+[2026-08-21 20:28:10,780] INFO store.tasks === LOGIN EMAIL EVENT === User 52 | LoginActivity 16 ===
+[2026-08-21 20:28:10,780] INFO store.tasks Login email task completed for user 52: {'status': 'skipped', 'channel': 'email', 'reason': 'No email address'}
+[2026-08-21 20:28:10,848] INFO celery.app.trace Task store.tasks.send_login_email_task[cbd8ecf0-f6c5-49da-b02e-065e83960a2b] succeeded in 0.07799999999997453s: {'status': 'skipped', 'channel': 'email', 'reason': 'No email address'}
+[2026-08-21 20:28:10,855] INFO store.tasks === LOGIN SMS EVENT === User 52 | LoginActivity 16 ===
+[2026-08-21 20:28:12,631] INFO store.tasks Login SMS task completed for user 52: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SMdf9cb91b0ea4b92af6e0409047d73ce8'}
+[2026-08-21 20:28:12,631] INFO celery.app.trace Task store.tasks.send_login_sms_task[0a8ad7a3-8c13-4575-8494-80885b28e701] succeeded in 1.780999999999949s: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SMdf9cb91b0ea4b92af6e0409047d73ce8'}
+[2026-08-21 20:29:45,683] INFO store.tasks === LOGIN EMAIL EVENT === User 52 | LoginActivity 17 ===
+[2026-08-21 20:29:45,685] INFO store.tasks Login email task completed for user 52: {'status': 'skipped', 'channel': 'email', 'reason': 'No email address'}
+[2026-08-21 20:29:45,809] INFO celery.app.trace Task store.tasks.send_login_email_task[7d04a885-648b-4579-9a85-07db9b65db2a] succeeded in 0.125s: {'status': 'skipped', 'channel': 'email', 'reason': 'No email address'}
+[2026-08-21 20:29:45,817] INFO store.tasks === LOGIN SMS EVENT === User 52 | LoginActivity 17 ===
+[2026-08-21 20:29:47,621] INFO store.tasks Login SMS task completed for user 52: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SM3e1a169d9e8ac64044fb9866d8559a76'}
+[2026-08-21 20:29:47,621] INFO celery.app.trace Task store.tasks.send_login_sms_task[80dd0029-1da8-4825-8dc9-0ab8fcb25db1] succeeded in 1.8120000000001255s: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SM3e1a169d9e8ac64044fb9866d8559a76'}

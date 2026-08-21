@@ -354,7 +354,8 @@ payButton.addEventListener('click', async function() {
     }
 
     payButton.disabled = true;
-    payButton.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Processing...';
+    payButton.innerHTML = '<span class="grochub-btn-spinner me-2"></span>Processing...';
+    showGrocHubLoader();
 
     const sessionResponse = await fetch('{% url "store:create_session" %}', {
       method: 'POST',
@@ -366,6 +367,7 @@ payButton.addEventListener('click', async function() {
 
     const sessionData = await sessionResponse.json();
     if (sessionData.url) {
+      hideGrocHubLoader();
       window.location.href = sessionData.url;
       return;
     }
@@ -373,6 +375,7 @@ payButton.addEventListener('click', async function() {
     throw new Error(sessionData.error || 'Payment initiation failed.');
   } catch (error) {
     console.error(error);
+    hideGrocHubLoader();
     errorAlert.textContent = error.message || 'An error occurred. Please try again.';
     errorAlert.classList.remove('d-none');
     payButton.disabled = false;

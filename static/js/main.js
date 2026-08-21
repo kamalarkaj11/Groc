@@ -82,7 +82,7 @@ function addToCart(productId, quantity, button) {
 
   if (button) {
     button.disabled = true;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Adding...';
+    button.innerHTML = '<span class="grochub-btn-spinner me-1" role="status" aria-hidden="true"></span> Adding...';
   }
 
   const formData = new FormData();
@@ -239,3 +239,109 @@ document.getElementById('searchInput')?.addEventListener('input', function() {
 
 // Periodic cart summary refresh (every 30s)
 setInterval(updateCartSummary, 30000);
+
+// ─── GrocHub Loading Animation ──────────────────────────────────────
+// Reusable full-screen loader. The overlay is *visible by default* in the
+// HTML/CSS so it also covers the initial page request; JS fades it out after
+// the page has loaded. For long-running operations (payment, checkout, …)
+// call showGrocHubLoader() / hideGrocHubLoader() explicitly.
+
+const GrocHubLoader = {
+  _el: null,
+  minShowMs: 450,
+  shownAt: 0,
+  hideTimer: null,
+
+  get el() {
+    if (!this._el) this._el = document.getElementById('grochub-loader');
+    return this._el;
+  },
+  set el(v) { this._el = v; },
+
+  reducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  },
+
+  // Follow the currently selected theme (dark vs light).
+  applyTheme() {
+    const loader = this.el;
+    if (!loader) return;
+    const root = document.documentElement;
+    let dark =
+      root.getAttribute('data-theme') === 'dark' ||
+      root.getAttribute('data-bs-theme') === 'dark' ||
+      !!document.querySelector('.api-dark, [data-bs-theme="dark"]') ||
+      (window.localStorage && window.localStorage.getItem('api-dark-mode') === '1');
+    if (!dark && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      dark = true;
+    }
+    loader.classList.toggle('grochub-dark', dark);
+  }
+};
+
+// Show the full-screen GrocHub loader.
+function showGrocHubLoader() {
+  const loader = GrocHubLoader.el;
+  if (!loader) return;
+  clearTimeout(GrocHubLoader.hideTimer);
+  GrocHubLoader.shownAt = Date.now();
+  GrocHubLoader.applyTheme();
+  loader.classList.remove('grochub-leaving', 'grochub-hidden');
+  void loader.offsetWidth; // restart any fade-in
+}
+
+// Hide the full-screen GrocHub loader (with a smooth fade).
+function hideGrocHubLoader() {
+  const loader = GrocHubLoader.el;
+  if (!loader) return;
+  clearTimeout(GrocHubLoader.hideTimer);
+  // Keep it for a very short moment so the transition feels smooth.
+  const hold = GrocHubLoader.reducedMotion()
+    ? 0
+    : Math.max(0, GrocHubLoader.minShowMs - (Date.now() - GrocHubLoader.shownAt));
+  GrocHubLoader.hideTimer = setTimeout(function () {
+    loader.classList.add('grochub-leaving');
+    setTimeout(function () {
+      loader.classList.add('grochub-hidden');
+      loader.classList.remove('grochub-leaving');
+    }, GrocHubLoader.reducedMotion() ? 120 : 500);
+  }, hold);
+}
+
+// ── Initial page-load lifecycle ─────────────────────────────────────
+// Fade the loader once the page (including assets) has finished loading.
+let grocHubLoadFired = false;
+window.addEventListener('load', function () {
+  grocHubLoadFired = true;
+  hideGrocHubLoader();
+});
+// If the page was already finished before this script ran, hide shortly.
+if (document.readyState === 'complete') {
+  setTimeout(hideGrocHubLoader, GrocHubLoader.reducedMotion() ? 0 : 350);
+}
+// Safety net: never leave the initial loader visible forever.
+setTimeout(hideGrocHubLoader, 8000);
+
+// ── Internal navigation support ─────────────────────────────────────
+// As soon as the user clicks a same-tab internal link, reveal the loader so
+// there is no white flash between pages. The destination page renders its own
+// default-visible loader, and a JS-prevented link is restored after a guard.
+function looksInternalLink(anchor) {
+  if (!anchor) return false;
+  const href = (anchor.getAttribute('href') || '').trim();
+  if (!href || href.charAt(0) === '#') return false;          // hash / placeholder
+  const target = anchor.getAttribute('target') || '';
+  if (target && target !== '_self') return false;             // opens elsewhere
+  if (anchor.hasAttribute('download')) return false;           // download
+  if (/^(mailto:|tel:|javascript:|data:|blob:)/i.test(href)) return false;
+  if (anchor.hasAttribute('data-add-to-cart') || anchor.hasAttribute('data-wishlist') || anchor.hasAttribute('data-product')) return false;
+  return true;
+}
+
+document.addEventListener('click', function (event) {
+  const anchor = event.target.closest ? event.target.closest('a') : null;
+  if (!looksInternalLink(anchor)) return;
+  showGrocHubLoader();
+  // If a page-side script prevented navigation / default, hide again shortly.
+  setTimeout(hideGrocHubLoader, 2200);
+});
