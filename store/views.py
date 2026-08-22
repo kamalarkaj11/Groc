@@ -3277,7 +3277,7 @@ def order_detail(request, order_id):
     tracking_history = OrderTrackingHistory.objects.filter(tracking=tracking).order_by('created_at')
 
     # Build timeline
-    status_sequence = ['pending', 'confirmed', 'packed', 'shipped', 'out_for_delivery', 'delivered']
+    status_sequence = OrderTracking.TRACKING_STATUS_ORDER
     timeline_items = []
     for s in status_sequence:
         is_completed = tracking.is_status_completed(s)
@@ -3340,7 +3340,7 @@ def track_order(request, order_id):
     history = OrderTrackingHistory.objects.filter(tracking=tracking).order_by('created_at')
 
     # Pre-compute timeline item classes to avoid complex template logic
-    status_sequence = ['pending', 'confirmed', 'packed', 'shipped', 'out_for_delivery', 'delivered']
+    status_sequence = OrderTracking.TRACKING_STATUS_ORDER
     timeline_items = []
     for s in status_sequence:
         is_completed = tracking.is_status_completed(s)

@@ -708,6 +708,10 @@ class OrderTracking(models.Model):
         ('cancelled', 'Cancelled'),
     ]
 
+    TRACKING_STATUS_ORDER = [
+        'pending', 'confirmed', 'packed', 'shipped', 'out_for_delivery', 'delivered',
+    ]
+
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='tracking')
     status = models.CharField(max_length=20, choices=TRACKING_STATUS_CHOICES, default='pending')
     tracking_number = models.CharField(max_length=100, blank=True)
@@ -734,6 +738,36 @@ class OrderTracking(models.Model):
             except OrderTracking.DoesNotExist:
                 self._previous_status = self.status
         super().save(*args, **kwargs)
+
+    def is_status_completed(self, status):
+        """Return True if the given status has already been completed (lies before the current one)."""
+        if self.status == 'cancelled':
+            return False
+        current_rank = self._status_rank(self.status)
+        status_rank = self._status_rank(status)
+        return status_rank != -1 and status_rank < current_rank
+
+    def is_current_status(self, status):
+        """Return True if the given status matches the current tracking status."""
+        return self.status == status
+
+    def get_progress_percentage(self):
+        """Return delivery progress as a whole percentage (0-100)."""
+        if self.status == 'cancelled':
+            return 0
+        current_rank = self._status_rank(self.status)
+        if current_rank == -1:
+            return 0
+        total_steps = len(self.TRACKING_STATUS_ORDER) - 1
+        return int(round(current_rank / total_steps * 100))
+
+    @classmethod
+    def _status_rank(cls, status):
+        """Return the zero-based position of a status in the delivery flow, or -1 if unknown."""
+        try:
+            return cls.TRACKING_STATUS_ORDER.index(status)
+        except ValueError:
+            return -1
 
     def __str__(self):
         return f"Tracking for Order #{self.order_id} - {self.get_status_display()}"

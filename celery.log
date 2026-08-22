@@ -25,3 +25,10 @@
 [2026-08-21 20:29:45,817] INFO store.tasks === LOGIN SMS EVENT === User 52 | LoginActivity 17 ===
 [2026-08-21 20:29:47,621] INFO store.tasks Login SMS task completed for user 52: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SM3e1a169d9e8ac64044fb9866d8559a76'}
 [2026-08-21 20:29:47,621] INFO celery.app.trace Task store.tasks.send_login_sms_task[80dd0029-1da8-4825-8dc9-0ab8fcb25db1] succeeded in 1.8120000000001255s: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SM3e1a169d9e8ac64044fb9866d8559a76'}
+[2026-08-22 10:22:30,804] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-22 10:22:30,810] INFO store.tasks === LOGIN EMAIL EVENT === User 79 | LoginActivity 18 ===
+[2026-08-22 10:22:47,875] INFO store.tasks Login email task completed for user 79: {'status': 'success', 'channel': 'email', 'recipient': 'kamalarkaj11@gmail.com'}
+[2026-08-22 10:22:48,092] INFO celery.app.trace Task store.tasks.send_login_email_task[ea313730-b499-499c-befd-0d08527e0c07] succeeded in 17.281000000000176s: {'status': 'success', 'channel': 'email', 'recipient': 'kamalarkaj11@gmail.com'}
+[2026-08-22 10:22:48,099] INFO store.tasks === LOGIN SMS EVENT === User 79 | LoginActivity 18 ===
+[2026-08-22 10:22:52,588] INFO store.tasks Login SMS task completed for user 79: {'status': 'failed', 'channel': 'sms', 'error': "Twilio error 21211: Unable to create record: Invalid 'To' Phone Number: penXXXX"}
+[2026-08-22 10:22:52,590] INFO celery.app.trace Task store.tasks.send_login_sms_task[728fa4ae-b289-4480-bc8e-e2b96349eefa] succeeded in 4.484000000000151s: {'status': 'failed', 'channel': 'sms', 'error': 'Twilio error 21211: Unable to create record: Invalid \'To\' Phone Number: penXXXX'}
