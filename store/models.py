@@ -494,15 +494,20 @@ class CartItem(models.Model):
 
 class Order(models.Model):
     ORDER_STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('confirmed', 'Confirmed'),
+        ('pending', 'Order Placed'),
+        ('pending_payment', 'Pending Payment'),
+        ('confirmed', 'Order Confirmed'),
         ('processing', 'Processing'),
         ('packed', 'Packed'),
         ('shipped', 'Shipped'),
         ('out_for_delivery', 'Out For Delivery'),
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
+        ('delivery_failed', 'Delivery Failed'),
+        ('payment_failed', 'Payment Failed'),
         ('returned', 'Returned'),
+        ('refund_initiated', 'Refund Initiated'),
+        ('refunded', 'Refunded'),
         ('failed', 'Failed'),
     ]
     
@@ -510,6 +515,7 @@ class Order(models.Model):
         ('pending', 'Pending'),
         ('paid', 'Paid'),
         ('failed', 'Failed'),
+        ('refund_pending', 'Refund Pending'),
         ('refunded', 'Refunded'),
     ]
     
@@ -546,6 +552,23 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    # ── Automatic milestone timestamps (populated only when reached) ──
+    ordered_at = models.DateTimeField(null=True, blank=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    processing_at = models.DateTimeField(null=True, blank=True)
+    packed_at = models.DateTimeField(null=True, blank=True)
+    shipped_at = models.DateTimeField(null=True, blank=True)
+    out_for_delivery_at = models.DateTimeField(null=True, blank=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    refund_initiated_at = models.DateTimeField(null=True, blank=True)
+    refunded_at = models.DateTimeField(null=True, blank=True)
+
+    # ── Cancellation & tracking metadata ──
+    cancel_reason = models.CharField(max_length=200, blank=True)
+    tracking_number = models.CharField(max_length=100, blank=True)
+    delivery_partner = models.CharField(max_length=100, blank=True)
+
     email_sent = models.BooleanField(default=False)
     sms_sent = models.BooleanField(default=False)
     notification_sent = models.BooleanField(default=False)
@@ -562,13 +585,33 @@ class Order(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.order_id:
-            last_order = Order.objects.order_by('-id').first()
-            next_id = (last_order.id + 1) if last_order else 1
-            self.order_id = f"GH{next_id:04d}"
+            # Customer-friendly unique ID: GROC + YYYYMMDD + daily sequence
+            # e.g. GROC202608220001. Legacy orders keep their GH#### ids.
+            today = timezone.localdate().strftime('%Y%m%d')
+            prefix = f"GROC{today}"
+            seq = 1
+            last = (Order.objects.filter(order_id__startswith=prefix)
+                    .order_by('-order_id').first())
+            if last and last.order_id and len(last.order_id) > len(prefix):
+                try:
+                    seq = int(last.order_id[len(prefix):]) + 1
+                except ValueError:
+                    seq = 1
+            candidate = f"{prefix}{seq:04d}"
+            # Guard against rare concurrent collisions.
+            while Order.objects.filter(order_id=candidate).exclude(pk=self.pk).exists():
+                seq += 1
+                candidate = f"{prefix}{seq:04d}"
+            self.order_id = candidate
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Order {self.order_id or self.id} - {self.user.username}"
+
+    @property
+    def display_name(self):
+        """Customer-friendly display name for the order."""
+        return self.order_id or f"#{self.id}"
 
 
 class OrderAddress(models.Model):
@@ -617,15 +660,34 @@ class OrderAddress(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    # ── Product snapshot (preserves historical order data) ──
+    product_name = models.CharField(max_length=200, blank=True)
+    product_image = models.CharField(max_length=500, blank=True)
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def save(self, *args, **kwargs):
+        if not self.product_name and self.product_id:
+            self.product_name = self.product.title if self.product else ''
+        super().save(*args, **kwargs)
 
     def total_price(self):
         return self.price * self.quantity
 
+    @property
+    def display_name(self):
+        return self.product_name or (self.product.title if self.product else 'Product')
+
+    @property
+    def subtotal(self):
+        return self.total_price()
+
     def __str__(self):
-        return f"{self.product.title} x{self.quantity}"
+        name = self.display_name
+        return f"{name} x{self.quantity}"
 
 
 class InvoiceHistory(models.Model):
@@ -655,9 +717,13 @@ class OrderStatusHistory(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='status_history')
     previous_status = models.CharField(max_length=20, blank=True)
     new_status = models.CharField(max_length=20)
+    message = models.TextField(blank=True, help_text="Human friendly description of this status event, e.g. 'Order has been shipped'.")
     changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_status_changes')
     changed_by_name = models.CharField(max_length=100, blank=True)
     notes = models.TextField(blank=True)
+    # Refund-related metadata (used for refund workflow history)
+    refund_id = models.CharField(max_length=255, blank=True)
+    refund_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -699,18 +765,25 @@ class NotificationLog(models.Model):
 
 class OrderTracking(models.Model):
     TRACKING_STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('confirmed', 'Confirmed'),
+        ('pending', 'Order Placed'),
+        ('confirmed', 'Order Confirmed'),
+        ('processing', 'Processing'),
         ('packed', 'Packed'),
         ('shipped', 'Shipped'),
         ('out_for_delivery', 'Out For Delivery'),
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
+        ('delivery_failed', 'Delivery Failed'),
+        ('returned', 'Returned'),
+        ('refund_initiated', 'Refund Initiated'),
+        ('refunded', 'Refunded'),
     ]
 
     TRACKING_STATUS_ORDER = [
-        'pending', 'confirmed', 'packed', 'shipped', 'out_for_delivery', 'delivered',
+        'pending', 'confirmed', 'processing', 'packed', 'shipped', 'out_for_delivery', 'delivered',
     ]
+
+    TRACKING_STATUS_CHOICES_DICT = dict(TRACKING_STATUS_CHOICES)
 
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='tracking')
     status = models.CharField(max_length=20, choices=TRACKING_STATUS_CHOICES, default='pending')

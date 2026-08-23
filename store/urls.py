@@ -87,7 +87,14 @@ urlpatterns = [
     path('profile/orders/', views.my_orders, name='profile_orders'),
     path('orders/<int:order_id>/', views.order_detail, name='order_detail'),
     path('track-order/<int:order_id>/', views.track_order, name='track_order'),
+    path('orders/<int:order_id>/cancel/', views.cancel_order_view, name='cancel_order'),
     path('api/orders/status/<int:order_id>/', views.api_order_status, name='api_order_status'),
+    path('api/orders/', views.api_order_list, name='api_order_list'),
+    path('api/orders/<int:order_id>/', views.api_order_detail, name='api_order_detail'),
+    path('api/orders/<int:order_id>/tracking/', views.api_order_tracking, name='api_order_tracking'),
+    path('api/orders/<int:order_id>/history/', views.api_order_history, name='api_order_history'),
+    path('api/orders/<int:order_id>/cancel/', views.api_order_cancel, name='api_order_cancel'),
+    path('api/admin/orders/<int:order_id>/status/', views.api_admin_update_order_status, name='api_admin_order_status_update'),
 
     # Profile Verification
     path('profile/send-otp/', views.profile_send_otp, name='profile_send_otp'),

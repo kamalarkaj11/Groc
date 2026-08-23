@@ -342,6 +342,93 @@ def send_order_confirmation_sms(self, order_id):
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def send_order_status_update_notifications(self, order_id, new_status):
+    """
+    Send email/SMS notification for a generic order status change.
+
+    Uses the existing `emails/order_status_update.html` template so no second
+    email system is introduced. In-app notifications are already created
+    synchronously by the order service; this task only handles email/SMS.
+    """
+    try:
+        order = Order.objects.select_related('user', 'shipping_address').get(id=order_id)
+    except Order.DoesNotExist:
+        logger.error('Order %s not found for status notification.', order_id)
+        return {'status': 'error', 'error': 'Order not found'}
+
+    from .order_services import NOTIFICATION_MESSAGES
+    status_label = dict(Order.ORDER_STATUS_CHOICES).get(new_status, new_status)
+    customer_name, customer_email, customer_phone = _get_customer_info(order)
+
+    log = _get_or_create_notification_log(order)
+
+    # ── Email channel ──
+    if customer_email and _verify_smtp_credentials():
+        order_id_display = order.order_id or f"#{order.id}"
+        message = NOTIFICATION_MESSAGES.get(new_status, f'Your order {order_id_display} status has been updated to {status_label}.').format(order_id=order_id_display)
+        subject = f"GrocHub - Order {order_id_display} {status_label}"
+        html_message = render_to_string('emails/order_status_update.html', {
+            'order': order,
+            'customer_name': customer_name,
+            'old_status': '',  # rendered context fetched fresh below
+            'new_status': status_label,
+            'message': message,
+            'track_url': f"/track-order/{order.id}/",
+        })
+        plain_message = strip_tags(html_message)
+        try:
+            sent_count = send_mail(
+                subject,
+                plain_message,
+                settings.DEFAULT_FROM_EMAIL,
+                [customer_email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+            if sent_count == 1:
+                log.email_status = 'sent'
+                log.email_sent_at = timezone.now()
+                log.email_error_message = ''
+                log.save()
+            else:
+                raise RuntimeError(f'SMTP returned sent_count={sent_count}')
+        except Exception as exc:
+            log.email_status = 'failed'
+            log.email_error_message = str(exc)
+            log.save()
+            logger.warning('Status email failed for order %s: %s', order_id, exc)
+    elif customer_email:
+        log.email_status = 'skipped'
+        log.email_error_message = 'SMTP not configured'
+        log.save()
+
+    # ── SMS channel ──
+    if customer_phone and _verify_twilio_credentials():
+        try:
+            client = Client(getattr(settings, 'TWILIO_ACCOUNT_SID', ''), getattr(settings, 'TWILIO_AUTH_TOKEN', ''))
+            message = NOTIFICATION_MESSAGES.get(new_status, f'Order {order.order_id or order.id} updated to {new_status}.').format(order_id=order.order_id or f"#{order.id}")
+            twilio_message = client.messages.create(
+                body=f"Hello {customer_name}, {message}",
+                from_=getattr(settings, 'TWILIO_PHONE_NUMBER', ''),
+                to=customer_phone,
+            )
+            if twilio_message.sid:
+                log.sms_status = 'sent'
+                log.sms_sent_at = timezone.now()
+                log.sms_error_message = ''
+                log.save()
+        except Exception as exc:
+            log.sms_status = 'failed'
+            log.sms_error_message = str(exc)
+            log.save()
+            logger.exception('Status SMS failed for order %s: %s', order_id, exc)
+    elif customer_phone:
+        log.sms_status = 'skipped'
+        log.sms_error_message = 'Twilio not configured'
+        log.save()
+
+    return {'status': 'processed', 'order_id': order_id, 'new_status': new_status}
 def send_order_notifications(self, order_id):
     """Master task that dispatches both email and SMS tasks for an order."""
     try:
@@ -478,7 +565,7 @@ def send_welcome_sms_task(self, user_id):
 
 
 @shared_task(bind=True, max_retries=2, default_retry_delay=120)
-def send_login_sms_task(self, user_id, request_data=None):
+def send_login_sms_task(self, user_id, login_activity_id=None, request_data=None):
     """Send login notification SMS after successful login."""
     from django.contrib.auth.models import User
     from django.http import HttpRequest
@@ -497,7 +584,7 @@ def send_login_sms_task(self, user_id, request_data=None):
 
     fake_request = _FakeRequest((request_data or {}).get('HTTP_USER_AGENT', ''))
 
-    logger.info('=== LOGIN SMS EVENT === User %s | Phone profile exists: %s ===', user_id, bool(getattr(user, 'phone_profile', None)))
+    logger.info('=== LOGIN SMS EVENT === User %s | LoginActivity %s ===', user_id, login_activity_id)
 
     try:
         result = _send_login_sms(user, fake_request)

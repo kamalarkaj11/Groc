@@ -32,3 +32,154 @@
 [2026-08-22 10:22:48,099] INFO store.tasks === LOGIN SMS EVENT === User 79 | LoginActivity 18 ===
 [2026-08-22 10:22:52,588] INFO store.tasks Login SMS task completed for user 79: {'status': 'failed', 'channel': 'sms', 'error': "Twilio error 21211: Unable to create record: Invalid 'To' Phone Number: penXXXX"}
 [2026-08-22 10:22:52,590] INFO celery.app.trace Task store.tasks.send_login_sms_task[728fa4ae-b289-4480-bc8e-e2b96349eefa] succeeded in 4.484000000000151s: {'status': 'failed', 'channel': 'sms', 'error': 'Twilio error 21211: Unable to create record: Invalid \'To\' Phone Number: penXXXX'}
+[2026-08-22 20:00:41,605] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-22 20:00:48,185] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[940f9b5e-1930-4acd-87a5-6460c6a7c56f] succeeded in 6.563000000000102s: {'status': 'processed', 'order_id': 10, 'new_status': 'confirmed'}
+[2026-08-22 20:00:48,187] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=940f9b5e-1930-4acd-87a5-6460c6a7c56f)
+[2026-08-22 20:00:56,540] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[e1530686-d808-4352-8e0b-a5fb2842058f] succeeded in 8.32799999999952s: {'status': 'processed', 'order_id': 10, 'new_status': 'processing'}
+[2026-08-22 20:00:56,540] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=e1530686-d808-4352-8e0b-a5fb2842058f)
+[2026-08-22 20:01:07,215] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[0215d98d-1aaf-4af1-8137-0068458c8fea] succeeded in 10.625s: {'status': 'processed', 'order_id': 10, 'new_status': 'packed'}
+[2026-08-22 20:01:07,215] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=0215d98d-1aaf-4af1-8137-0068458c8fea)
+[2026-08-22 20:01:21,085] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[6987afa1-734c-485f-b4b4-a7e4b547f1d7] succeeded in 13.82800000000043s: {'status': 'processed', 'order_id': 10, 'new_status': 'shipped'}
+[2026-08-22 20:01:21,087] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=6987afa1-734c-485f-b4b4-a7e4b547f1d7)
+[2026-08-22 20:01:25,794] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[09a2f987-9d19-4633-9816-bb80fe93eb28] succeeded in 4.655999999999949s: {'status': 'processed', 'order_id': 10, 'new_status': 'out_for_delivery'}
+[2026-08-22 20:01:25,795] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=09a2f987-9d19-4633-9816-bb80fe93eb28)
+[2026-08-22 20:01:30,201] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[705bd641-e6ea-4036-9084-f465358f83f2] succeeded in 4.359999999999673s: {'status': 'processed', 'order_id': 10, 'new_status': 'delivered'}
+[2026-08-22 20:01:30,203] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=705bd641-e6ea-4036-9084-f465358f83f2)
+[2026-08-22 20:01:38,992] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[ea14aa95-a2b8-4265-b096-a272b9cf7f5b] succeeded in 8.671000000000276s: {'status': 'processed', 'order_id': 11, 'new_status': 'confirmed'}
+[2026-08-22 20:01:38,992] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=ea14aa95-a2b8-4265-b096-a272b9cf7f5b)
+[2026-08-22 20:01:49,774] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[c54038d1-3d18-4dd1-9213-fb5c55684762] succeeded in 10.735000000000582s: {'status': 'processed', 'order_id': 11, 'new_status': 'cancelled'}
+[2026-08-22 20:01:49,774] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=c54038d1-3d18-4dd1-9213-fb5c55684762)
+[2026-08-22 20:01:58,960] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[9c56360a-064a-4a0d-a3c8-44b8e62a3db7] succeeded in 9.140000000000327s: {'status': 'processed', 'order_id': 11, 'new_status': 'refund_initiated'}
+[2026-08-22 20:01:58,960] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=9c56360a-064a-4a0d-a3c8-44b8e62a3db7)
+[2026-08-22 20:02:23,569] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[1624492f-6b74-4597-82d1-2b8a248d8837] succeeded in 24.563000000000102s: {'status': 'processed', 'order_id': 11, 'new_status': 'refunded'}
+[2026-08-22 20:02:23,569] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=1624492f-6b74-4597-82d1-2b8a248d8837)
+[2026-08-22 20:02:31,758] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[158256e7-11fb-4711-9ba3-a8adfd2a67bf] succeeded in 8.094000000000051s: {'status': 'processed', 'order_id': 12, 'new_status': 'confirmed'}
+[2026-08-22 20:02:31,758] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=158256e7-11fb-4711-9ba3-a8adfd2a67bf)
+[2026-08-22 20:02:40,694] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[8d1df7b5-3eaf-4194-b117-660fb19ff0f5] succeeded in 8.907000000000153s: {'status': 'processed', 'order_id': 12, 'new_status': 'packed'}
+[2026-08-22 20:02:40,694] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=8d1df7b5-3eaf-4194-b117-660fb19ff0f5)
+[2026-08-22 20:02:47,582] INFO celery.app.trace Task store.tasks.send_order_status_update_notifications[3446c35b-4ca3-421a-a1ae-ba469c4b8a57] succeeded in 6.859000000000378s: {'status': 'processed', 'order_id': 12, 'new_status': 'shipped'}
+[2026-08-22 20:02:47,584] INFO store.tasks Task send_order_status_update_notifications dispatched asynchronously via local transport (task_id=3446c35b-4ca3-421a-a1ae-ba469c4b8a57)
+[2026-08-22 21:32:22,042] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-22 21:32:22,054] INFO store.tasks === LOGIN EMAIL EVENT === User 84 | LoginActivity 19 ===
+[2026-08-22 21:32:28,435] INFO store.tasks Login email task completed for user 84: {'status': 'success', 'channel': 'email', 'recipient': 'h1_414537@e.com'}
+[2026-08-22 21:32:28,463] INFO celery.app.trace Task store.tasks.send_login_email_task[b197fc55-5b35-4651-b32d-23543be6976f] succeeded in 6.406000000000176s: {'status': 'success', 'channel': 'email', 'recipient': 'h1_414537@e.com'}
+[2026-08-22 21:32:29,495] INFO store.tasks === LOGIN EMAIL EVENT === User 85 | LoginActivity 20 ===
+[2026-08-22 21:32:34,514] INFO store.tasks Login email task completed for user 85: {'status': 'success', 'channel': 'email', 'recipient': 'h2_414537@e.com'}
+[2026-08-22 21:32:34,515] INFO celery.app.trace Task store.tasks.send_login_email_task[bd78375c-4250-4973-ad1a-75ea894fb869] succeeded in 5.031999999999925s: {'status': 'success', 'channel': 'email', 'recipient': 'h2_414537@e.com'}
+[2026-08-22 21:32:35,528] INFO store.tasks === LOGIN EMAIL EVENT === User 86 | LoginActivity 21 ===
+[2026-08-22 21:32:40,276] INFO store.tasks Login email task completed for user 86: {'status': 'success', 'channel': 'email', 'recipient': 'h3_414537@e.com'}
+[2026-08-22 21:32:40,276] INFO celery.app.trace Task store.tasks.send_login_email_task[79fe14ab-4fbb-4d97-8285-5ea7c4b076bd] succeeded in 4.75s: {'status': 'success', 'channel': 'email', 'recipient': 'h3_414537@e.com'}
+[2026-08-22 21:33:18,374] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-22 21:33:18,380] INFO store.tasks === LOGIN EMAIL EVENT === User 87 | LoginActivity 22 ===
+[2026-08-22 21:33:23,591] INFO store.tasks Login email task completed for user 87: {'status': 'success', 'channel': 'email', 'recipient': 'h1_414594@e.com'}
+[2026-08-22 21:33:23,612] INFO celery.app.trace Task store.tasks.send_login_email_task[8cc3508e-64e9-4316-ada5-50bfd4569df9] succeeded in 5.234000000000151s: {'status': 'success', 'channel': 'email', 'recipient': 'h1_414594@e.com'}
+[2026-08-22 21:33:24,561] INFO store.tasks === LOGIN EMAIL EVENT === User 88 | LoginActivity 23 ===
+[2026-08-22 21:33:29,063] INFO store.tasks Login email task completed for user 88: {'status': 'success', 'channel': 'email', 'recipient': 'h2_414594@e.com'}
+[2026-08-22 21:33:29,063] INFO celery.app.trace Task store.tasks.send_login_email_task[7da4ee60-3786-41bb-9d53-08d1ddc6c068] succeeded in 4.516000000000076s: {'status': 'success', 'channel': 'email', 'recipient': 'h2_414594@e.com'}
+[2026-08-22 21:33:30,000] INFO store.tasks === LOGIN EMAIL EVENT === User 89 | LoginActivity 24 ===
+[2026-08-22 21:33:34,684] INFO store.tasks Login email task completed for user 89: {'status': 'success', 'channel': 'email', 'recipient': 'h3_414594@e.com'}
+[2026-08-22 21:33:34,685] INFO celery.app.trace Task store.tasks.send_login_email_task[2aad6350-20f6-4cf8-b305-0b74b5a6e3b9] succeeded in 4.6879999999998745s: {'status': 'success', 'channel': 'email', 'recipient': 'h3_414594@e.com'}
+[2026-08-22 21:34:35,934] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-22 21:34:35,940] INFO store.tasks === LOGIN EMAIL EVENT === User 90 | LoginActivity 25 ===
+[2026-08-22 21:34:36,011] INFO store.tasks Login email task completed for user 90: {'status': 'success', 'channel': 'email', 'recipient': 'h1_414672@e.com'}
+[2026-08-22 21:34:36,035] INFO celery.app.trace Task store.tasks.send_login_email_task[baa0b130-b1e3-4306-a761-7ba813f6f10a] succeeded in 0.10900000000015098s: {'status': 'success', 'channel': 'email', 'recipient': 'h1_414672@e.com'}
+[2026-08-22 21:34:37,013] INFO store.tasks === LOGIN EMAIL EVENT === User 91 | LoginActivity 26 ===
+[2026-08-22 21:34:37,021] INFO store.tasks Login email task completed for user 91: {'status': 'success', 'channel': 'email', 'recipient': 'h2_414672@e.com'}
+[2026-08-22 21:34:37,021] INFO celery.app.trace Task store.tasks.send_login_email_task[f115a674-ae6b-416c-8b3b-cb6fa4a6c95a] succeeded in 0.016000000000076398s: {'status': 'success', 'channel': 'email', 'recipient': 'h2_414672@e.com'}
+[2026-08-22 21:34:37,977] INFO store.tasks === LOGIN EMAIL EVENT === User 92 | LoginActivity 27 ===
+[2026-08-22 21:34:37,982] INFO store.tasks Login email task completed for user 92: {'status': 'success', 'channel': 'email', 'recipient': 'h3_414672@e.com'}
+[2026-08-22 21:34:37,982] INFO celery.app.trace Task store.tasks.send_login_email_task[409a3671-392d-443c-bce0-ec1569e007ae] succeeded in 0.0s: {'status': 'success', 'channel': 'email', 'recipient': 'h3_414672@e.com'}
+[2026-08-22 21:35:26,056] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-22 21:35:26,059] INFO store.tasks === LOGIN EMAIL EVENT === User 52 | LoginActivity 28 ===
+[2026-08-22 21:35:26,059] INFO store.tasks Login email task completed for user 52: {'status': 'skipped', 'channel': 'email', 'reason': 'No email address'}
+[2026-08-22 21:35:26,081] INFO celery.app.trace Task store.tasks.send_login_email_task[72030650-6c1d-407d-981c-e7cb88cf7096] succeeded in 0.031000000000176442s: {'status': 'skipped', 'channel': 'email', 'reason': 'No email address'}
+[2026-08-22 21:38:52,393] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-22 21:38:52,396] INFO store.tasks === LOGIN EMAIL EVENT === User 93 | LoginActivity 29 ===
+[2026-08-22 21:38:52,468] INFO store.tasks Login email task completed for user 93: {'status': 'success', 'channel': 'email', 'recipient': 'h1_414928@e.com'}
+[2026-08-22 21:38:52,493] INFO celery.app.trace Task store.tasks.send_login_email_task[79c73012-c472-42cf-8fe6-e0013f64933b] succeeded in 0.09300000000007458s: {'status': 'success', 'channel': 'email', 'recipient': 'h1_414928@e.com'}
+[2026-08-22 21:38:52,495] INFO store.tasks === LOGIN SMS EVENT === User 93 | LoginActivity 29 ===
+[2026-08-22 21:38:52,496] INFO store.tasks Login SMS task completed for user 93: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:38:52,496] INFO celery.app.trace Task store.tasks.send_login_sms_task[4a715a56-3b0b-4589-a1ff-88220d800767] succeeded in 0.0s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:38:53,457] INFO store.tasks === LOGIN EMAIL EVENT === User 94 | LoginActivity 30 ===
+[2026-08-22 21:38:53,464] INFO store.tasks Login email task completed for user 94: {'status': 'success', 'channel': 'email', 'recipient': 'h2_414928@e.com'}
+[2026-08-22 21:38:53,465] INFO celery.app.trace Task store.tasks.send_login_email_task[f7cbcfd4-6496-4dcf-9ab7-50c2afaf0249] succeeded in 0.0s: {'status': 'success', 'channel': 'email', 'recipient': 'h2_414928@e.com'}
+[2026-08-22 21:38:53,466] INFO store.tasks === LOGIN SMS EVENT === User 94 | LoginActivity 30 ===
+[2026-08-22 21:38:53,470] INFO store.tasks Login SMS task completed for user 94: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:38:53,470] INFO celery.app.trace Task store.tasks.send_login_sms_task[d816412b-faa6-4b47-abf6-f6ee89a852ec] succeeded in 0.015999999999849024s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:38:54,639] INFO store.tasks === LOGIN EMAIL EVENT === User 95 | LoginActivity 31 ===
+[2026-08-22 21:38:54,642] INFO store.tasks Login email task completed for user 95: {'status': 'success', 'channel': 'email', 'recipient': 'h3_414928@e.com'}
+[2026-08-22 21:38:54,642] INFO celery.app.trace Task store.tasks.send_login_email_task[76dd1455-cc79-44c7-8411-18631cc21f4f] succeeded in 0.016000000000076398s: {'status': 'success', 'channel': 'email', 'recipient': 'h3_414928@e.com'}
+[2026-08-22 21:38:54,642] INFO store.tasks === LOGIN SMS EVENT === User 95 | LoginActivity 31 ===
+[2026-08-22 21:38:54,642] INFO store.tasks Login SMS task completed for user 95: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:38:54,642] INFO celery.app.trace Task store.tasks.send_login_sms_task[224bdb75-b25a-48f3-8323-1e5986cfff9c] succeeded in 0.0s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:39:44,716] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-22 21:39:44,722] INFO store.tasks === LOGIN EMAIL EVENT === User 96 | LoginActivity 32 ===
+[2026-08-22 21:39:44,791] INFO store.tasks Login email task completed for user 96: {'status': 'success', 'channel': 'email', 'recipient': 'h1_414980@e.com'}
+[2026-08-22 21:39:44,828] INFO celery.app.trace Task store.tasks.send_login_email_task[bb0786da-8577-4581-8dab-dfb6de45b7d9] succeeded in 0.10900000000015098s: {'status': 'success', 'channel': 'email', 'recipient': 'h1_414980@e.com'}
+[2026-08-22 21:39:44,831] INFO store.tasks === LOGIN SMS EVENT === User 96 | LoginActivity 32 ===
+[2026-08-22 21:39:44,832] INFO store.tasks Login SMS task completed for user 96: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:39:44,833] INFO celery.app.trace Task store.tasks.send_login_sms_task[d9f98dc2-265e-4524-bf2b-45a627ab0869] succeeded in 0.0s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:39:45,860] INFO store.tasks === LOGIN EMAIL EVENT === User 97 | LoginActivity 33 ===
+[2026-08-22 21:39:45,870] INFO store.tasks Login email task completed for user 97: {'status': 'success', 'channel': 'email', 'recipient': 'h2_414980@e.com'}
+[2026-08-22 21:39:45,870] INFO celery.app.trace Task store.tasks.send_login_email_task[bfb6bbfc-7886-4824-9c0c-236266d420ee] succeeded in 0.015000000000100044s: {'status': 'success', 'channel': 'email', 'recipient': 'h2_414980@e.com'}
+[2026-08-22 21:39:45,874] INFO store.tasks === LOGIN SMS EVENT === User 97 | LoginActivity 33 ===
+[2026-08-22 21:39:45,876] INFO store.tasks Login SMS task completed for user 97: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:39:45,877] INFO celery.app.trace Task store.tasks.send_login_sms_task[0cad8599-813d-4bac-a718-c05e06e01015] succeeded in 0.015999999999849024s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:39:46,922] INFO store.tasks === LOGIN EMAIL EVENT === User 98 | LoginActivity 34 ===
+[2026-08-22 21:39:46,931] INFO store.tasks Login email task completed for user 98: {'status': 'success', 'channel': 'email', 'recipient': 'h3_414980@e.com'}
+[2026-08-22 21:39:46,931] INFO celery.app.trace Task store.tasks.send_login_email_task[89252ddb-0f10-47ee-9d5d-be0fe93d7f02] succeeded in 0.015999999999849024s: {'status': 'success', 'channel': 'email', 'recipient': 'h3_414980@e.com'}
+[2026-08-22 21:39:46,933] INFO store.tasks === LOGIN SMS EVENT === User 98 | LoginActivity 34 ===
+[2026-08-22 21:39:46,933] INFO store.tasks Login SMS task completed for user 98: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:39:46,933] INFO celery.app.trace Task store.tasks.send_login_sms_task[268903c6-5c4c-4fc6-8595-f98c73b4f8c0] succeeded in 0.0s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:40:08,449] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-22 21:40:08,452] INFO store.tasks === LOGIN EMAIL EVENT === User 99 | LoginActivity 35 ===
+[2026-08-22 21:40:08,519] INFO store.tasks Login email task completed for user 99: {'status': 'success', 'channel': 'email', 'recipient': 'h1_415004@e.com'}
+[2026-08-22 21:40:08,543] INFO celery.app.trace Task store.tasks.send_login_email_task[dd0e0b5b-e30f-494e-837d-a3796d7d8489] succeeded in 0.09300000000007458s: {'status': 'success', 'channel': 'email', 'recipient': 'h1_415004@e.com'}
+[2026-08-22 21:40:08,543] INFO store.tasks === LOGIN SMS EVENT === User 99 | LoginActivity 35 ===
+[2026-08-22 21:40:08,546] INFO store.tasks Login SMS task completed for user 99: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:40:08,546] INFO celery.app.trace Task store.tasks.send_login_sms_task[2c186deb-568b-4c41-a86f-4de8ed49e931] succeeded in 0.015999999999849024s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:40:09,541] INFO store.tasks === LOGIN EMAIL EVENT === User 100 | LoginActivity 36 ===
+[2026-08-22 21:40:09,546] INFO store.tasks Login email task completed for user 100: {'status': 'success', 'channel': 'email', 'recipient': 'h2_415004@e.com'}
+[2026-08-22 21:40:09,546] INFO celery.app.trace Task store.tasks.send_login_email_task[7125ad53-cb34-4745-9d27-332adbaa64f1] succeeded in 0.015999999999849024s: {'status': 'success', 'channel': 'email', 'recipient': 'h2_415004@e.com'}
+[2026-08-22 21:40:09,555] INFO store.tasks === LOGIN SMS EVENT === User 100 | LoginActivity 36 ===
+[2026-08-22 21:40:09,559] INFO store.tasks Login SMS task completed for user 100: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:40:09,559] INFO celery.app.trace Task store.tasks.send_login_sms_task[8a3639f5-a0a1-4778-96ea-35948662858a] succeeded in 0.0s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:40:10,570] INFO store.tasks === LOGIN EMAIL EVENT === User 101 | LoginActivity 37 ===
+[2026-08-22 21:40:10,580] INFO store.tasks Login email task completed for user 101: {'status': 'success', 'channel': 'email', 'recipient': 'h3_415004@e.com'}
+[2026-08-22 21:40:10,580] INFO celery.app.trace Task store.tasks.send_login_email_task[e8795b68-5535-4460-bc8d-56426e814e7d] succeeded in 0.015000000000100044s: {'status': 'success', 'channel': 'email', 'recipient': 'h3_415004@e.com'}
+[2026-08-22 21:40:10,582] INFO store.tasks === LOGIN SMS EVENT === User 101 | LoginActivity 37 ===
+[2026-08-22 21:40:10,583] INFO store.tasks Login SMS task completed for user 101: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-22 21:40:10,584] INFO celery.app.trace Task store.tasks.send_login_sms_task[e2f486c7-5229-4709-a8cb-b0e09947d61f] succeeded in 0.0s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-23 16:46:41,261] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-23 16:46:41,269] INFO store.tasks === LOGIN EMAIL EVENT === User 102 | LoginActivity 38 ===
+[2026-08-23 16:46:41,396] INFO store.tasks Login email task completed for user 102: {'status': 'success', 'channel': 'email', 'recipient': 'h1_483797@e.com'}
+[2026-08-23 16:46:41,419] INFO celery.app.trace Task store.tasks.send_login_email_task[57f0f076-fcbf-4d4c-9e89-3c88ce5ecabe] succeeded in 0.13999999999987267s: {'status': 'success', 'channel': 'email', 'recipient': 'h1_483797@e.com'}
+[2026-08-23 16:46:41,419] INFO store.tasks === LOGIN SMS EVENT === User 102 | LoginActivity 38 ===
+[2026-08-23 16:46:41,428] INFO store.tasks Login SMS task completed for user 102: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-23 16:46:41,428] INFO celery.app.trace Task store.tasks.send_login_sms_task[1dd408ab-fb70-4b1c-aeb1-018d9f8c16a3] succeeded in 0.016000000000076398s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-23 16:46:42,568] INFO store.tasks === LOGIN EMAIL EVENT === User 103 | LoginActivity 39 ===
+[2026-08-23 16:46:42,574] INFO store.tasks Login email task completed for user 103: {'status': 'success', 'channel': 'email', 'recipient': 'h2_483797@e.com'}
+[2026-08-23 16:46:42,574] INFO celery.app.trace Task store.tasks.send_login_email_task[024fca59-a7a7-4329-befd-696b6506d015] succeeded in 0.0s: {'status': 'success', 'channel': 'email', 'recipient': 'h2_483797@e.com'}
+[2026-08-23 16:46:42,574] INFO store.tasks === LOGIN SMS EVENT === User 103 | LoginActivity 39 ===
+[2026-08-23 16:46:42,580] INFO store.tasks Login SMS task completed for user 103: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-23 16:46:42,580] INFO celery.app.trace Task store.tasks.send_login_sms_task[24a04737-1d54-488b-95ae-906c4255c3a2] succeeded in 0.01499999999987267s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-23 16:46:43,678] INFO store.tasks === LOGIN EMAIL EVENT === User 104 | LoginActivity 40 ===
+[2026-08-23 16:46:43,691] INFO store.tasks Login email task completed for user 104: {'status': 'success', 'channel': 'email', 'recipient': 'h3_483797@e.com'}
+[2026-08-23 16:46:43,691] INFO celery.app.trace Task store.tasks.send_login_email_task[ef1fa628-a7cc-4a99-a4f5-2aa5d4c56b2c] succeeded in 0.016000000000076398s: {'status': 'success', 'channel': 'email', 'recipient': 'h3_483797@e.com'}
+[2026-08-23 16:46:43,693] INFO store.tasks === LOGIN SMS EVENT === User 104 | LoginActivity 40 ===
+[2026-08-23 16:46:43,693] INFO store.tasks Login SMS task completed for user 104: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-23 16:46:43,693] INFO celery.app.trace Task store.tasks.send_login_sms_task[bc72601a-79e4-4f81-8ea6-d282dc1576dd] succeeded in 0.0s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-23 16:47:43,921] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-23 16:47:43,928] INFO store.tasks === LOGIN EMAIL EVENT === User 106 | LoginActivity 41 ===
+[2026-08-23 16:47:43,985] INFO store.tasks Login email task completed for user 106: {'status': 'success', 'channel': 'email', 'recipient': 'i@e.com'}
+[2026-08-23 16:47:44,017] INFO celery.app.trace Task store.tasks.send_login_email_task[5fe13a0b-99de-446a-9a5a-c9df3f153cf2] succeeded in 0.09400000000005093s: {'status': 'success', 'channel': 'email', 'recipient': 'i@e.com'}
+[2026-08-23 16:47:44,017] INFO store.tasks === LOGIN SMS EVENT === User 106 | LoginActivity 41 ===
+[2026-08-23 16:47:44,021] INFO store.tasks Login SMS task completed for user 106: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-23 16:47:44,021] INFO celery.app.trace Task store.tasks.send_login_sms_task[352d06f7-a73d-4001-b15f-b6daff255718] succeeded in 0.0s: {'status': 'skipped', 'channel': 'sms', 'reason': 'No phone number'}
+[2026-08-23 16:53:57,359] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-23 16:53:57,371] INFO store.tasks === LOGIN EMAIL EVENT === User 79 | LoginActivity 42 ===
+[2026-08-23 16:54:02,527] INFO store.tasks Login email task completed for user 79: {'status': 'success', 'channel': 'email', 'recipient': 'kamalarkaj11@gmail.com'}
+[2026-08-23 16:54:02,579] INFO celery.app.trace Task store.tasks.send_login_email_task[cdfabfb7-2252-4418-9cf8-d8a3d6bc2789] succeeded in 5.219000000000051s: {'status': 'success', 'channel': 'email', 'recipient': 'kamalarkaj11@gmail.com'}
+[2026-08-23 16:54:02,582] INFO store.tasks === LOGIN SMS EVENT === User 79 | LoginActivity 42 ===
+[2026-08-23 16:54:04,542] INFO store.tasks Login SMS task completed for user 79: {'status': 'failed', 'channel': 'sms', 'error': "Twilio error 21211: Unable to create record: Invalid 'To' Phone Number: penXXXX"}
+[2026-08-23 16:54:04,542] INFO celery.app.trace Task store.tasks.send_login_sms_task[4fc82ab9-004d-47ed-b7dc-253577b61132] succeeded in 1.9529999999995198s: {'status': 'failed', 'channel': 'sms', 'error': 'Twilio error 21211: Unable to create record: Invalid \'To\' Phone Number: penXXXX'}

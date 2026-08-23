@@ -31,12 +31,16 @@ urlpatterns = [
 #
 # The admin panel is registered ONLY in non-production environments
 # (equivalent to settings.DEBUG being True). In production the entire
-# /admin/ URL tree is never registered at all, so /admin/, /admin/login/,
-# /admin/logout/ and every other admin sub-path fall through to Django's
-# normal 404 handler instead of exposing the admin interface.
+# /admin/ URL tree is never registered at all, so /admin/, /admin/login/
+# and every other admin sub-path fall through to Django's normal 404
+# handler instead of exposing the admin interface.
+#
+# NOTE: it is appended (not prepended) so the store app's custom order
+# management routes (/admin/orders/...) keep precedence over the Django
+# admin's generic "<app_label>/" catch-all patterns.
 # ---------------------------------------------------------------------------
 if not settings.IS_PRODUCTION:
-    urlpatterns.insert(0, path('admin/', admin.site.urls))
+    urlpatterns.append(path('admin/', admin.site.urls))
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

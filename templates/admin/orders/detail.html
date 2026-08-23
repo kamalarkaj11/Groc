@@ -194,6 +194,22 @@
         background: #e0e7ff;
         color: #3730a3;
       }
+      .badge-payment_failed {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .badge-delivery_failed {
+        background: #ffedd5;
+        color: #9a3412;
+      }
+      .badge-refund_initiated {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .badge-pending {
+        background: #f3f4f6;
+        color: #374151;
+      }
 
       .product-table th {
         font-size: 0.78rem;
@@ -316,33 +332,175 @@
               <div class="row g-2 align-items-end">
                 <div class="col-md-4">
                   <label class="fw-bold small mb-1">New Status</label>
-                  <select name="status" class="form-select">
+                  <select name="status" id="status-select" class="form-select">
                     {% for key, label in status_choices %}
                     <option
                       value="{{ key }}"
-                      {%
-                      if
-                      order.status=""
-                      ="key"
-                      %}selected{%
-                      endif
-                      %}
+                      {% if order.status == key %}selected{% endif %}
+                      {% if key not in allowed_transitions %}disabled{% endif %}
                     >
-                      {{ label }}
+                      {{ label }}{% if key not in allowed_transitions %} (not allowed){% endif %}
                     </option>
                     {% endfor %}
                   </select>
                 </div>
+                <div class="col-md-4 add-message-field">
+                  <label class="fw-bold small mb-1">Status Message (customer visible)</label>
+                  <input
+                    type="text"
+                    name="status_message"
+                    class="form-control"
+                    placeholder="Optional update message"
+                  />
+                </div>
                 <div class="col-md-2">
                   <button
-                    type="submit"
+                    type="button"
                     class="btn btn-success w-100 fw-bold rounded-3"
+                    data-bs-toggle="modal"
+                    data-bs-target="#statusConfirmModal"
                   >
                     <i class="bi bi-check-lg"></i> Update
                   </button>
                 </div>
+                <div class="col-md-4 tracking-fields">
+                  <label class="fw-bold small mb-1">Tracking Number</label>
+                  <input type="text" name="tracking_number" class="form-control" value="{{ tracking.tracking_number }}" placeholder="GROC-TRK-000000" />
+                </div>
+                <div class="col-md-4 tracking-fields">
+                  <label class="fw-bold small mb-1">Delivery Partner</label>
+                  <input type="text" name="delivery_partner" class="form-control" value="{{ tracking.delivery_partner }}" placeholder="GrocHub Delivery" />
+                </div>
               </div>
             </form>
+          </div>
+        </div>
+<!-- Status Update Confirmation Modal -->
+        <div class="modal fade" id="statusConfirmModal" tabindex="-1" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 14px">
+              <form method="post" id="status-confirm-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_status" />
+                <input type="hidden" name="status" id="confirm-status-input" />
+                <input type="hidden" name="status_message" id="confirm-message-input" />
+                <input type="hidden" name="tracking_number" id="confirm-tracking-input" />
+                <input type="hidden" name="delivery_partner" id="confirm-partner-input" />
+                <div class="modal-header" style="border-bottom: 1px solid var(--admin-line)">
+                  <h5 class="modal-title fw-bold">
+                    <i class="bi bi-shield-check" style="color: var(--admin-green)"></i>
+                    Update Order Status?
+                  </h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                  <p class="mb-1">Order: <strong>#{{ order.order_id }}</strong></p>
+                  <p class="mb-1">
+                    Current Status:
+                    <span class="badge-status badge-{{ order.status }}">{{ order.get_status_display }}</span>
+                  </p>
+                  <p class="mb-2">
+                    New Status:
+                    <span class="badge-status badge-confirmed" id="confirm-new-status-badge">-</span>
+                  </p>
+                  <p class="text-muted small mb-0">
+                    The transition will be validated against the allowed order lifecycle. Status history,
+                    timestamps and customer notifications will be updated automatically.
+                  </p>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--admin-line)">
+                  <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-success fw-bold">
+                    <i class="bi bi-check-lg"></i> Update Status
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tracking Information -->
+        <div class="detail-card">
+          <div class="detail-card-header">
+            <i class="bi bi-upc-scan"></i> Tracking &amp; Delivery Partner
+          </div>
+          <div class="detail-card-body">
+            <form method="post" class="update-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_tracking" />
+              <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                  <label class="fw-bold small mb-1">Tracking Number</label>
+                  <input type="text" name="tracking_number" class="form-control" value="{{ tracking.tracking_number }}" />
+                </div>
+                <div class="col-md-3">
+                  <label class="fw-bold small mb-1">Delivery Partner</label>
+                  <input type="text" name="delivery_partner" class="form-control" value="{{ tracking.delivery_partner }}" />
+                </div>
+                <div class="col-md-3">
+                  <label class="fw-bold small mb-1">Current Location</label>
+                  <input type="text" name="current_location" class="form-control" value="{{ tracking.current_location }}" />
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                  <button type="submit" class="btn btn-primary w-100 fw-bold rounded-3">
+                    <i class="bi bi-save"></i> Save Tracking
+                  </button>
+                </div>
+                <div class="col-12">
+                  <label class="fw-bold small mb-1">Tracking Notes</label>
+                  <textarea name="tracking_notes" class="form-control" rows="2">{{ tracking.notes }}</textarea>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+<!-- Refund / Cancellation Management -->
+        <div class="detail-card">
+          <div class="detail-card-header">
+            <i class="bi bi-arrow-counterclockwise"></i> Refund &amp; Cancellation
+          </div>
+          <div class="detail-card-body">
+            <form method="post" class="update-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_refund" />
+              <div class="row g-2 align-items-end">
+                <div class="col-md-3">
+                  <label class="fw-bold small mb-1">Action</label>
+                  <select name="refund_action" class="form-select">
+                    <option value="initiate">Initiate Refund</option>
+                    <option value="complete">Complete Refund (gateway confirmed)</option>
+                    <option value="cancel">Cancel Order</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="fw-bold small mb-1">Cancellation Reason (for cancel)</label>
+                  <input type="text" name="cancel_reason" class="form-control" value="{{ order.cancel_reason }}" placeholder="Reason for cancellation" />
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                  <button type="submit" class="btn btn-warning w-100 fw-bold rounded-3">
+                    <i class="bi bi-arrow-repeat"></i> Apply
+                  </button>
+                </div>
+              </div>
+            </form>
+            <div class="info-grid mt-3">
+              <div class="info-item">
+                <label>Cancel Reason</label>
+                <div class="value">{{ order.cancel_reason|default:"-" }}</div>
+              </div>
+              <div class="info-item">
+                <label>Cancelled At</label>
+                <div class="value">{{ order.cancelled_at|date:"d M Y h:i A"|default:"-" }}</div>
+              </div>
+              <div class="info-item">
+                <label>Refund Initiated</label>
+                <div class="value">{{ order.refund_initiated_at|date:"d M Y h:i A"|default:"-" }}</div>
+              </div>
+              <div class="info-item">
+                <label>Refunded At</label>
+                <div class="value">{{ order.refunded_at|date:"d M Y h:i A"|default:"-" }}</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -362,13 +520,7 @@
                     {% for key, label in payment_status_choices %}
                     <option
                       value="{{ key }}"
-                      {%
-                      if
-                      order.payment_status=""
-                      ="key"
-                      %}selected{%
-                      endif
-                      %}
+                      {% if order.payment_status == "key" %}selected{% endif %}
                     >
                       {{ label }}
                     </option>
@@ -381,13 +533,7 @@
                     {% for key, label in payment_method_choices %}
                     <option
                       value="{{ key }}"
-                      {%
-                      if
-                      order.payment_method=""
-                      ="key"
-                      %}selected{%
-                      endif
-                      %}
+                      {% if order.payment_method == "key" %}selected{% endif %}
                     >
                       {{ label }}
                     </option>
@@ -561,11 +707,10 @@
               shipping_address.city }}{% if shipping_address.state %}, {{
               shipping_address.get_state_display }}{% endif %} - {{
               shipping_address.postal_code }}<br />
-              Phone: {{ shipping_address.phone|default:order.phone }} {% if
-              shipping_address.delivery_instructions %}<br /><br /><em
-                >Notes: {{ shipping_address.delivery_instructions }}</em
-              >{% endif %} {% else %} {{ order.address_line1|default:"No address
-              on file" }}<br />
+              Phone: {{ shipping_address.phone|default:order.phone }}
+              {% if shipping_address.delivery_instructions %}<br /><br /><em>Notes: {{ shipping_address.delivery_instructions }}</em>{% endif %}
+              {% else %}
+              {{ order.address_line1|default:"No address on file" }}<br />
               {{ order.city|default:"" }}{% if order.state %}, {{
               order.get_state_display }}{% endif %} - {{
               order.pincode|default:"" }}<br />
@@ -808,5 +953,49 @@
       </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Sync the main status form into the confirmation modal before it opens.
+      document.addEventListener('DOMContentLoaded', function () {
+        var statusSelect = document.getElementById('status-select');
+        var confirmModal = document.getElementById('statusConfirmModal');
+
+        if (confirmModal && statusSelect) {
+          confirmModal.addEventListener('show.bs.modal', function () {
+            var selected = statusSelect.options[statusSelect.selectedIndex];
+            if (!selected || selected.disabled) {
+              // Block opening the modal when no valid transition is selected.
+              var bs = bootstrap.Modal.getInstance(confirmModal);
+              if (bs) { bs.hide(); }
+              alert('Please select a valid new status first (some transitions are not allowed).');
+              return;
+            }
+            document.getElementById('confirm-status-input').value = selected.value;
+            document.getElementById('confirm-new-status-badge').textContent = selected.textContent.replace(' (not allowed)', '').trim();
+            document.getElementById('confirm-new-status-badge').className = 'badge-status badge-' + selected.value;
+
+            var msgField = document.querySelector('#status-update-form input[name="status_message"]');
+            var trackField = document.querySelector('#status-update-form input[name="tracking_number"]');
+            var partnerField = document.querySelector('#status-update-form input[name="delivery_partner"]');
+            document.getElementById('confirm-message-input').value = msgField ? msgField.value : '';
+            document.getElementById('confirm-tracking-input').value = trackField ? trackField.value : '';
+            document.getElementById('confirm-partner-input').value = partnerField ? partnerField.value : '';
+          });
+        }
+
+        // Highlight tracking fields only for shipping-related statuses.
+        function toggleTrackingFields() {
+          if (!statusSelect) return;
+          var v = statusSelect.value;
+          var show = ['shipped', 'out_for_delivery', 'delivered'].indexOf(v) !== -1;
+          document.querySelectorAll('.tracking-fields').forEach(function (el) {
+            el.style.display = show ? '' : 'none';
+          });
+        }
+        if (statusSelect) {
+          statusSelect.addEventListener('change', toggleTrackingFields);
+          toggleTrackingFields();
+        }
+      });
+    </script>
   </body>
 </html>

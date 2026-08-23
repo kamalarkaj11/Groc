@@ -91,11 +91,17 @@
 
     .od-status-badge.pending { background: #fef3c7; color: #92400e; }
     .od-status-badge.confirmed { background: #dbeafe; color: #1e40af; }
-    .od-status-badge.packed { background: #e0e7ff; color: #3730a3; }
+    .od-status-badge.processing { background: #e0e7ff; color: #3730a3; }
+    .od-status-badge.packed { background: #ede9fe; color: #5b21b6; }
+    .od-status-badge.shipped { background: #e0f2fe; color: #075985; }
     .od-status-badge.out_for_delivery { background: #cffafe; color: #155e75; }
     .od-status-badge.delivered { background: #d1fae5; color: #065f46; }
     .od-status-badge.cancelled { background: #fee2e2; color: #991b1b; }
-    .od-status-badge.failed { background: #fee2e2; color: #991b1b; }
+    .od-status-badge.failed, .od-status-badge.payment_failed { background: #fee2e2; color: #991b1b; }
+    .od-status-badge.delivery_failed { background: #ffedd5; color: #9a3412; }
+    .od-status-badge.returned { background: #fce7f3; color: #9d174d; }
+    .od-status-badge.refund_initiated { background: #fef3c7; color: #92400e; }
+    .od-status-badge.refunded { background: #e0e7ff; color: #3730a3; }
 
     .od-info-grid {
         display: grid;
@@ -532,6 +538,12 @@
 
         <!-- Actions -->
         <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px;">
+            {% if can_cancel %}
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelOrderModal"
+                    style="border-radius: 8px; font-weight: 800; padding: 10px 24px;">
+                <i class="bi bi-x-circle me-1"></i> Cancel Order
+            </button>
+            {% endif %}
             <a href="{% url 'store:track_order' order.id %}" class="btn btn-success" style="border-radius: 8px; font-weight: 800; padding: 10px 24px;">
                 <i class="bi bi-geo-alt me-1"></i> Track Order
             </a>
@@ -545,6 +557,41 @@
                 <i class="bi bi-arrow-left me-1"></i> Back to Orders
             </a>
         </div>
+
+        {% if can_cancel %}
+        <!-- Cancel Order Modal -->
+        <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius: 14px;">
+                    <form method="post" action="{% url 'store:cancel_order' order.id %}">
+                        {% csrf_token %}
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-circle me-2"></i>Cancel Order</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="text-muted">Why do you want to cancel this order?</p>
+                            <select name="cancel_reason" class="form-select mb-3" required>
+                                <option value="" selected disabled>Choose a reason...</option>
+                                <option value="Change of mind">Change of mind</option>
+                                <option value="Ordered by mistake">Ordered by mistake</option>
+                                <option value="Delivery taking too long">Delivery taking too long</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <div class="alert alert-warning small mb-0">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Cancellation is only possible before the order is packed/shipped.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-dismiss="modal">Keep Order</button>
+                            <button type="submit" class="btn btn-danger fw-bold"><i class="bi bi-x-circle me-1"></i> Cancel Order</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

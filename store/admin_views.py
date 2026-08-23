@@ -18,6 +18,13 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .models import Order, OrderItem, OrderAddress, OrderStatusHistory, OrderTracking, Notification, UserProfile, Quotation, QuotationItem
+from .order_services import (
+    update_order_status,
+    get_allowed_transitions,
+    cancel_order as _service_cancel_order,
+    initiate_refund,
+    mark_refunded,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -202,26 +209,27 @@ def admin_order_detail(request, order_id):
             if new_status and new_status in dict(Order.ORDER_STATUS_CHOICES):
                 old_status = order.status
                 if old_status != new_status:
-                    order.status = new_status
-                    order.save()
-                    
-                    # Create status history
-                    changed_by_name = request.user.get_full_name() or request.user.username
-                    OrderStatusHistory.objects.create(
-                        order=order,
-                        previous_status=old_status,
-                        new_status=new_status,
-                        changed_by=request.user,
-                        changed_by_name=changed_by_name,
-                        notes=f"Status updated by admin from {old_status} to {new_status}",
-                    )
-                    
-                    # Send notifications
-                    _send_order_notifications(order, old_status, new_status, request)
-                    
-                    messages.success(request, f"Order {order.order_id} status updated to {order.get_status_display()}")
+                    # Use the centralized order service (validates the transition,
+                    # records milestone timestamp + history + tracking + notifications).
+                    tracking_number = request.POST.get('tracking_number', '').strip()
+                    delivery_partner = request.POST.get('delivery_partner', '').strip()
+                    try:
+                        update_order_status(
+                            order,
+                            new_status,
+                            user=request.user,
+                            message=request.POST.get('status_message', '').strip() or None,
+                            notes=f"Status updated by admin from {old_status} to {new_status}",
+                            tracking_number=tracking_number or None,
+                            delivery_partner=delivery_partner or None,
+                        )
+                        messages.success(request, f"Order {order.order_id} status updated to {order.get_status_display()}")
+                    except ValueError as exc:
+                        messages.error(request, f"Cannot update status: {exc}")
                 else:
                     messages.warning(request, "Order is already in this status.")
+            else:
+                messages.error(request, "Invalid status selected.")
         
         elif action == 'update_payment':
             new_payment_status = request.POST.get('payment_status', '').strip()
@@ -237,6 +245,42 @@ def admin_order_detail(request, order_id):
             order.save()
             messages.success(request, f"Payment details updated for Order {order.order_id}")
         
+        elif action == 'update_tracking':
+            tracking_number = request.POST.get('tracking_number', '').strip()
+            delivery_partner = request.POST.get('delivery_partner', '').strip()
+            current_location = request.POST.get('current_location', '').strip()
+            tracking_notes = request.POST.get('tracking_notes', '').strip()
+
+            if tracking_number:
+                tracking.tracking_number = tracking_number
+                order.tracking_number = tracking_number
+            if delivery_partner:
+                tracking.delivery_partner = delivery_partner
+                order.delivery_partner = delivery_partner
+            if current_location:
+                tracking.current_location = current_location
+            if tracking_notes:
+                tracking.notes = tracking_notes
+            tracking.save()
+            order.save()
+            messages.success(request, f"Tracking details updated for Order {order.order_id}")
+
+        elif action == 'update_refund':
+            ref_action = request.POST.get('refund_action', '').strip()
+            try:
+                if ref_action == 'initiate':
+                    order = initiate_refund(order, user=request.user)
+                    messages.success(request, "Refund initiated.")
+                elif ref_action == 'complete':
+                    order = mark_refunded(order, user=request.user)
+                    messages.success(request, "Refund marked as completed.")
+                elif ref_action == 'cancel':
+                    reason = request.POST.get('cancel_reason', '').strip()
+                    order = _service_cancel_order(order, user=request.user, reason=reason or 'Admin cancellation')
+                    messages.success(request, "Order cancelled.")
+            except ValueError as exc:
+                messages.error(request, f"Refund/cancel action failed: {exc}")
+
         elif action == 'update_delivery':
             address_line1 = request.POST.get('address_line1', '').strip()
             city = request.POST.get('city', '').strip()
@@ -301,6 +345,9 @@ def admin_order_detail(request, order_id):
         'status_choices': Order.ORDER_STATUS_CHOICES,
         'payment_status_choices': Order.PAYMENT_STATUS_CHOICES,
         'payment_method_choices': Order.PAYMENT_METHOD_CHOICES,
+        # Only allow transitions that are valid from the current status
+        # (blocked transitions are disabled in the UI).
+        'allowed_transitions': get_allowed_transitions(order.status),
     }
     return render(request, 'admin/orders/detail.html', context)
 
@@ -321,30 +368,29 @@ def admin_bulk_update_orders(request):
         return redirect('store:admin_order_dashboard')
     
     updated_count = 0
+    invalid_count = 0
     for order_id in order_ids:
         try:
             order = Order.objects.get(id=order_id)
             old_status = order.status
             if old_status != new_status:
-                order.status = new_status
-                order.save()
-                
-                changed_by_name = request.user.get_full_name() or request.user.username
-                OrderStatusHistory.objects.create(
-                    order=order,
-                    previous_status=old_status,
-                    new_status=new_status,
-                    changed_by=request.user,
-                    changed_by_name=changed_by_name,
-                    notes=f"Bulk status update from {old_status} to {new_status}",
-                )
-                
-                _send_order_notifications(order, old_status, new_status, request)
-                updated_count += 1
+                try:
+                    update_order_status(
+                        order,
+                        new_status,
+                        user=request.user,
+                        notes=f"Bulk status update from {old_status} to {new_status}",
+                    )
+                    updated_count += 1
+                except ValueError:
+                    invalid_count += 1
         except Order.DoesNotExist:
             continue
-    
-    messages.success(request, f"{updated_count} order(s) updated to {dict(Order.ORDER_STATUS_CHOICES).get(new_status, new_status)}")
+
+    message = f"{updated_count} order(s) updated to {dict(Order.ORDER_STATUS_CHOICES).get(new_status, new_status)}"
+    if invalid_count:
+        message += f". {invalid_count} skipped (invalid transition)."
+    messages.success(request, message)
     return redirect('store:admin_order_dashboard')
 
 

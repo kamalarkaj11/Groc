@@ -25,7 +25,7 @@ from django.db import IntegrityError, transaction
 from django.db import models
 from django.db.models import Avg, Count, Q, Sum
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse, HttpResponseBadRequest, Http404
 from django.views.decorators.http import require_http_methods, require_POST
 from twilio.rest import Client
 
@@ -39,6 +39,13 @@ from .models import (Category, Subcategory, Order, OrderAddress, OrderItem, Prod
                      Profile, PhoneOTP, OTP, NewsletterSubscriber, OrderTracking, OrderTrackingHistory, Notification,
                      OrderStatusHistory, Quotation, QuotationItem, Coupon)
 from .notifications import send_order_notifications as trigger_order_notifications
+from .order_services import (
+    update_order_status,
+    cancel_order as _service_cancel_order,
+    is_customer_cancellable,
+    get_allowed_transitions,
+    record_order_placed,
+)
 from .signals import create_otp, generate_and_send_otp, send_otp_email
 from .api_products import CATEGORY_QUERIES, sync_products_for_query, warm_home_products
 from . import invoice_utils
@@ -933,15 +940,33 @@ def api_order_create(request):
     if not cart_items:
         return JsonResponse({'success': False, 'error': 'Cart is empty.'}, status=400)
     total = sum(item.total_price() for item in cart_items)
-    order = Order.objects.create(user=request.user, total_amount=total, status='pending')
-    for item in cart_items:
-        OrderItem.objects.create(
-            order=order,
-            product=item.product,
-            quantity=item.quantity,
-            price=item.product.get_price(),
-        )
-    cart_items.delete()
+    try:
+        with transaction.atomic():
+            order = Order.objects.create(user=request.user, total_amount=total, status='pending')
+            for item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    quantity=item.quantity,
+                    price=item.product.get_price(),
+                    product_name=item.product.title,
+                    product_image=(
+                        item.product.image.url
+                        if item.product.image
+                        else item.product.external_image_url
+                    ),
+                    discount=Decimal('0.00'),
+                )
+            # Initial status history + tracking row (estimated delivery in 3 days).
+            record_order_placed(
+                order,
+                user=request.user,
+                estimated_delivery_date=timezone.now().date() + timedelta(days=3),
+            )
+            cart_items.delete()
+    except Exception:
+        logger.exception('api_order_create failed')
+        return JsonResponse({'success': False, 'error': 'Could not create order.'}, status=500)
     return JsonResponse({'success': True, 'order_id': order.id, 'total': str(total)})
 
 @login_required
@@ -1959,8 +1984,19 @@ def create_session(request):
                     product=cart_item.product,
                     quantity=cart_item.quantity,
                     price=cart_item.product.get_price(),
+                    product_name=cart_item.product.title,
+                    product_image=(
+                        cart_item.product.image.url
+                        if cart_item.product.image
+                        else cart_item.product.external_image_url
+                    ),
+                    discount=Decimal('0.00'),
                 )
                 purchased_product_ids.append(cart_item.product.id)
+
+            # Initial tracking + status-history record + estimated delivery.
+            estimated_delivery_date = timezone.now().date() + timedelta(days=3)
+            record_order_placed(order, user=request.user, estimated_delivery_date=estimated_delivery_date)
             
             # Note: Cart items are NOT deleted here
             # They will be deleted in the webhook after successful payment
@@ -2177,9 +2213,20 @@ def stripe_webhook(request):
             # Use transaction.atomic() to ensure order update and cart deletion happen together
             with transaction.atomic():
                 order = Order.objects.select_related('user').get(stripe_session_id=session['id'])
-                order.status = 'confirmed'
-                order.save()
-                
+                # Mark payment settled and run the validated transition through
+                # the centralized order service (records history + tracking +
+                # milestone timestamp and triggers notifications).
+                order.payment_status = 'paid'
+                order.transaction_id = session.get('payment_intent', '') or order.transaction_id
+                order.save(update_fields=['payment_status', 'transaction_id'])
+                update_order_status(
+                    order, 'confirmed',
+                    message='Payment successful. Your order has been confirmed.',
+                    notes='Order confirmed via Stripe webhook.',
+                    notify=False,  # confirmation email/SMS handled below
+                )
+                order = Order.objects.get(pk=order.pk)
+
                 # Delete only the purchased items from the user's cart
                 # This happens ONLY after successful payment
                 purchased_product_ids = order.items.values_list('product_id', flat=True)
@@ -2187,7 +2234,7 @@ def stripe_webhook(request):
                     user=order.user,
                     product_id__in=purchased_product_ids
                 ).delete()
-                
+
                 logger.info(f"Cart items deleted for order {order.id}")
 
                 # Check if this order was converted from a Quotation
@@ -2197,7 +2244,13 @@ def stripe_webhook(request):
                     quote.save()
                     logger.info(f"Quotation {quote.quotation_id} marked as ordered")
 
-            logger.info(f"Order {order.id} marked as confirmed (notifications will be sent via signal)")
+            # Send the rich order-confirmation email/SMS (safe to call repeatedly).
+            try:
+                trigger_order_notifications(order.id)
+            except Exception as ne:
+                logger.error('Failed to trigger confirmation notifications for order %s: %s', order.id, ne)
+
+            logger.info(f"Order {order.id} marked as confirmed")
         except Order.DoesNotExist:
             logger.error("Order not found for session")
         except Exception as e:
@@ -3276,8 +3329,44 @@ def order_detail(request, order_id):
     tracking, created = OrderTracking.objects.get_or_create(order=order)
     tracking_history = OrderTrackingHistory.objects.filter(tracking=tracking).order_by('created_at')
 
-    # Build timeline
+    context = {
+        'order': order,
+        'items': items,
+        'shipping_address': shipping_address,
+        'status_history': status_history,
+        'tracking': tracking,
+        'tracking_history': tracking_history,
+        'timeline_items': _build_timeline_items(tracking),
+        'can_cancel': is_customer_cancellable(order),
+    }
+    return render(request, 'order_detail.html', context)
+
+
+def _build_timeline_items(tracking):
+    """
+    Build the visual progress timeline used by track order / order detail.
+
+    Each item carries: key, label, icon, css_class (completed/current/cancelled/'').
+    """
     status_sequence = OrderTracking.TRACKING_STATUS_ORDER
+    labels = {
+        'pending': 'Order Placed',
+        'confirmed': 'Order Confirmed',
+        'processing': 'Processing',
+        'packed': 'Packed',
+        'shipped': 'Shipped',
+        'out_for_delivery': 'Out For Delivery',
+        'delivered': 'Delivered',
+    }
+    icons = {
+        'pending': 'bi-receipt',
+        'confirmed': 'bi-check-lg',
+        'processing': 'bi-arrow-repeat',
+        'packed': 'bi-box-seam',
+        'shipped': 'bi-truck',
+        'out_for_delivery': 'bi-geo-alt',
+        'delivered': 'bi-house-check',
+    }
     timeline_items = []
     for s in status_sequence:
         is_completed = tracking.is_status_completed(s)
@@ -3292,35 +3381,11 @@ def order_detail(request, order_id):
             css_class = ''
         timeline_items.append({
             'key': s,
-            'label': {
-                'pending': 'Order Placed',
-                'confirmed': 'Order Confirmed',
-                'packed': 'Packed',
-                'shipped': 'Shipped',
-                'out_for_delivery': 'Out For Delivery',
-                'delivered': 'Delivered',
-            }[s],
-            'icon': {
-                'pending': 'bi-receipt',
-                'confirmed': 'bi-check-lg',
-                'packed': 'bi-box-seam',
-                'shipped': 'bi-truck',
-                'out_for_delivery': 'bi-geo-alt',
-                'delivered': 'bi-house-check',
-            }[s],
+            'label': labels[s],
+            'icon': icons[s],
             'css_class': css_class,
         })
-
-    context = {
-        'order': order,
-        'items': items,
-        'shipping_address': shipping_address,
-        'status_history': status_history,
-        'tracking': tracking,
-        'tracking_history': tracking_history,
-        'timeline_items': timeline_items,
-    }
-    return render(request, 'order_detail.html', context)
+    return timeline_items
 
 
 @login_required
@@ -3335,52 +3400,48 @@ def track_order(request, order_id):
 
     # Get or create tracking record
     tracking, created = OrderTracking.objects.get_or_create(order=order)
+    if created:
+        record_order_placed(order)
 
     # Get history records
     history = OrderTrackingHistory.objects.filter(tracking=tracking).order_by('created_at')
-
-    # Pre-compute timeline item classes to avoid complex template logic
-    status_sequence = OrderTracking.TRACKING_STATUS_ORDER
-    timeline_items = []
-    for s in status_sequence:
-        is_completed = tracking.is_status_completed(s)
-        is_current = tracking.is_current_status(s)
-        if tracking.status == 'cancelled' and s == 'pending':
-            css_class = 'cancelled'
-        elif is_completed:
-            css_class = 'completed'
-        elif is_current:
-            css_class = 'current'
-        else:
-            css_class = ''
-        timeline_items.append({
-            'key': s,
-            'label': {
-                'pending': 'Order Placed',
-                'confirmed': 'Order Confirmed',
-                'packed': 'Packed',
-                'shipped': 'Shipped',
-                'out_for_delivery': 'Out For Delivery',
-                'delivered': 'Delivered',
-            }[s],
-            'icon': {
-                'pending': 'bi-receipt',
-                'confirmed': 'bi-check-lg',
-                'packed': 'bi-box-seam',
-                'shipped': 'bi-truck',
-                'out_for_delivery': 'bi-geo-alt',
-                'delivered': 'bi-house-check',
-            }[s],
-            'css_class': css_class,
-        })
+    status_history = OrderStatusHistory.objects.filter(order=order).order_by('created_at')
+    shipping_address = getattr(order, 'shipping_address', None)
+    items = OrderItem.objects.filter(order=order).select_related('product')
 
     context = {
         'order': order,
         'tracking': tracking,
         'history': history,
-        'timeline_items': timeline_items,
+        'status_history': status_history,
+        'shipping_address': shipping_address,
+        'items': items,
+        'timeline_items': _build_timeline_items(tracking),
+        'can_cancel': is_customer_cancellable(order),
     }
     return render(request, 'track_order.html', context)
+
+
+@login_required
+@require_POST
+def cancel_order_view(request, order_id):
+    """Customer-facing cancel order handler (form POST). Validates eligibility server-side."""
+    order = get_object_or_404(Order, id=order_id)
+    if not (request.user.is_staff or order.user == request.user):
+        messages.error(request, 'You do not have permission to cancel this order.')
+        return redirect('store:my_orders')
+
+    reason = (request.POST.get('cancel_reason') or '').strip()[:200]
+    if not reason:
+        messages.error(request, 'Please choose a cancellation reason before submitting.')
+        return redirect('store:track_order', order_id=order.id)
+
+    try:
+        _service_cancel_order(order, user=request.user, reason=reason)
+        messages.success(request, f'Order {order.order_id} has been cancelled.')
+    except ValueError as exc:
+        messages.error(request, str(exc))
+    return redirect('store:track_order', order_id=order.id)
 
 
 @login_required
@@ -3405,10 +3466,21 @@ def api_order_status(request, order_id):
         'tracking_status_display': tracking.get_status_display(),
         'progress_percentage': tracking.get_progress_percentage(),
         'estimated_delivery': tracking.estimated_delivery_date.isoformat() if tracking.estimated_delivery_date else None,
+        'delivered_at': order.delivered_at.isoformat() if order.delivered_at else None,
+        'can_cancel': is_customer_cancellable(order),
+        'timeline': [
+            {
+                'key': t['key'],
+                'label': t['label'],
+                'css_class': t['css_class'],
+            }
+            for t in _build_timeline_items(tracking)
+        ],
         'status_history': [
             {
                 'previous': h.previous_status,
                 'new': h.new_status,
+                'message': h.message,
                 'changed_by': h.changed_by_name,
                 'date': h.created_at.strftime('%d %b %Y %I:%M %p'),
             }
@@ -3449,6 +3521,230 @@ def _time_ago(dt):
     if days < 30:
         return f'{days}d ago'
     return dt.strftime('%d %b %Y')
+
+
+# ============================================================
+# Order API endpoints (customer + admin)
+# ============================================================
+
+def _serialize_order(order):
+    """Serialize an Order for JSON API responses (customer-safe)."""
+    shipping = getattr(order, 'shipping_address', None)
+    tracking = getattr(order, 'tracking', None)
+    return {
+        'id': order.id,
+        'order_id': order.order_id,
+        'created_at': order.created_at.strftime('%d %b %Y, %I:%M %p'),
+        'status': order.status,
+        'status_display': order.get_status_display(),
+        'payment_status': order.payment_status,
+        'payment_status_display': order.get_payment_status_display(),
+        'payment_method': order.payment_method,
+        'payment_method_display': order.get_payment_method_display(),
+        'transaction_id': order.transaction_id,
+        'subtotal': str(order.subtotal),
+        'discount_amount': str(order.discount_amount),
+        'tax_amount': str(order.tax_amount),
+        'shipping_charge': str(order.shipping_charge),
+        'total_amount': str(order.total_amount),
+        'tracking_number': order.tracking_number or (tracking.tracking_number if tracking else ''),
+        'delivery_partner': order.delivery_partner or (tracking.delivery_partner if tracking else ''),
+        'estimated_delivery': (
+            (tracking.estimated_delivery_date.isoformat()) if tracking and tracking.estimated_delivery_date
+            else (order.expected_delivery_date.isoformat() if order.expected_delivery_date else None)
+        ),
+        'delivered_at': order.delivered_at.isoformat() if order.delivered_at else None,
+        'cancelled_at': order.cancelled_at.isoformat() if order.cancelled_at else None,
+        'cancel_reason': order.cancel_reason,
+        'can_cancel': is_customer_cancellable(order),
+        'shipping_address': {
+            'full_name': shipping.full_name if shipping else '',
+            'email': shipping.email if shipping else '',
+            'phone': shipping.phone if shipping else '',
+            'address_line1': shipping.address_line1 if shipping else '',
+            'address_line2': shipping.address_line2 if shipping else '',
+            'city': shipping.city if shipping else '',
+            'state': shipping.get_state_display() if shipping and shipping.state else '',
+            'postal_code': shipping.postal_code if shipping else '',
+            'country': shipping.country if shipping else '',
+        } if shipping else None,
+    }
+
+
+def _serialize_order_history(history_list):
+    return [
+        {
+            'status': h.new_status,
+            'status_display': dict(Order.ORDER_STATUS_CHOICES).get(h.new_status, h.new_status),
+            'previous_status': h.previous_status,
+            'message': h.message,
+            'notes': h.notes,
+            'changed_by': h.changed_by_name,
+            'changed_at': h.created_at.strftime('%d %b %Y, %I:%M %p'),
+        }
+        for h in history_list
+    ]
+
+@api_login_required
+def api_order_list(request):
+    """GET /api/orders/ - list the logged-in customer's orders (paginated)."""
+    orders = Order.objects.filter(user=request.user).select_related(
+        'shipping_address'
+    ).prefetch_related('tracking').order_by('-created_at')
+
+    page = 1
+    try:
+        page = max(1, int(request.GET.get('page', 1)))
+    except (TypeError, ValueError):
+        page = 1
+
+    paginator = Paginator(orders, 10)
+    page_obj = paginator.get_page(page)
+    results = [_serialize_order(o) for o in page_obj.object_list]
+
+    return JsonResponse({
+        'count': paginator.count,
+        'page': page_obj.number,
+        'num_pages': paginator.num_pages,
+        'has_next': page_obj.has_next(),
+        'has_previous': page_obj.has_previous(),
+        'results': results,
+    })
+
+
+@api_login_required
+def api_order_detail(request, order_id):
+    """GET /api/orders/<order_id>/ - full order detail (ownership enforced)."""
+    order = _get_order_for_user(request.user, order_id)
+    items = list(order.items.select_related('product').all())
+    return JsonResponse({
+        **_serialize_order(order),
+        'items': [
+            {
+                'product_id': item.product_id,
+                'product_name': item.display_name,
+                'product_image': item.product_image or (
+                    item.product.image.url if item.product and item.product.image
+                    else (item.product.external_image_url if item.product else '')
+                ),
+                'quantity': item.quantity,
+                'unit_price': str(item.price),
+                'discount': str(item.discount),
+                'subtotal': str(item.total_price()),
+            }
+            for item in items
+        ],
+    })
+
+
+@api_login_required
+def api_order_tracking(request, order_id):
+    """GET /api/orders/<order_id>/tracking/ - current tracking summary."""
+    order = _get_order_for_user(request.user, order_id)
+    tracking, created = OrderTracking.objects.get_or_create(order=order)
+    if created:
+        record_order_placed(order)
+    return JsonResponse({
+        'order_id': order.order_id,
+        'current_status': order.status,
+        'current_status_display': order.get_status_display(),
+        'tracking_status': tracking.status,
+        'tracking_status_display': tracking.get_status_display(),
+        'progress_percentage': tracking.get_progress_percentage(),
+        'estimated_delivery': tracking.estimated_delivery_date.isoformat() if tracking.estimated_delivery_date else None,
+        'delivered_at': order.delivered_at.isoformat() if order.delivered_at else None,
+        'tracking_number': tracking.tracking_number,
+        'delivery_partner': tracking.delivery_partner,
+        'current_location': tracking.current_location,
+        'notes': tracking.notes,
+        'can_cancel': is_customer_cancellable(order),
+        'timeline': [
+            {
+                'key': t['key'],
+                'label': t['label'],
+                'icon': t['icon'],
+                'css_class': t['css_class'],
+            }
+            for t in _build_timeline_items(tracking)
+        ],
+        'history': _serialize_order_history(OrderStatusHistory.objects.filter(order=order).order_by('created_at')),
+    })
+
+
+@api_login_required
+def api_order_history(request, order_id):
+    """GET /api/orders/<order_id>/history/ - full immutable status timeline."""
+    order = _get_order_for_user(request.user, order_id)
+    history = OrderStatusHistory.objects.filter(order=order).order_by('created_at')
+    return JsonResponse({
+        'order_id': order.order_id,
+        'history': _serialize_order_history(history),
+    })
+
+
+@api_login_required
+@require_POST
+def api_order_cancel(request, order_id):
+    """POST /api/orders/<order_id>/cancel/ - cancel an eligible order."""
+    order = _get_order_for_user(request.user, order_id)
+    try:
+        body = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        body = {}
+    reason = (body.get('reason') or '').strip()[:200]
+    if not reason:
+        return JsonResponse({'error': 'Please provide a cancellation reason.'}, status=400)
+    try:
+        updated = _service_cancel_order(order, user=request.user, reason=reason)
+    except ValueError as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+    return JsonResponse({'success': True, 'message': 'Order cancelled.', 'order_status': updated.status})
+
+
+@api_login_required
+def api_admin_update_order_status(request, order_id):
+    """PATCH /api/admin/orders/<order_id>/status/ - staff only status updates."""
+    if not (request.user.is_staff or request.user.is_superuser):
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    order = get_object_or_404(Order, id=order_id)
+    try:
+        body = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        body = {}
+    new_status = str(body.get('status', '')).strip()
+    if not new_status or new_status not in dict(Order.ORDER_STATUS_CHOICES):
+        return JsonResponse({'error': 'Invalid status.'}, status=400)
+    try:
+        update_order_status(
+            order,
+            new_status,
+            user=request.user,
+            message=body.get('message') or None,
+            notes=body.get('notes') or None,
+            notify=True,
+            tracking_number=body.get('tracking_number') or None,
+            delivery_partner=body.get('delivery_partner') or None,
+        )
+    except ValueError as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+    return JsonResponse({
+        'success': True,
+        'order_status': order.status,
+        'order_status_display': order.get_status_display(),
+    })
+
+
+def _get_order_for_user(user, order_id):
+    """
+    Return the order if accessible to ``user``, else raise Http404.
+
+    Raising 404 (instead of 403) avoids revealing the existence of another
+    customer's order. Staff/superusers can access any order.
+    """
+    order = get_object_or_404(Order.objects.select_related('shipping_address'), id=order_id)
+    if not (user.is_staff or user.is_superuser) and order.user_id != user.id:
+        raise Http404('Order not found.')
+    return order
 
 
 @login_required

@@ -36,6 +36,16 @@ img {
   height: auto;
 }
 
+/* Prevent oversized embedded media from widening the page beyond the
+   viewport while preserving each element's own natural aspect ratio. */
+video,
+iframe,
+embed,
+object {
+  max-width: 100%;
+  height: auto;
+}
+
 .table-responsive table {
   min-width: 100%;
 }

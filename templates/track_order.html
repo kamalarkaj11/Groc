@@ -7,25 +7,59 @@
 <style>
     /* ── Track Order Page Premium Redesign ── */
     :root {
-        --track-primary: #28a745;
-        --track-primary-dark: #1e7e34;
-        --track-primary-light: rgba(40, 167, 69, 0.1);
-        --track-success: #10b981;
-        --track-warning: #f59e0b;
-        --track-danger: #ef4444;
-        --track-gray: #9ca3af;
-        --track-light: #f8fafc;
-        --track-border: #e5e7eb;
-        --track-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-        --track-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.1);
+        --track-primary: #198754;
+        --track-primary-dark: #146c43;
+        --track-primary-deep: #155d3b;
+        --track-primary-light: rgba(25, 135, 84, 0.10);
+        --track-primary-soft: #e8f5ef;
+
+        --track-success: #20b486;
+        --track-success-light: rgba(32, 180, 134, 0.10);
+
+        --track-warning: #f5a623;
+        --track-warning-light: #fff3df;
+
+        --track-danger: #e05252;
+        --track-danger-light: #fdeaea;
+
+        --track-info: #4f8df7;
+        --track-info-light: #eaf2ff;
+
+        --track-purple: #7657d9;
+        --track-purple-light: #f0ecff;
+
+        --track-pink: #d96b9a;
+        --track-pink-light: #fdeef5;
+
+        --track-page-bg: #f4faf7;
+        --track-card-bg: #ffffff;
+
+        --track-heading: #10251b;
+        --track-text: #25382f;
+        --track-muted: #6c7b73;
+        --track-light-text: #98a49e;
+
+        --track-border: #dcebe3;
+        --track-border-light: #edf4f0;
+
+        --track-shadow: 0 4px 24px rgba(20, 108, 67, 0.08);
+        --track-shadow-hover: 0 12px 36px rgba(20, 108, 67, 0.14);
+
+        --track-gray: #98a49e;
+        --track-light: #f4faf7;
         --track-radius: 16px;
         --track-radius-sm: 12px;
     }
 
     /* ── Page Container ── */
+    body:has(.track-page-wrapper) {
+        background: var(--track-page-bg);
+        color: var(--track-text);
+    }
     .track-page-wrapper {
         padding-bottom: 60px;
         min-height: calc(100vh - 200px);
+        background: var(--track-page-bg);
     }
 
     /* ── Breadcrumb ── */
@@ -47,19 +81,19 @@
         color: var(--track-primary-dark);
     }
     .track-breadcrumb .breadcrumb-item.active {
-        color: #6b7280;
+        color: var(--track-muted);
     }
     .track-breadcrumb .breadcrumb-item + .breadcrumb-item::before {
-        color: #d1d5db;
+        color: #b7c4bc;
     }
 
     /* ── Hero Order Tracking Card ── */
     .hero-tracking-card {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        background: linear-gradient(135deg, #155d3b 0%, #198754 50%, #319b6b 100%);
         border-radius: var(--track-radius);
         padding: 2rem 2.5rem;
         color: #fff;
-        box-shadow: 0 12px 48px rgba(15, 52, 96, 0.3);
+        box-shadow: 0 12px 48px rgba(20, 108, 67, 0.35);
         position: relative;
         overflow: hidden;
         margin-bottom: 1.75rem;
@@ -72,7 +106,7 @@
         right: -10%;
         width: 400px;
         height: 400px;
-        background: radial-gradient(circle, rgba(40, 167, 69, 0.12) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(93, 218, 157, 0.16) 0%, transparent 70%);
         border-radius: 50%;
         pointer-events: none;
     }
@@ -102,13 +136,13 @@
         width: 52px;
         height: 52px;
         border-radius: 14px;
-        background: rgba(40, 167, 69, 0.2);
-        border: 1px solid rgba(40, 167, 69, 0.3);
+        background: rgba(93, 218, 157, 0.18);
+        border: 1px solid rgba(93, 218, 157, 0.35);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.4rem;
-        color: #4ade80;
+        color: #5dda9d;
         flex-shrink: 0;
     }
     .hero-tracking-card .hero-order-number {
@@ -136,32 +170,32 @@
         backdrop-filter: blur(4px);
     }
     .hero-tracking-card .hero-status-badge.pending {
-        background: rgba(245, 158, 11, 0.2);
-        color: #fbbf24;
+        background: rgba(245, 166, 35, 0.22);
+        color: #ffd08a;
     }
     .hero-tracking-card .hero-status-badge.confirmed {
-        background: rgba(59, 130, 246, 0.2);
-        color: #93c5fd;
+        background: rgba(79, 141, 247, 0.22);
+        color: #a9c7fd;
     }
     .hero-tracking-card .hero-status-badge.packed {
-        background: rgba(99, 102, 241, 0.2);
-        color: #a5b4fc;
+        background: rgba(118, 87, 217, 0.25);
+        color: #c9bcf7;
     }
     .hero-tracking-card .hero-status-badge.shipped {
-        background: rgba(16, 185, 129, 0.2);
-        color: #6ee7b7;
+        background: rgba(32, 180, 134, 0.25);
+        color: #7fe3c0;
     }
     .hero-tracking-card .hero-status-badge.out_for_delivery {
-        background: rgba(245, 158, 11, 0.2);
-        color: #fcd34d;
+        background: rgba(245, 166, 35, 0.22);
+        color: #ffd08a;
     }
     .hero-tracking-card .hero-status-badge.delivered {
-        background: rgba(16, 185, 129, 0.2);
-        color: #6ee7b7;
+        background: rgba(32, 180, 134, 0.25);
+        color: #7fe3c0;
     }
     .hero-tracking-card .hero-status-badge.cancelled {
-        background: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
+        background: rgba(224, 82, 82, 0.25);
+        color: #f8b4b4;
     }
     .hero-tracking-card .hero-info-grid {
         display: grid;
@@ -191,18 +225,19 @@
         font-weight: 700;
     }
     .hero-tracking-card .hero-info-item .info-value .text-success {
-        color: #4ade80 !important;
+        color: #7fe3c0 !important;
     }
     .hero-tracking-card .hero-info-item .info-value .text-warning {
-        color: #fbbf24 !important;
+        color: #ffd08a !important;
     }
     .hero-tracking-card .hero-info-item .info-value .text-danger {
-        color: #fca5a5 !important;
+        color: #f8b4b4 !important;
     }
 
     /* ── Premium Card Base ── */
     .premium-card {
-        background: #fff;
+        background: var(--track-card-bg);
+        border: 1px solid var(--track-border);
         border-radius: var(--track-radius);
         box-shadow: var(--track-shadow);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -216,7 +251,7 @@
     }
     .premium-card .card-header-custom {
         padding: 1.25rem 1.5rem;
-        border-bottom: 2px solid #f3f4f6;
+        border-bottom: 2px solid var(--track-border-light);
         display: flex;
         align-items: center;
         gap: 0.75rem;
@@ -236,30 +271,30 @@
         color: var(--track-primary);
     }
     .premium-card .card-header-custom .header-icon.icon-success {
-        background: rgba(16, 185, 129, 0.1);
+        background: var(--track-success-light);
         color: var(--track-success);
     }
     .premium-card .card-header-custom .header-icon.icon-warning {
-        background: rgba(245, 158, 11, 0.1);
+        background: var(--track-warning-light);
         color: var(--track-warning);
     }
     .premium-card .card-header-custom .header-icon.icon-info {
-        background: rgba(59, 130, 246, 0.1);
-        color: #3b82f6;
+        background: var(--track-info-light);
+        color: var(--track-info);
     }
     .premium-card .card-header-custom .header-icon.icon-danger {
-        background: rgba(239, 68, 68, 0.1);
+        background: var(--track-danger-light);
         color: var(--track-danger);
     }
     .premium-card .card-header-custom .header-icon.icon-purple {
-        background: rgba(139, 92, 246, 0.1);
-        color: #8b5cf6;
+        background: var(--track-purple-light);
+        color: var(--track-purple);
     }
     .premium-card .card-header-custom h5 {
         font-size: 1.05rem;
         font-weight: 700;
         margin: 0;
-        color: #1f2937;
+        color: var(--track-heading);
     }
     .premium-card .card-body-custom {
         padding: 1.5rem;
@@ -282,7 +317,7 @@
         left: 40px;
         right: 40px;
         height: 4px;
-        background: #e5e7eb;
+        background: var(--track-border);
         border-radius: 4px;
         z-index: 0;
     }
@@ -310,13 +345,13 @@
         width: 56px;
         height: 56px;
         border-radius: 50%;
-        background: #f3f4f6;
-        border: 3px solid #e5e7eb;
+        background: var(--track-border-light);
+        border: 3px solid var(--track-border);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.2rem;
-        color: #d1d5db;
+        color: #b7c4bc;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
     }
@@ -327,7 +362,7 @@
         background: var(--track-primary);
         border-color: var(--track-primary);
         color: #fff;
-        box-shadow: 0 0 0 6px rgba(40, 167, 69, 0.15);
+        box-shadow: 0 0 0 6px rgba(25, 135, 84, 0.15);
     }
     .step-tracker .step-item.completed .step-circle i {
         animation: stepComplete 0.5s ease;
@@ -341,25 +376,25 @@
         background: #fff;
         border-color: var(--track-primary);
         color: var(--track-primary);
-        box-shadow: 0 0 0 6px rgba(40, 167, 69, 0.15), 0 0 20px rgba(40, 167, 69, 0.2);
+        box-shadow: 0 0 0 6px rgba(25, 135, 84, 0.15), 0 0 20px rgba(25, 135, 84, 0.2);
         animation: pulse-current 2s infinite;
     }
     @keyframes pulse-current {
-        0% { box-shadow: 0 0 0 6px rgba(40, 167, 69, 0.15), 0 0 20px rgba(40, 167, 69, 0.2); }
-        50% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0.08), 0 0 30px rgba(40, 167, 69, 0.1); }
-        100% { box-shadow: 0 0 0 6px rgba(40, 167, 69, 0.15), 0 0 20px rgba(40, 167, 69, 0.2); }
+        0% { box-shadow: 0 0 0 6px rgba(25, 135, 84, 0.15), 0 0 20px rgba(25, 135, 84, 0.2); }
+        50% { box-shadow: 0 0 0 10px rgba(25, 135, 84, 0.08), 0 0 30px rgba(25, 135, 84, 0.1); }
+        100% { box-shadow: 0 0 0 6px rgba(25, 135, 84, 0.15), 0 0 20px rgba(25, 135, 84, 0.2); }
     }
     .step-tracker .step-item.cancelled .step-circle {
         background: var(--track-danger);
         border-color: var(--track-danger);
         color: #fff;
-        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.15);
+        box-shadow: 0 0 0 6px rgba(224, 82, 82, 0.15);
     }
     .step-tracker .step-item .step-label {
         margin-top: 0.75rem;
         font-size: 0.78rem;
         font-weight: 600;
-        color: #9ca3af;
+        color: var(--track-light-text);
         transition: color 0.3s;
         max-width: 90px;
         line-height: 1.3;
@@ -368,7 +403,7 @@
         color: var(--track-primary);
     }
     .step-tracker .step-item.current .step-label {
-        color: #1f2937;
+        color: var(--track-heading);
         font-weight: 700;
     }
     .step-tracker .step-item.cancelled .step-label {
@@ -376,24 +411,24 @@
     }
     .step-tracker .step-item .step-time {
         font-size: 0.65rem;
-        color: #d1d5db;
+        color: #b7c4bc;
         margin-top: 2px;
         font-weight: 500;
     }
     .step-tracker .step-item.completed .step-time,
     .step-tracker .step-item.current .step-time {
-        color: #6b7280;
+        color: var(--track-muted);
     }
 
     /* ── Progress Percentage Bar ── */
     .progress-percentage-bar {
         margin-top: 1.5rem;
         padding-top: 1.25rem;
-        border-top: 2px solid #f3f4f6;
+        border-top: 2px solid var(--track-border-light);
     }
     .progress-percentage-bar .progress-track-sm {
         height: 8px;
-        background: #e5e7eb;
+        background: var(--track-border);
         border-radius: 50px;
         overflow: hidden;
         position: relative;
@@ -416,7 +451,7 @@
         background: #fff;
         border: 3px solid var(--track-primary);
         border-radius: 50%;
-        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        box-shadow: 0 2px 8px rgba(25, 135, 84, 0.3);
     }
     .progress-percentage-bar .progress-stats {
         display: flex;
@@ -431,7 +466,7 @@
     }
     .progress-percentage-bar .progress-stats .status-text {
         font-size: 0.85rem;
-        color: #6b7280;
+        color: var(--track-muted);
         font-weight: 500;
     }
     .progress-percentage-bar .progress-stats .status-text i {
@@ -440,7 +475,8 @@
 
     /* ── Delivery Address Card ── */
     .address-premium-card {
-        background: #fff;
+        background: var(--track-card-bg);
+        border: 1px solid var(--track-border);
         border-radius: var(--track-radius);
         box-shadow: var(--track-shadow);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -471,7 +507,7 @@
         justify-content: space-between;
         margin-bottom: 1.25rem;
         padding-bottom: 1rem;
-        border-bottom: 2px solid #f3f4f6;
+        border-bottom: 2px solid var(--track-border-light);
     }
     .address-premium-card .address-header .header-left {
         display: flex;
@@ -493,7 +529,7 @@
         font-size: 1.05rem;
         font-weight: 700;
         margin: 0;
-        color: #1f2937;
+        color: var(--track-heading);
     }
     .address-premium-card .address-badge {
         display: inline-flex;
@@ -507,8 +543,8 @@
         letter-spacing: 0.3px;
     }
     .address-premium-card .address-badge.verified {
-        background: #d1fae5;
-        color: #065f46;
+        background: #dff5e9;
+        color: #146c43;
     }
     .address-premium-card .address-body {
         display: flex;
@@ -536,16 +572,16 @@
         color: var(--track-primary);
     }
     .address-premium-card .address-row .row-icon.phone-icon {
-        background: rgba(16, 185, 129, 0.1);
+        background: var(--track-success-light);
         color: var(--track-success);
     }
     .address-premium-card .address-row .row-icon.address-icon {
-        background: rgba(245, 158, 11, 0.1);
+        background: var(--track-warning-light);
         color: var(--track-warning);
     }
     .address-premium-card .address-row .row-icon.email-icon {
-        background: rgba(236, 72, 153, 0.1);
-        color: #ec4899;
+        background: var(--track-pink-light);
+        color: var(--track-pink);
     }
     .address-premium-card .address-row .row-content {
         flex: 1;
@@ -555,12 +591,12 @@
         font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 0.4px;
-        color: #9ca3af;
+        color: var(--track-light-text);
         margin-bottom: 2px;
     }
     .address-premium-card .address-row .row-value {
         font-size: 0.92rem;
-        color: #1f2937;
+        color: var(--track-heading);
         line-height: 1.5;
     }
     .address-premium-card .address-row .row-value.name-value {
@@ -569,21 +605,21 @@
     }
     .address-premium-card .address-row .row-value.phone-value {
         font-weight: 500;
-        color: #374151;
+        color: var(--track-text);
     }
     .address-premium-card .address-row .row-value.address-value {
         font-weight: 400;
-        color: #6b7280;
+        color: var(--track-muted);
     }
     .address-premium-card .address-divider {
         height: 1px;
-        background: linear-gradient(90deg, #f3f4f6, #e5e7eb, #f3f4f6);
+        background: linear-gradient(90deg, var(--track-border-light), var(--track-border), var(--track-border-light));
         margin: 0.15rem 0;
     }
     .address-premium-card .address-footer {
         margin-top: 1rem;
         padding-top: 0.85rem;
-        border-top: 2px solid #f3f4f6;
+        border-top: 2px solid var(--track-border-light);
         display: flex;
         align-items: center;
         gap: 0.6rem;
@@ -602,7 +638,8 @@
 
     /* ── Order Summary Card (Sticky) ── */
     .order-summary-card {
-        background: #fff;
+        background: var(--track-card-bg);
+        border: 1px solid var(--track-border);
         border-radius: var(--track-radius);
         box-shadow: var(--track-shadow);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -622,7 +659,7 @@
         gap: 0.75rem;
         margin-bottom: 1.25rem;
         padding-bottom: 1rem;
-        border-bottom: 2px solid #f3f4f6;
+        border-bottom: 2px solid var(--track-border-light);
     }
     .order-summary-card .summary-header .summary-icon {
         width: 40px;
@@ -639,7 +676,7 @@
         font-size: 1.05rem;
         font-weight: 700;
         margin: 0;
-        color: #1f2937;
+        color: var(--track-heading);
     }
     .order-summary-card .summary-row {
         display: flex;
@@ -649,11 +686,11 @@
         font-size: 0.9rem;
     }
     .order-summary-card .summary-row .summary-label {
-        color: #6b7280;
+        color: var(--track-muted);
         font-weight: 500;
     }
     .order-summary-card .summary-row .summary-value {
-        color: #1f2937;
+        color: var(--track-heading);
         font-weight: 600;
     }
     .order-summary-card .summary-row .summary-value.text-success {
@@ -664,7 +701,7 @@
     }
     .order-summary-card .summary-divider {
         height: 2px;
-        background: linear-gradient(90deg, #f3f4f6, #e5e7eb, #f3f4f6);
+        background: linear-gradient(90deg, var(--track-border-light), var(--track-border), var(--track-border-light));
         margin: 0.25rem 0;
     }
     .order-summary-card .summary-total {
@@ -673,12 +710,12 @@
         align-items: center;
         padding: 1rem 0 0;
         margin-top: 0.5rem;
-        border-top: 2px solid #f3f4f6;
+        border-top: 2px solid var(--track-border-light);
     }
     .order-summary-card .summary-total .total-label {
         font-size: 1rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--track-heading);
     }
     .order-summary-card .summary-total .total-value {
         font-size: 1.25rem;
@@ -691,7 +728,7 @@
         gap: 0.5rem;
         padding: 0.6rem 0;
         font-size: 0.9rem;
-        color: #6b7280;
+        color: var(--track-muted);
     }
     .order-summary-card .summary-items-count i {
         color: var(--track-primary);
@@ -699,7 +736,8 @@
 
     /* ── Order Items Section ── */
     .order-items-section {
-        background: #fff;
+        background: var(--track-card-bg);
+        border: 1px solid var(--track-border);
         border-radius: var(--track-radius);
         box-shadow: var(--track-shadow);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -717,7 +755,7 @@
         gap: 0.75rem;
         margin-bottom: 1.25rem;
         padding-bottom: 1rem;
-        border-bottom: 2px solid #f3f4f6;
+        border-bottom: 2px solid var(--track-border-light);
     }
     .order-items-section .items-header .items-icon {
         width: 40px;
@@ -727,21 +765,21 @@
         align-items: center;
         justify-content: center;
         font-size: 1.1rem;
-        background: rgba(139, 92, 246, 0.1);
-        color: #8b5cf6;
+        background: var(--track-purple-light);
+        color: var(--track-purple);
     }
     .order-items-section .items-header h5 {
         font-size: 1.05rem;
         font-weight: 700;
         margin: 0;
-        color: #1f2937;
+        color: var(--track-heading);
     }
     .order-items-section .product-item {
         display: flex;
         align-items: center;
         gap: 1rem;
         padding: 1rem 0;
-        border-bottom: 1px solid #f3f4f6;
+        border-bottom: 1px solid var(--track-border-light);
         transition: background 0.2s;
     }
     .order-items-section .product-item:last-child {
@@ -749,7 +787,7 @@
         padding-bottom: 0;
     }
     .order-items-section .product-item:hover {
-        background: #fafafa;
+        background: #f7faf8;
         margin: 0 -0.5rem;
         padding-left: 0.5rem;
         padding-right: 0.5rem;
@@ -761,18 +799,18 @@
         border-radius: var(--track-radius-sm);
         object-fit: cover;
         flex-shrink: 0;
-        background: #f3f4f6;
+        background: var(--track-border-light);
     }
     .order-items-section .product-item .product-img-placeholder {
         width: 64px;
         height: 64px;
         border-radius: var(--track-radius-sm);
-        background: #f3f4f6;
+        background: var(--track-border-light);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 1.3rem;
-        color: #9ca3af;
+        color: var(--track-light-text);
         flex-shrink: 0;
     }
     .order-items-section .product-item .product-info {
@@ -782,7 +820,7 @@
     .order-items-section .product-item .product-info .product-name {
         font-weight: 700;
         font-size: 0.92rem;
-        color: #1f2937;
+        color: var(--track-heading);
         margin-bottom: 2px;
         white-space: nowrap;
         overflow: hidden;
@@ -790,7 +828,7 @@
     }
     .order-items-section .product-item .product-info .product-meta {
         font-size: 0.8rem;
-        color: #6b7280;
+        color: var(--track-muted);
     }
     .order-items-section .product-item .product-info .product-meta .category-badge {
         display: inline-block;
@@ -807,17 +845,18 @@
     }
     .order-items-section .product-item .product-pricing .unit-price {
         font-size: 0.8rem;
-        color: #9ca3af;
+        color: var(--track-light-text);
     }
     .order-items-section .product-item .product-pricing .total-price {
         font-size: 1rem;
         font-weight: 700;
-        color: #1f2937;
+        color: var(--track-heading);
     }
 
     /* ── Delivery Partner Card ── */
     .delivery-partner-card {
-        background: #fff;
+        background: var(--track-card-bg);
+        border: 1px solid var(--track-border);
         border-radius: var(--track-radius);
         box-shadow: var(--track-shadow);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -836,7 +875,7 @@
         gap: 0.75rem;
         margin-bottom: 1.25rem;
         padding-bottom: 1rem;
-        border-bottom: 2px solid #f3f4f6;
+        border-bottom: 2px solid var(--track-border-light);
     }
     .delivery-partner-card .partner-header .partner-icon {
         width: 44px;
@@ -846,14 +885,14 @@
         align-items: center;
         justify-content: center;
         font-size: 1.2rem;
-        background: rgba(245, 158, 11, 0.1);
+        background: var(--track-warning-light);
         color: var(--track-warning);
     }
     .delivery-partner-card .partner-header h5 {
         font-size: 1.05rem;
         font-weight: 700;
         margin: 0;
-        color: #1f2937;
+        color: var(--track-heading);
     }
     .delivery-partner-card .partner-body {
         display: flex;
@@ -865,7 +904,7 @@
         align-items: center;
         gap: 0.85rem;
         padding: 0.6rem 0.75rem;
-        background: #f9fafb;
+        background: #f7faf8;
         border-radius: var(--track-radius-sm);
     }
     .delivery-partner-card .partner-row .p-icon {
@@ -883,15 +922,15 @@
         color: var(--track-primary);
     }
     .delivery-partner-card .partner-row .p-icon.vehicle {
-        background: rgba(59, 130, 246, 0.1);
-        color: #3b82f6;
+        background: var(--track-info-light);
+        color: var(--track-info);
     }
     .delivery-partner-card .partner-row .p-icon.phone {
-        background: rgba(16, 185, 129, 0.1);
+        background: var(--track-success-light);
         color: var(--track-success);
     }
     .delivery-partner-card .partner-row .p-icon.status {
-        background: rgba(245, 158, 11, 0.1);
+        background: var(--track-warning-light);
         color: var(--track-warning);
     }
     .delivery-partner-card .partner-row .p-content {
@@ -901,12 +940,12 @@
         font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 0.4px;
-        color: #9ca3af;
+        color: var(--track-light-text);
     }
     .delivery-partner-card .partner-row .p-content .p-value {
         font-size: 0.9rem;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--track-heading);
     }
     .delivery-partner-card .partner-status-indicator {
         display: inline-flex;
@@ -918,21 +957,22 @@
         font-weight: 600;
     }
     .delivery-partner-card .partner-status-indicator.on-the-way {
-        background: #fef3c7;
-        color: #92400e;
+        background: #fff3df;
+        color: #9a6700;
     }
     .delivery-partner-card .partner-status-indicator.delivered {
-        background: #d1fae5;
-        color: #065f46;
+        background: #dff5e9;
+        color: #146c43;
     }
     .delivery-partner-card .partner-status-indicator.pending {
-        background: #e5e7eb;
-        color: #4b5563;
+        background: var(--track-border);
+        color: #55645c;
     }
 
     /* ── Order Timeline (Vertical) ── */
     .order-timeline-card {
-        background: #fff;
+        background: var(--track-card-bg);
+        border: 1px solid var(--track-border);
         border-radius: var(--track-radius);
         box-shadow: var(--track-shadow);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -950,7 +990,7 @@
         gap: 0.75rem;
         margin-bottom: 1.25rem;
         padding-bottom: 1rem;
-        border-bottom: 2px solid #f3f4f6;
+        border-bottom: 2px solid var(--track-border-light);
     }
     .order-timeline-card .timeline-header .tl-icon {
         width: 40px;
@@ -960,14 +1000,14 @@
         align-items: center;
         justify-content: center;
         font-size: 1.1rem;
-        background: rgba(99, 102, 241, 0.1);
-        color: #6366f1;
+        background: var(--track-purple-light);
+        color: var(--track-purple);
     }
     .order-timeline-card .timeline-header h5 {
         font-size: 1.05rem;
         font-weight: 700;
         margin: 0;
-        color: #1f2937;
+        color: var(--track-heading);
     }
     .order-timeline-card .vertical-timeline {
         position: relative;
@@ -980,7 +1020,7 @@
         top: 8px;
         bottom: 8px;
         width: 3px;
-        background: #e5e7eb;
+        background: var(--track-border);
         border-radius: 50px;
     }
     .order-timeline-card .vertical-timeline.timeline-active::before {
@@ -1000,8 +1040,8 @@
         width: 26px;
         height: 26px;
         border-radius: 50%;
-        background: #e5e7eb;
-        border: 3px solid #e5e7eb;
+        background: var(--track-border);
+        border: 3px solid var(--track-border);
         z-index: 2;
         display: flex;
         align-items: center;
@@ -1017,7 +1057,7 @@
     .order-timeline-card .vertical-timeline .tl-item.completed .tl-dot {
         background: var(--track-success);
         border-color: var(--track-success);
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        box-shadow: 0 0 0 4px rgba(32, 180, 134, 0.2);
     }
     .order-timeline-card .vertical-timeline .tl-item.completed .tl-dot i {
         opacity: 1;
@@ -1025,13 +1065,13 @@
     .order-timeline-card .vertical-timeline .tl-item.current .tl-dot {
         background: var(--track-primary);
         border-color: var(--track-primary);
-        box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.2);
+        box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.2);
         animation: pulse-tl-dot 2s infinite;
     }
     @keyframes pulse-tl-dot {
-        0% { box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.2); }
-        50% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0.1); }
-        100% { box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.2); }
+        0% { box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.2); }
+        50% { box-shadow: 0 0 0 10px rgba(25, 135, 84, 0.1); }
+        100% { box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.2); }
     }
     .order-timeline-card .vertical-timeline .tl-item.current .tl-dot i {
         opacity: 1;
@@ -1039,7 +1079,7 @@
     .order-timeline-card .vertical-timeline .tl-item.cancelled .tl-dot {
         background: var(--track-danger);
         border-color: var(--track-danger);
-        box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+        box-shadow: 0 0 0 4px rgba(224, 82, 82, 0.2);
     }
     .order-timeline-card .vertical-timeline .tl-item.cancelled .tl-dot i {
         opacity: 1;
@@ -1049,25 +1089,25 @@
     }
     .order-timeline-card .vertical-timeline .tl-item .tl-content .tl-status {
         font-weight: 600;
-        color: #1f2937;
+        color: var(--track-heading);
         font-size: 0.92rem;
     }
     .order-timeline-card .vertical-timeline .tl-item .tl-content .tl-time {
         font-size: 0.78rem;
-        color: #9ca3af;
+        color: var(--track-light-text);
         margin-top: 2px;
     }
     .order-timeline-card .vertical-timeline .tl-item .tl-content .tl-desc {
         font-size: 0.82rem;
-        color: #6b7280;
+        color: var(--track-muted);
         margin-top: 4px;
     }
     .order-timeline-card .vertical-timeline .tl-item.completed .tl-content .tl-status,
     .order-timeline-card .vertical-timeline .tl-item.current .tl-content .tl-status {
-        color: #111827;
+        color: var(--track-heading);
     }
     .order-timeline-card .vertical-timeline .tl-item:not(.completed):not(.current):not(.cancelled) .tl-content .tl-status {
-        color: #d1d5db;
+        color: #b7c4bc;
     }
     .order-timeline-card .vertical-timeline .tl-item:not(.completed):not(.current):not(.cancelled) .tl-content .tl-time {
         visibility: hidden;
@@ -1088,54 +1128,54 @@
         transition: all 0.3s;
     }
     .status-badge-premium.pending {
-        background: #fef3c7;
-        color: #92400e;
-        border-color: #fde68a;
+        background: #fff3df;
+        color: #9a6700;
+        border-color: #fae3bd;
     }
     .status-badge-premium.confirmed {
-        background: #dbeafe;
-        color: #1e40af;
-        border-color: #bfdbfe;
+        background: #eaf2ff;
+        color: #285ea8;
+        border-color: #d5e5fb;
     }
     .status-badge-premium.processing {
-        background: #e0e7ff;
-        color: #3730a3;
-        border-color: #c7d2fe;
+        background: #eef0ff;
+        color: #5147a8;
+        border-color: #dde0fa;
     }
     .status-badge-premium.packed {
-        background: #ede9fe;
-        color: #5b21b6;
-        border-color: #ddd6fe;
+        background: #f0ecff;
+        color: #5f45a8;
+        border-color: #e0d8fa;
     }
     .status-badge-premium.shipped {
-        background: #d1fae5;
-        color: #065f46;
-        border-color: #a7f3d0;
+        background: #e8f7ef;
+        color: #146c43;
+        border-color: #c8ecda;
     }
     .status-badge-premium.out_for_delivery {
-        background: #fef3c7;
-        color: #92400e;
-        border-color: #fde68a;
+        background: #fff3df;
+        color: #9a6700;
+        border-color: #fae3bd;
     }
     .status-badge-premium.delivered {
-        background: #d1fae5;
-        color: #065f46;
-        border-color: #a7f3d0;
+        background: #e8f7ef;
+        color: #146c43;
+        border-color: #c8ecda;
     }
     .status-badge-premium.cancelled {
-        background: #fee2e2;
-        color: #991b1b;
-        border-color: #fecaca;
+        background: #fdeaea;
+        color: #a22b2b;
+        border-color: #f6cdcd;
     }
     .status-badge-premium.returned {
-        background: #fce7f3;
-        color: #9d174d;
-        border-color: #fbcfe8;
+        background: #fdeef5;
+        color: #9d3968;
+        border-color: #f8d3e3;
     }
     .status-badge-premium.failed {
-        background: #fee2e2;
-        color: #991b1b;
-        border-color: #fecaca;
+        background: #fdeaea;
+        color: #a22b2b;
+        border-color: #f6cdcd;
     }
 
     /* ── Action Buttons ── */
@@ -1161,24 +1201,24 @@
         min-height: 48px;
     }
     .action-buttons-wrapper .action-btn.btn-primary-action {
-        background: linear-gradient(135deg, #28a745, #20c997);
+        background: linear-gradient(135deg, #198754, #20b486);
         color: #fff;
-        box-shadow: 0 6px 20px rgba(40, 167, 69, 0.35);
+        box-shadow: 0 6px 20px rgba(25, 135, 84, 0.28);
     }
     .action-buttons-wrapper .action-btn.btn-primary-action:hover {
         transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(40, 167, 69, 0.5);
+        box-shadow: 0 12px 30px rgba(25, 135, 84, 0.38);
         color: #fff;
     }
     .action-buttons-wrapper .action-btn.btn-secondary-action {
-        background: #f3f4f6;
-        color: #374151;
-        border: 1px solid #e5e7eb;
+        background: #f1f5f3;
+        color: #405149;
+        border: 1px solid #dce5e0;
     }
     .action-buttons-wrapper .action-btn.btn-secondary-action:hover {
-        background: #e5e7eb;
+        background: #e6ede9;
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 8px 20px rgba(20, 108, 67, 0.1);
     }
     .action-buttons-wrapper .action-btn.btn-outline-action {
         background: transparent;
@@ -1189,23 +1229,23 @@
         background: var(--track-primary);
         color: #fff;
         transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(40, 167, 69, 0.25);
+        box-shadow: 0 8px 20px rgba(25, 135, 84, 0.25);
     }
     .action-buttons-wrapper .action-btn.btn-danger-action {
-        background: linear-gradient(135deg, #ef4444, #f97316);
+        background: linear-gradient(135deg, #e05252, #ec7846);
         color: #fff;
-        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+        box-shadow: 0 6px 20px rgba(224, 82, 82, 0.3);
     }
     .action-buttons-wrapper .action-btn.btn-danger-action:hover {
         transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(239, 68, 68, 0.45);
+        box-shadow: 0 12px 30px rgba(224, 82, 82, 0.45);
         color: #fff;
     }
 
     /* ── Cancelled Banner ── */
     .cancelled-banner-premium {
-        background: linear-gradient(135deg, #fee2e2, #fecaca);
-        border: 2px solid #fca5a5;
+        background: linear-gradient(135deg, #fff1f1, #fde2e2);
+        border: 2px solid #f3b5b5;
         border-radius: var(--track-radius);
         padding: 1.5rem 2rem;
         text-align: center;
@@ -1218,11 +1258,11 @@
         margin-bottom: 0.75rem;
     }
     .cancelled-banner-premium h4 {
-        color: #991b1b;
+        color: #a22b2b;
         font-weight: 700;
     }
     .cancelled-banner-premium p {
-        color: #7f1d1d;
+        color: #a22b2b;
         margin-bottom: 0;
         font-size: 0.95rem;
     }
@@ -1231,36 +1271,38 @@
     .empty-state-premium {
         text-align: center;
         padding: 4rem 2rem;
-        background: #fff;
+        background: var(--track-card-bg);
+        border: 1px solid var(--track-border);
         border-radius: var(--track-radius);
         box-shadow: var(--track-shadow);
         animation: fadeInUp 0.5s ease;
     }
     .empty-state-premium .empty-illustration {
         font-size: 5rem;
-        color: #d1d5db;
+        color: #9aa9a1;
         margin-bottom: 1.5rem;
         display: block;
     }
     .empty-state-premium .empty-illustration i {
-        background: #f3f4f6;
+        background: #edf5f0;
         padding: 1.5rem;
         border-radius: 50%;
     }
     .empty-state-premium h3 {
         font-weight: 700;
-        color: #1f2937;
+        color: var(--track-heading);
         margin-bottom: 0.5rem;
     }
     .empty-state-premium p {
-        color: #6b7280;
+        color: var(--track-muted);
         max-width: 400px;
         margin: 0 auto 1.5rem;
     }
 
     /* ── Loading Skeleton ── */
     .skeleton-card {
-        background: #fff;
+        background: var(--track-card-bg);
+        border: 1px solid var(--track-border);
         border-radius: var(--track-radius);
         box-shadow: var(--track-shadow);
         padding: 1.5rem;
@@ -1268,7 +1310,7 @@
     }
     .skeleton-card .skeleton-line {
         height: 14px;
-        background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+        background: linear-gradient(90deg, #eef4f0 25%, #e1ebe5 50%, #eef4f0 75%);
         background-size: 200% 100%;
         animation: shimmer 1.5s infinite;
         border-radius: 8px;
@@ -1285,7 +1327,7 @@
         width: 56px;
         height: 56px;
         border-radius: 50%;
-        background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+        background: linear-gradient(90deg, #eef4f0 25%, #e1ebe5 50%, #eef4f0 75%);
         background-size: 200% 100%;
         animation: shimmer 1.5s infinite;
         margin: 0 auto 1rem;
@@ -1529,7 +1571,7 @@
             display: flex;
             justify-content: space-between;
             padding-top: 0.5rem;
-            border-top: 1px solid #f3f4f6;
+            border-top: 1px solid var(--track-border-light);
         }
         .address-premium-card .address-header {
             flex-direction: column;
@@ -1554,7 +1596,7 @@
     /* ── Print Styles ── */
     @media print {
         .hero-tracking-card {
-            background: #1a1a2e !important;
+            background: #155d3b !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
@@ -1631,6 +1673,8 @@
                             <span class="text-success"><i class="bi bi-check-circle-fill"></i> Paid</span>
                         {% elif order.payment_status == 'failed' %}
                             <span class="text-danger"><i class="bi bi-x-circle-fill"></i> Failed</span>
+                        {% elif order.payment_status == 'refund_pending' %}
+                            <span class="text-warning"><i class="bi bi-hourglass-split"></i> Refund Pending</span>
                         {% elif order.payment_status == 'refunded' %}
                             <span class="text-success"><i class="bi bi-arrow-counterclockwise"></i> Refunded</span>
                         {% else %}
@@ -1642,9 +1686,14 @@
                     <div class="info-label"><i class="bi bi-currency-rupee me-1"></i>Total</div>
                     <div class="info-value">₹ {{ order.total_amount|floatformat:2 }}</div>
                 </div>
-                {% if tracking.estimated_delivery_date %}
+                {% if tracking.status == 'delivered' and order.delivered_at %}
                 <div class="hero-info-item">
-                    <div class="info-label"><i class="bi bi-truck me-1"></i>Est. Delivery</div>
+                    <div class="info-label"><i class="bi bi-check-circle me-1"></i>Delivered On</div>
+                    <div class="info-value">{{ order.delivered_at|date:"l, d M Y" }}</div>
+                </div>
+                {% elif tracking.estimated_delivery_date %}
+                <div class="hero-info-item">
+                    <div class="info-label"><i class="bi bi-truck me-1"></i>{% if tracking.status == 'delivered' %}Delivered{% else %}Est. Delivery{% endif %}</div>
                     <div class="info-value">{{ tracking.estimated_delivery_date|date:"l, d M Y" }}</div>
                 </div>
                 {% endif %}
@@ -1843,8 +1892,8 @@
                                 {% endif %}
                             </div>
                             <div class="text-end flex-shrink-0" style="min-width: 120px;">
-                                <div style="font-size: 0.78rem; font-weight: 600; color: #374151;">{{ item.created_at|date:"d M Y" }}</div>
-                                <div style="font-size: 0.72rem; color: #9ca3af;">{{ item.created_at|date:"h:i A" }}</div>
+                                <div style="font-size: 0.78rem; font-weight: 600; color: var(--track-text);">{{ item.created_at|date:"d M Y" }}</div>
+                                <div style="font-size: 0.72rem; color: var(--track-light-text);">{{ item.created_at|date:"h:i A" }}</div>
                             </div>
                         </div>
                         {% endfor %}
@@ -1957,7 +2006,7 @@
                                 <div class="row-icon email-icon"><i class="bi bi-envelope-fill"></i></div>
                                 <div class="row-content">
                                     <div class="row-label">Email</div>
-                                    <div class="row-value" style="font-weight: 400; color: #6b7280;">{{ address.email }}</div>
+                                    <div class="row-value" style="font-weight: 400; color: var(--track-muted);">{{ address.email }}</div>
                                 </div>
                             </div>
                             {% endif %}
@@ -2003,7 +2052,14 @@
                                 <div class="p-icon vehicle"><i class="bi bi-upc-scan"></i></div>
                                 <div class="p-content">
                                     <div class="p-label">Tracking #</div>
-                                    <div class="p-value" style="font-family: monospace; letter-spacing: 0.5px;">{{ tracking.tracking_number }}</div>
+                                    <div class="p-value" style="font-family: monospace; letter-spacing: 0.5px;">
+                                        {{ tracking.tracking_number }}
+                                        <button type="button" class="btn btn-sm btn-outline-secondary ms-2 py-0 px-2"
+                                                id="copyTrackingBtn" data-tracking="{{ tracking.tracking_number }}"
+                                                title="Copy Tracking Number">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             {% endif %}
@@ -2053,23 +2109,23 @@
                     <div class="card-body-custom">
                         {% if tracking.updated_at %}
                         <div class="d-flex align-items-center gap-3 mb-3">
-                            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(16, 185, 129, 0.1); display: flex; align-items: center; justify-content: center; color: var(--track-success); flex-shrink: 0;">
+                            <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--track-success-light); display: flex; align-items: center; justify-content: center; color: var(--track-success); flex-shrink: 0;">
                                 <i class="bi bi-clock"></i>
                             </div>
                             <div>
-                                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.4px; color: #9ca3af;">Last Updated</div>
-                                <div style="font-size: 0.9rem; font-weight: 600; color: #1f2937;">{{ tracking.updated_at|date:"d M Y, h:i A" }}</div>
+                                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.4px; color: var(--track-light-text);">Last Updated</div>
+                                <div style="font-size: 0.9rem; font-weight: 600; color: var(--track-heading);">{{ tracking.updated_at|date:"d M Y, h:i A" }}</div>
                             </div>
                         </div>
                         {% endif %}
                         {% if tracking.notes %}
                         <div class="d-flex align-items-start gap-3">
-                            <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(107, 114, 128, 0.1); display: flex; align-items: center; justify-content: center; color: #6b7280; flex-shrink: 0; margin-top: 2px;">
+                            <div style="width: 36px; height: 36px; border-radius: 10px; background: #eef4f0; display: flex; align-items: center; justify-content: center; color: var(--track-muted); flex-shrink: 0; margin-top: 2px;">
                                 <i class="bi bi-chat-dots"></i>
                             </div>
                             <div>
-                                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.4px; color: #9ca3af;">Notes</div>
-                                <div style="font-size: 0.9rem; color: #374151;">{{ tracking.notes }}</div>
+                                <div style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.4px; color: var(--track-light-text);">Notes</div>
+                                <div style="font-size: 0.9rem; color: var(--track-text);">{{ tracking.notes }}</div>
                             </div>
                         </div>
                         {% endif %}
@@ -2082,8 +2138,16 @@
 
     <!-- ── ACTION BUTTONS ── -->
     <div class="action-buttons-wrapper">
+        {% if can_cancel %}
+        <button type="button" class="action-btn btn-danger-action" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+            <i class="bi bi-x-circle"></i> Cancel Order
+        </button>
+        {% endif %}
         <a href="{% url 'store:my_orders' %}" class="action-btn btn-secondary-action">
             <i class="bi bi-arrow-left"></i> Back to Orders
+        </a>
+        <a href="{% url 'store:order_invoice' order.id %}" class="action-btn btn-outline-action">
+            <i class="bi bi-receipt"></i> View Invoice
         </a>
         <a href="{% url 'store:order_invoice_pdf' order.id %}" class="action-btn btn-outline-action">
             <i class="bi bi-download"></i> Download Invoice
@@ -2100,6 +2164,67 @@
         </a>
         {% endif %}
     </div>
+
+    {% if can_cancel %}
+    <!-- ── CANCEL ORDER MODAL ── -->
+    <div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="border-radius: var(--track-radius-sm); border: none;">
+                <form method="post" action="{% url 'store:cancel_order' order.id %}">
+                    {% csrf_token %}
+                    <div class="modal-header" style="border-bottom: 1px solid var(--track-border);">
+                        <h5 class="modal-title fw-bold" style="color: #a22b2b;">
+                            <i class="bi bi-x-circle me-2"></i>Cancel Order #{{ order.order_id|default:order.id }}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-3 text-muted">Why do you want to cancel this order?</p>
+                        <div class="d-flex flex-column gap-2">
+                            <label class="cancel-reason-option">
+                                <input type="radio" name="cancel_reason" value="Change of mind" required>
+                                <span><i class="bi bi-heartbreak me-2"></i>Change of mind</span>
+                            </label>
+                            <label class="cancel-reason-option">
+                                <input type="radio" name="cancel_reason" value="Ordered by mistake">
+                                <span><i class="bi bi-slash-circle me-2"></i>Ordered by mistake</span>
+                            </label>
+                            <label class="cancel-reason-option">
+                                <input type="radio" name="cancel_reason" value="Delivery taking too long">
+                                <span><i class="bi bi-hourglass-split me-2"></i>Delivery taking too long</span>
+                            </label>
+                            <label class="cancel-reason-option">
+                                <input type="radio" name="cancel_reason" value="Other">
+                                <span><i class="bi bi-three-dots me-2"></i>Other</span>
+                            </label>
+                        </div>
+                        <div class="alert alert-warning mt-3 mb-0 small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Cancellation is only possible before the order is packed/shipped.
+                            {% if order.payment_status == 'paid' %}If you already paid, your refund will be initiated automatically.{% endif %}
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="border-top: 1px solid var(--track-border);">
+                        <button type="button" class="btn btn-outline-secondary fw-bold px-4" data-bs-dismiss="modal">Keep Order</button>
+                        <button type="submit" class="btn btn-danger fw-bold px-4">
+                            <i class="bi bi-x-circle me-1"></i> Cancel Order
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <style>
+        .cancel-reason-option {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px; border: 2px solid var(--track-border); border-radius: 10px;
+            cursor: pointer; transition: all 0.15s ease; font-weight: 600;
+        }
+        .cancel-reason-option:hover { border-color: #f3b5b5; background: #fdf1f1; }
+        .cancel-reason-option input[type="radio"] { accent-color: var(--track-danger); width: 16px; height: 16px; }
+        .cancel-reason-option:has(input:checked) { border-color: var(--track-danger); background: #fdf1f1; }
+    </style>
+    {% endif %}
 
     {% else %}
     <!-- ── EMPTY STATE ── -->
@@ -2121,6 +2246,36 @@
 <script>
     (function() {
         'use strict';
+
+        // ── Copy Tracking Number ──
+        const copyBtn = document.getElementById('copyTrackingBtn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function () {
+                const value = this.dataset.tracking || '';
+                const done = () => {
+                    const icon = this.querySelector('i');
+                    icon.className = 'bi bi-clipboard-check';
+                    this.classList.remove('btn-outline-secondary');
+                    this.classList.add('btn-success');
+                    setTimeout(() => {
+                        icon.className = 'bi bi-clipboard';
+                        this.classList.add('btn-outline-secondary');
+                        this.classList.remove('btn-success');
+                    }, 1500);
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(value).then(done).catch(done);
+                } else {
+                    const tmp = document.createElement('textarea');
+                    tmp.value = value;
+                    document.body.appendChild(tmp);
+                    tmp.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(tmp);
+                    done();
+                }
+            });
+        }
 
         // ── Animate progress bar on load ──
         const progressFill = document.querySelector('.progress-fill-sm');

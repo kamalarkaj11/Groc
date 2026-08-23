@@ -333,6 +333,9 @@ class OrderAdmin(admin.ModelAdmin):
         'discount_amount', 'shipping_charge', 'created_at', 'updated_at',
         'order_id_display', 'customer_name_display', 'customer_email_display',
         'customer_phone_display', 'delivery_address_display', 'notification_details',
+        'ordered_at', 'confirmed_at', 'processing_at', 'packed_at',
+        'shipped_at', 'out_for_delivery_at', 'delivered_at',
+        'cancelled_at', 'refund_initiated_at', 'refunded_at',
     ]
     date_hierarchy = 'created_at'
     inlines = [OrderAddressInline, OrderItemInline, OrderStatusHistoryInline, NotificationLogInline]
@@ -341,7 +344,9 @@ class OrderAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ('Order Info', {
-            'fields': ('order_id_display', 'user', 'status', 'created_at', 'updated_at'),
+            'fields': ('order_id_display', 'user', 'status', 'created_at', 'updated_at',
+                       'ordered_at', 'confirmed_at', 'processing_at', 'packed_at',
+                       'shipped_at', 'out_for_delivery_at', 'delivered_at'),
         }),
         ('Payment Info', {
             'fields': ('payment_method', 'payment_status', 'transaction_id', 'stripe_session_id',
@@ -352,7 +357,12 @@ class OrderAdmin(admin.ModelAdmin):
         }),
         ('Delivery Info', {
             'fields': ('address', 'address_line1', 'city', 'state', 'pincode', 'phone',
-                       'delivery_notes', 'expected_delivery_date', 'delivery_address_display'),
+                       'delivery_notes', 'expected_delivery_date', 'tracking_number',
+                       'delivery_partner', 'delivery_address_display'),
+        }),
+        ('Cancellation & Refund', {
+            'fields': ('cancel_reason', 'cancelled_at', 'refund_initiated_at', 'refunded_at'),
+            'classes': ('collapse',),
         }),
         ('Notification Status', {
             'fields': ('notification_details',),
@@ -504,135 +514,102 @@ class OrderAdmin(admin.ModelAdmin):
         )
 
     def save_model(self, request, obj, form, change):
-        """Override save to create status history entry when status changes."""
+        """Override save to route status changes through the centralized service."""
         if change:
             try:
                 old_obj = Order.objects.get(pk=obj.pk)
                 old_status = old_obj.status
-                if old_status != obj.status:
-                    # Create status history entry
-                    changed_by_name = request.user.get_full_name() or request.user.username
-                    OrderStatusHistory.objects.create(
-                        order=obj,
-                        previous_status=old_status,
-                        new_status=obj.status,
-                        changed_by=request.user if request.user.is_staff else None,
-                        changed_by_name=changed_by_name,
-                        notes=f"Status changed from {old_status} to {obj.status} by admin",
-                    )
-                    
-                    # Send notification to user about status change
-                    self._send_status_notification(obj, old_status)
+                new_status = obj.status
+                if old_status != new_status:
+                    from .order_services import update_order_status, is_valid_transition
+                    if not is_valid_transition(old_status, new_status):
+                        # Invalid transition: revert the form value so the DB is
+                        # not corrupted, and inform the admin user.
+                        obj.status = old_status
+                        self.message_user(
+                            request,
+                            f"Invalid status transition {old_status} → {new_status} was rejected.",
+                            level='warning',
+                        )
+                    else:
+                        # The centralized service persists the new status and all
+                        # audit/tracking/notification side effects. Restore the
+                        # true current value first so the service sees the real
+                        # transition; super().save_model then persists any other
+                        # form fields (status already at its final value).
+                        obj.status = old_status
+                        update_order_status(
+                            obj,
+                            new_status,
+                            user=request.user if request.user.is_staff else None,
+                            notes=f"Status changed from {old_status} to {new_status} by admin",
+                        )
             except Order.DoesNotExist:
                 pass
         super().save_model(request, obj, form, change)
 
-    def _send_status_notification(self, order, old_status):
-        """Send notification to user when order status changes."""
-        try:
-            from .models import Notification
-            status_messages = {
-                'confirmed': f'Your order {order.order_id} has been confirmed. We\'re preparing your items!',
-                'packed': f'Your order {order.order_id} has been packed and is ready for delivery.',
-                'out_for_delivery': f'Your order {order.order_id} is out for delivery! Get ready to receive your groceries.',
-                'delivered': f'Your order {order.order_id} has been delivered successfully. Enjoy your groceries! 🎉',
-                'cancelled': f'Your order {order.order_id} has been cancelled. Please contact support for more information.',
-            }
-            
-            if order.status in status_messages:
-                message = status_messages[order.status]
-                title = f"Order {order.get_status_display()}"
-                
-                # Create notification
-                Notification.objects.create(
-                    user=order.user,
-                    title=title,
-                    message=message,
-                    notification_type='order',
-                )
-        except Exception:
-            pass
-
     def mark_as_confirmed(self, request, queryset):
+        from .order_services import update_order_status
+        updated = 0
         for order in queryset:
             if order.status == 'pending':
-                old_status = order.status
-                order.status = 'confirmed'
-                order.save()
-                changed_by_name = request.user.get_full_name() or request.user.username
-                OrderStatusHistory.objects.create(
-                    order=order,
-                    previous_status=old_status,
-                    new_status='confirmed',
-                    changed_by=request.user,
-                    changed_by_name=changed_by_name,
-                )
-        self.message_user(request, "Selected orders marked as confirmed.")
+                try:
+                    update_order_status(order, 'confirmed', user=request.user)
+                    updated += 1
+                except ValueError:
+                    continue
+        self.message_user(request, f"{updated} selected order(s) marked as confirmed.")
     mark_as_confirmed.short_description = "Mark selected as Confirmed"
 
     def mark_as_packed(self, request, queryset):
+        from .order_services import update_order_status
+        updated = 0
         for order in queryset:
-            old_status = order.status
-            order.status = 'packed'
-            order.save()
-            changed_by_name = request.user.get_full_name() or request.user.username
-            OrderStatusHistory.objects.create(
-                order=order,
-                previous_status=old_status,
-                new_status='packed',
-                changed_by=request.user,
-                changed_by_name=changed_by_name,
-            )
-        self.message_user(request, "Selected orders marked as packed.")
+            try:
+                update_order_status(order, 'packed', user=request.user)
+                updated += 1
+            except ValueError:
+                continue
+        self.message_user(request, f"{updated} selected order(s) marked as packed.")
     mark_as_packed.short_description = "Mark selected as Packed"
 
     def mark_as_out_for_delivery(self, request, queryset):
+        from .order_services import update_order_status
+        updated = 0
         for order in queryset:
-            old_status = order.status
-            order.status = 'out_for_delivery'
-            order.save()
-            changed_by_name = request.user.get_full_name() or request.user.username
-            OrderStatusHistory.objects.create(
-                order=order,
-                previous_status=old_status,
-                new_status='out_for_delivery',
-                changed_by=request.user,
-                changed_by_name=changed_by_name,
-            )
-        self.message_user(request, "Selected orders marked as out for delivery.")
+            try:
+                update_order_status(order, 'out_for_delivery', user=request.user)
+                updated += 1
+            except ValueError:
+                continue
+        self.message_user(request, f"{updated} selected order(s) marked as out for delivery.")
     mark_as_out_for_delivery.short_description = "Mark selected as Out for Delivery"
 
     def mark_as_delivered(self, request, queryset):
+        from .order_services import update_order_status
+        updated = 0
         for order in queryset:
-            old_status = order.status
-            order.status = 'delivered'
-            order.payment_status = 'paid'
-            order.save()
-            changed_by_name = request.user.get_full_name() or request.user.username
-            OrderStatusHistory.objects.create(
-                order=order,
-                previous_status=old_status,
-                new_status='delivered',
-                changed_by=request.user,
-                changed_by_name=changed_by_name,
-            )
-        self.message_user(request, "Selected orders marked as delivered.")
+            try:
+                update_order_status(order, 'delivered', user=request.user)
+                if order.payment_status not in ('paid', 'refunded'):
+                    order.payment_status = 'paid'
+                    order.save(update_fields=['payment_status'])
+                updated += 1
+            except ValueError:
+                continue
+        self.message_user(request, f"{updated} selected order(s) marked as delivered.")
     mark_as_delivered.short_description = "Mark selected as Delivered"
 
     def mark_as_cancelled(self, request, queryset):
+        from .order_services import update_order_status
+        updated = 0
         for order in queryset:
-            old_status = order.status
-            order.status = 'cancelled'
-            order.save()
-            changed_by_name = request.user.get_full_name() or request.user.username
-            OrderStatusHistory.objects.create(
-                order=order,
-                previous_status=old_status,
-                new_status='cancelled',
-                changed_by=request.user,
-                changed_by_name=changed_by_name,
-            )
-        self.message_user(request, "Selected orders marked as cancelled.")
+            try:
+                update_order_status(order, 'cancelled', user=request.user)
+                updated += 1
+            except ValueError:
+                continue
+        self.message_user(request, f"{updated} selected order(s) marked as cancelled.")
     mark_as_cancelled.short_description = "Mark selected as Cancelled"
 
 

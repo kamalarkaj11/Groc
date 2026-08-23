@@ -469,13 +469,7 @@
                 {% for key, label in status_choices %}
                 <option
                   value="{{ key }}"
-                  {%
-                  if
-                  status_filter=""
-                  ="key"
-                  %}selected{%
-                  endif
-                  %}
+                  {% if status_filter == "key" %}selected{% endif %}
                 >
                   {{ label }}
                 </option>
@@ -489,13 +483,7 @@
                 {% for key, label in payment_status_choices %}
                 <option
                   value="{{ key }}"
-                  {%
-                  if
-                  payment_filter=""
-                  ="key"
-                  %}selected{%
-                  endif
-                  %}
+                  {% if payment_filter == "key" %}selected{% endif %}
                 >
                   {{ label }}
                 </option>
@@ -509,13 +497,7 @@
                 {% for key, label in payment_method_choices %}
                 <option
                   value="{{ key }}"
-                  {%
-                  if
-                  method_filter=""
-                  ="key"
-                  %}selected{%
-                  endif
-                  %}
+                  {% if method_filter == "key" %}selected{% endif %}
                 >
                   {{ label }}
                 </option>
@@ -528,49 +510,25 @@
                 <option value="">Custom Range</option>
                 <option
                   value="today"
-                  {%
-                  if
-                  date_preset=""
-                  ="today"
-                  %}selected{%
-                  endif
-                  %}
+                  {% if date_preset == "today" %}selected{% endif %}
                 >
                   Today
                 </option>
                 <option
                   value="yesterday"
-                  {%
-                  if
-                  date_preset=""
-                  ="yesterday"
-                  %}selected{%
-                  endif
-                  %}
+                  {% if date_preset == "yesterday" %}selected{% endif %}
                 >
                   Yesterday
                 </option>
                 <option
                   value="last7"
-                  {%
-                  if
-                  date_preset=""
-                  ="last7"
-                  %}selected{%
-                  endif
-                  %}
+                  {% if date_preset == "last7" %}selected{% endif %}
                 >
                   Last 7 Days
                 </option>
                 <option
                   value="last30"
-                  {%
-                  if
-                  date_preset=""
-                  ="last30"
-                  %}selected{%
-                  endif
-                  %}
+                  {% if date_preset == "last30" %}selected{% endif %}
                 >
                   Last 30 Days
                 </option>
@@ -582,13 +540,7 @@
                 {% for key, label in sort_choices %}
                 <option
                   value="{{ key }}"
-                  {%
-                  if
-                  sort_by=""
-                  ="key"
-                  %}selected{%
-                  endif
-                  %}
+                  {% if sort_by == "key" %}selected{% endif %}
                 >
                   {{ label }}
                 </option>
@@ -733,8 +685,7 @@
                   </td>
                   <td>
                     <div class="product-imgs">
-                      {% for item in order.items.all|slice:":3" %} {% if
-                      item.product.image %}
+                      {% for item in order.items.all|slice:":3" %} {% if item.product.image %}
                       <img
                         src="{{ item.product.image.url }}"
                         alt="{{ item.product.title }}"
@@ -815,13 +766,11 @@
                 ><i class="bi bi-chevron-left"></i
               ></a>
             </li>
-            {% endif %} {% for num in page_obj.paginator.page_range %} {% if
-            page_obj.number == num %}
+            {% endif %} {% for num in page_obj.paginator.page_range %} {% if page_obj.number == num %}
             <li class="page-item active">
               <span class="page-link">{{ num }}</span>
             </li>
-            {% elif num > page_obj.number|add:"-3" and num <
-            page_obj.number|add:"3" %}
+            {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
             <li class="page-item">
               <a
                 class="page-link"

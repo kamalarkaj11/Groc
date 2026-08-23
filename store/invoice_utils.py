@@ -347,7 +347,8 @@ def _build_pdf(ctx):
     
     item_rows = [item_header]
     for i, item in enumerate(ctx['items'], 1):
-        product_name = item.product.title if item.product else 'Product'
+        # Prefer the immutable snapshot name; fall back to the live product.
+        product_name = item.product_name or (item.product.title if item.product else 'Product')
         weight = item.product.weight if item.product and item.product.weight else ''
         meta_parts = []
         if weight:

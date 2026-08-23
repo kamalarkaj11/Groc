@@ -37,6 +37,24 @@
         padding: 0;
       }
 
+      /* ── Horizontal Overflow Guard ──
+         Decoratives in the sticky header (the glowing aurora ::before with
+         `inset: -40px` and the infinite shimmer sweep ::after that travels
+         left/right past the header box) deliberately bleed a few pixels past
+         the viewport on smaller screens, which produces an unwanted bottom
+         horizontal scrollbar. Clipping horizontal overflow at the root keeps
+         the page within the viewport width while preserving vertical
+         scrolling. This is applied to <html> (not just <body>) so it does
+         NOT create a nested scroll container that could break the sticky
+         header, dropdowns, or modals. */
+      html {
+        overflow-x: hidden;
+      }
+      body {
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
       body {
         display: flex;
         flex-direction: column;

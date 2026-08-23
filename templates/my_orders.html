@@ -113,8 +113,17 @@
 
     .mo-status-pill.pending { background: #fef3c7; color: #92400e; }
     .mo-status-pill.paid, .mo-status-pill.confirmed { background: #d1fae5; color: #065f46; }
-    .mo-status-pill.failed { background: #fee2e2; color: #991b1b; }
+    .mo-status-pill.failed, .mo-status-pill.payment_failed { background: #fee2e2; color: #991b1b; }
     .mo-status-pill.delivered { background: #dbeafe; color: #1e40af; }
+    .mo-status-pill.processing { background: #e0e7ff; color: #3730a3; }
+    .mo-status-pill.packed { background: #ede9fe; color: #5b21b6; }
+    .mo-status-pill.shipped { background: #e0f2fe; color: #075985; }
+    .mo-status-pill.out_for_delivery { background: #cffafe; color: #155e75; }
+    .mo-status-pill.cancelled { background: #fee2e2; color: #991b1b; }
+    .mo-status-pill.delivery_failed { background: #ffedd5; color: #9a3412; }
+    .mo-status-pill.returned { background: #fce7f3; color: #9d174d; }
+    .mo-status-pill.refund_initiated { background: #fef3c7; color: #92400e; }
+    .mo-status-pill.refunded { background: #e0e7ff; color: #3730a3; }
 
     .mo-tracking-badge {
         display: inline-flex;
@@ -443,7 +452,7 @@
                 <div class="mo-card-body">
                     <div class="mo-order-top">
                         <div>
-                            <div class="mo-order-id">Order #{{ order.id }}</div>
+                            <div class="mo-order-id">Order #{{ order.order_id|default:order.id }}</div>
                             <div class="mo-order-date">
                                 <i class="bi bi-calendar3 me-1"></i>{{ order.created_at|date:"d M Y, h:i A" }}
                             </div>
@@ -496,13 +505,15 @@
                     <div class="mo-items-row">
                         {% for item in order.items.all %}
                         <div class="mo-item-chip">
-                            {% if item.product.image %}
-                            <img src="{{ item.product.image.url }}" alt="{{ item.product.title }}">
+                            {% if item.product_image %}
+                            <img src="{{ item.product_image }}" alt="{{ item.display_name }}">
+                            {% elif item.product.image %}
+                            <img src="{{ item.product.image.url }}" alt="{{ item.display_name }}">
                             {% elif item.product.external_image_url %}
-                            <img src="{{ item.product.external_image_url }}" alt="{{ item.product.title }}">
+                            <img src="{{ item.product.external_image_url }}" alt="{{ item.display_name }}">
                             {% endif %}
                             <div>
-                                <div class="item-name">{{ item.product.title }}</div>
+                                <div class="item-name">{{ item.display_name }}</div>
                                 <div class="item-qty">x{{ item.quantity }}</div>
                             </div>
                         </div>
@@ -515,6 +526,9 @@
                             <small>&middot; {{ order.items.count }} item{{ order.items.count|pluralize }}</small>
                         </div>
                         <div class="mo-actions">
+                            <a href="{% url 'store:order_detail' order.id %}" class="mo-btn mo-btn-track" style="background:#fff;color:var(--mo-green);border:1.5px solid var(--mo-line);">
+                                <i class="bi bi-eye"></i> View
+                            </a>
                             <a href="{% url 'store:track_order' order.id %}" class="mo-btn mo-btn-track">
                                 <i class="bi bi-geo-alt"></i> Track Order
                             </a>
