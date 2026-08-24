@@ -674,10 +674,6 @@ class OrderStatusHistoryAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
 # ---------- NotificationLog Admin ----------
 
 @admin.register(NotificationLog)
@@ -1043,10 +1039,6 @@ class OrderTrackingHistoryAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
 
 # ---------- Notification Admin ----------
 
