@@ -1,6 +1,0 @@
-[2026-08-23 20:25:05,006] WARNING store.auth_emails LOGIN NOTIFICATION SKIPPED: No email address for user 52
-[2026-08-23 20:25:05,123] INFO store.auth_emails Sending login notification SMS to +917560073621 (user 52)
-[2026-08-23 20:25:07,742] INFO store.auth_emails LOGIN SMS SENT SUCCESSFULLY | User 52 | To: +917560073621 | SID: SMbc78b56495929520ea5686367b4f6995
-[2026-08-24 19:56:54,288] WARNING store.auth_emails LOGIN NOTIFICATION SKIPPED: No email address for user 52
-[2026-08-24 19:56:54,460] INFO store.auth_emails Sending login notification SMS to +917560073621 (user 52)
-[2026-08-24 19:56:56,854] INFO store.auth_emails LOGIN SMS SENT SUCCESSFULLY | User 52 | To: +917560073621 | SID: SM60357949d25f1cb4794bb54c110b657f
