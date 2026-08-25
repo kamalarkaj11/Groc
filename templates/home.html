@@ -1016,71 +1016,6 @@
     transform: translateY(0);
   }
 
-  /* ── Newsletter Section ── */
-  .deal-band {
-    color: #fff;
-    background:
-      linear-gradient(90deg, rgba(17, 79, 50, 0.94), rgba(21, 142, 93, 0.88)),
-      url("https://images.unsplash.com/photo-1573246123716-6b1782bfc499?auto=format&fit=crop&w=1600&q=85") center/cover;
-  }
-
-  .deal-band .section-title {
-    text-shadow: 0 2px 12px rgba(0,0,0,0.15);
-  }
-
-  .deal-grid {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 26px;
-    align-items: center;
-  }
-
-  .deal-band .section-copy {
-    color: rgba(255, 255, 255, 0.88);
-  }
-
-  .newsletter-form {
-    display: flex;
-    gap: 12px;
-    max-width: 560px;
-    margin-top: 24px;
-  }
-
-  .newsletter-form input {
-    min-width: 0;
-    flex: 1;
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    border-radius: 999px;
-    padding: 13px 18px;
-    background: rgba(255, 255, 255, 0.95);
-  }
-
-  .nav-dots {
-    display: grid;
-    gap: 12px;
-    z-index: 1050;
-  }
-
-  .nav-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: rgba(25, 135, 84, 0.28);
-    border: 2px solid #fff;
-    box-shadow: 0 4px 12px rgba(24, 37, 31, 0.16);
-  }
-
-  .nav-dot.active {
-    background: var(--gh-green);
-    transform: scale(1.25);
-  }
-
-  .newsletter-eyebrow {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.28);
-  }
-
   /* ── Animations ── */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(28px); }
@@ -1105,8 +1040,7 @@
 
   /* ── Responsive ── */
   @media (max-width: 991px) {
-    .hero-grid,
-    .deal-grid {
+    .hero-grid {
       grid-template-columns: 1fr;
     }
 
@@ -1148,13 +1082,11 @@
       grid-template-columns: 1fr;
     }
 
-    .hero-actions,
-    .newsletter-form {
+    .hero-actions {
       flex-direction: column;
     }
 
-    .gh-btn,
-    .newsletter-form button {
+    .gh-btn {
       width: 100%;
     }
 
@@ -1249,14 +1181,6 @@
       </aside>
     </div>
   </section>
-
-  <nav class="nav-dots position-fixed end-0 top-50 translate-middle-y me-4 d-none d-lg-grid" aria-label="Home sections">
-    <a href="#hero" class="nav-dot active" data-section="hero" aria-label="Hero"></a>
-    <a href="#why-us" class="nav-dot" data-section="why-us" aria-label="Why choose us"></a>
-    <a href="#featured" class="nav-dot" data-section="featured" aria-label="Featured products"></a>
-    <a href="#categories" class="nav-dot" data-section="categories" aria-label="Categories"></a>
-    <a href="#newsletter" class="nav-dot" data-section="newsletter" aria-label="Newsletter"></a>
-  </nav>
 
   <section class="stat-strip fade-up">
     <div class="gh-container">
@@ -1469,50 +1393,9 @@
     </div>
   </section>
 
-  <section id="newsletter" class="section-pad deal-band fade-up fade-up-d4">
-    <div class="gh-container deal-grid">
-      <div>
-        <span class="eyebrow newsletter-eyebrow">
-          <i class="bi bi-envelope-heart"></i> Fresh Updates
-        </span>
-        <h2 class="section-title">Weekly deals, new arrivals, and fresh reminders.</h2>
-        <p class="section-copy">Subscribe to hear about the best seasonal produce and quick offers before your next grocery run.</p>
-        <form class="newsletter-form">
-          <input type="email" placeholder="Enter your email" aria-label="Email address">
-          <button type="submit" class="gh-btn gh-btn-primary">Subscribe <i class="bi bi-send"></i></button>
-        </form>
-      </div>
-      <a href="{% url 'store:product_list' %}" class="gh-btn gh-btn-light">Start Shopping <i class="bi bi-arrow-right"></i></a>
-    </div>
-  </section>
-</div>
+  </div>
 
 <script>
-  document.querySelectorAll('.nav-dot').forEach(dot => {
-    dot.addEventListener('click', event => {
-      event.preventDefault();
-      const target = document.querySelector(dot.getAttribute('href'));
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    });
-  });
-
-  window.addEventListener('scroll', () => {
-    const sections = ['hero', 'why-us', 'featured', 'categories', 'newsletter'];
-    const scrollPosition = window.scrollY + 140;
-
-    sections.forEach(section => {
-      const element = document.getElementById(section);
-      if (!element) return;
-
-      if (element.offsetTop <= scrollPosition && scrollPosition < element.offsetTop + element.offsetHeight) {
-        document.querySelectorAll('.nav-dot').forEach(dot => dot.classList.remove('active'));
-        document.querySelector(`[data-section="${section}"]`)?.classList.add('active');
-      }
-    });
-  });
-
   // Intersection Observer for fade-up animations
   const fadeObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {

@@ -1615,6 +1615,11 @@
 
   if (form) {
     form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Prevent duplicate submissions while a request is already in flight.
+      if (submitBtn.dataset.submitting === 'true') return;
+
       const requiredFields = form.querySelectorAll('[required]');
       let isValid = true;
       requiredFields.forEach(field => {
@@ -1625,14 +1630,53 @@
           field.classList.remove('is-invalid');
         }
       });
+
+      // Additional email format check on submit.
+      const emailField = form.querySelector('#email');
+      if (isValid && emailField && emailField.value.trim() &&
+          !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailField.value.trim())) {
+        emailField.classList.add('is-invalid');
+        isValid = false;
+      }
+
       if (!isValid) {
-        e.preventDefault();
         const firstInvalid = form.querySelector('.is-invalid');
         if (firstInvalid) firstInvalid.focus();
+        showContactToast('Please fill in all required fields correctly.', 'error');
         return;
       }
+
+      submitBtn.dataset.submitting = 'true';
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Sending...';
+
+      const formData = new FormData(form);
+
+      fetch(form.getAttribute('action') || window.location.href, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData
+      })
+        .then(res => res.json().catch(() => ({ success: false, message: 'Something went wrong. Please try again.' })))
+        .then(data => {
+          if (data && data.success) {
+            form.reset();
+            showContactToast(data.message || 'Message Sent Successfully!', 'success');
+          } else {
+            showContactToast((data && data.message) || 'Something went wrong. Please try again.', 'error');
+          }
+        })
+        .catch(() => {
+          showContactToast('Something went wrong. Please try again.', 'error');
+        })
+        .finally(() => {
+          submitBtn.dataset.submitting = 'false';
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<i class="bi bi-send-fill"></i> <span>Send Message</span>';
+        });
     });
 
     form.querySelectorAll('input, textarea').forEach(field => {
@@ -1662,18 +1706,41 @@
     }
   }
 
-  // ==================== Show Toast on Success Message ====================
-  {% if messages %}
-  (function() {
+  // ==================== Event-Driven Toast ====================
+  // The popup is shown ONLY from the submit event handler above (or other
+  // explicit events). It is never triggered on page load, so simply opening the
+  // Contact page (or clicking the navbar link) does not display any popup.
+  function showContactToast(message, type) {
     const toast = document.getElementById('successToast');
     const msgEl = document.getElementById('toastMessage');
-    {% for message in messages %}
-    msgEl.textContent = '{{ message|escapejs }}';
-    {% endfor %}
+    if (!toast || !msgEl) return;
+    const isError = (type === 'error' || type === 'danger');
+    toast.classList.remove('show', 'success', 'error');
+    // Force a reflow so a repeated toast restarts its entry animation.
+    void toast.offsetWidth;
+    toast.classList.add(isError ? 'error' : 'success');
+    msgEl.textContent = message || '';
+    const icon = toast.querySelector('.gh-toast-icon i');
+    if (icon) {
+      icon.className = 'bi ' + (isError ? 'bi-exclamation-circle-fill' : 'bi-check-circle-fill');
+    }
     toast.classList.add('show');
-    setTimeout(() => { toast.classList.remove('show'); }, 5000);
+    // Clear any previous auto-hide timer so only one pending timeout remains.
+    clearTimeout(showContactToast._timer);
+    showContactToast._timer = setTimeout(function () {
+      toast.classList.remove('show');
+    }, 5000);
+  }
+
+  // Allow the user to manually dismiss the popup.
+  (function () {
+    const toast = document.getElementById('successToast');
+    if (!toast) return;
+    toast.addEventListener('click', function () {
+      clearTimeout(showContactToast._timer);
+      toast.classList.remove('show');
+    });
   })();
-  {% endif %}
 
   // ==================== Scroll Animations (Intersection Observer) ====================
   const animElements = document.querySelectorAll('.animate-on-scroll');

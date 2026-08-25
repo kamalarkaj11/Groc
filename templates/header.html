@@ -274,12 +274,16 @@
   .nav-wrap {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 18px;
     flex: 1 1 auto;
     min-width: 0;
   }
 
+  /* Primary navigation links. These collapse (max-width → 0) as the search
+     expands. We animate max-width (px) rather than width:auto so the browser
+     can interpolate every intermediate frame → a truly smooth, continuous
+     shrink that is synchronized with the search growth below. */
   .primary-nav {
     display: flex;
     align-items: center;
@@ -287,6 +291,19 @@
     margin: 0;
     padding: 0;
     list-style: none;
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: none;
+    overflow: hidden;
+    white-space: nowrap;
+    will-change: max-width, opacity, transform;
+    /* opacity/transform fade quickly; max-width/margin match the search timing */
+    transition:
+      opacity 0.35s var(--transition-smooth),
+      transform 0.35s var(--transition-smooth),
+      max-width 0.5s var(--transition-smooth),
+      margin 0.5s var(--transition-smooth),
+      visibility 0.5s ease;
   }
 
   .nav-link-custom,
@@ -422,11 +439,55 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    flex: 0 1 auto;
+    flex: 0 0 auto;
     min-width: 0;
+    margin-left: auto;
   }
 
-  .header-search { position: relative; width: clamp(205px, 23vw, 310px); }
+  /* ═══ EXPANDABLE SEARCH ═══
+     A single state class `.search-expanded` on .site-header toggles the
+     center dynamic zone between the navigation menu and the full-width
+     search field. The nav links fade/slide/collapse out (max-width → 0)
+     while the search bar grows to all available width (set as a px by JS).
+     Logo and the right-side controls (cart/notification/account) stay
+     pinned because the nav's margin-right:auto was replaced by a fixed gap
+     and .header-actions uses margin-left:auto. */
+  .site-header.search-expanded .nav-wrap { gap: 0; }
+
+  .site-header.search-expanded .primary-nav {
+    opacity: 0;
+    visibility: hidden;
+    max-width: 0;
+    margin-right: 18px;
+    overflow: hidden;
+    transform: translateX(-14px);
+    pointer-events: none;
+  }
+
+  .site-header.search-expanded .header-search {
+    flex: 0 1 auto;
+    min-width: 0;
+    margin-right: 18px;
+  }
+
+  .site-header.search-expanded .header-actions { flex: 0 0 auto; }
+
+  /* Prominent active search field */
+  .site-header.search-expanded .header-search input {
+    border-color: rgba(25, 135, 84, 0.55);
+    background: #fff;
+    box-shadow:
+      0 0 0 4px rgba(25, 135, 84, 0.1),
+      0 6px 20px rgba(22, 131, 76, 0.12);
+  }
+
+  .header-search {
+    position: relative;
+    width: clamp(205px, 23vw, 310px);
+    flex: 0 1 auto;
+    min-width: 0;
+    transition: width 0.5s var(--transition-smooth), margin-right 0.5s var(--transition-smooth), flex 0.5s var(--transition-smooth);
+  }
   .header-search input {
     width: 100%;
     min-height: 44px;
@@ -479,7 +540,8 @@
     50% { opacity: 0.45; }
   }
 
-  .search-icon { position: absolute; left: 16px; top: 50%; color: var(--header-muted); transform: translateY(-50%); }
+  .search-icon { position: absolute; left: 16px; top: 50%; color: var(--header-muted); transform: translateY(-50%); transition: opacity 0.3s var(--transition-smooth), transform 0.3s var(--transition-smooth), color 0.3s ease; }
+  .site-header.search-expanded .search-icon { opacity: 1; transform: translateY(-50%) scale(1); color: var(--header-green); }
   .search-submit {
     position: absolute;
     right: 5px;
@@ -2292,16 +2354,16 @@
         <li><a href="{% url 'store:contact' %}" class="nav-link-custom"><i class="bi bi-chat-dots"></i> Contact</a></li>
       </ul>
 
-      <div class="header-actions">
-        <form action="{% url 'store:product_list' %}" method="get" class="header-search">
-          <i class="bi bi-search search-icon"></i>
-          <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products" autocomplete="off" id="globalProductSearch">
-          <button type="submit" class="search-submit" aria-label="Search">
-            <i class="bi bi-arrow-right-short"></i>
-          </button>
-          <div class="search-suggestions" id="globalSearchSuggestions" role="listbox" aria-label="Search suggestions"></div>
-        </form>
+      <form action="{% url 'store:product_list' %}" method="get" class="header-search">
+        <i class="bi bi-search search-icon"></i>
+        <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products" autocomplete="off" id="globalProductSearch">
+        <button type="submit" class="search-submit" aria-label="Search">
+          <i class="bi bi-arrow-right-short"></i>
+        </button>
+        <div class="search-suggestions" id="globalSearchSuggestions" role="listbox" aria-label="Search suggestions"></div>
+      </form>
 
+      <div class="header-actions">
         <a href="{% url 'store:cart' %}" class="cart-action desktop-cart" aria-label="Cart">
           <i class="bi bi-cart3"></i>
           <span class="cart-count" id="cart-count-desktop">{{ cart_item_count|default:0 }}</span>
@@ -2488,6 +2550,68 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => renderSearchSuggestions(data.results || []))
         .catch(closeSearchSuggestions);
     }, 280);
+  });
+
+  // ── Expandable search (desktop) ────────────────────────────────
+  // A single state class .search-expanded + a dynamically measured width
+  // lets the search field take over the whole center zone, while the logo
+  // and the right-side controls (cart/notification/account) stay fixed.
+  const searchForm = document.querySelector('.header-search');
+  const headerActions = document.querySelector('.header-actions');
+  const primaryNav = document.querySelector('.primary-nav');
+  const EXPAND_GAP = 18; // right margin between the search and the controls
+  const isSearchExpanded = () => siteHeader?.classList.contains('search-expanded');
+  let navNaturalWidth = 1200; // measured on first open; collapsed state
+
+  // The nav links are collapsed via a px max-width and the search grows via
+  // a px width, so BOTH values are animated by CSS transitions → the two
+  // movements stay visually synchronized and never "jump". We only lock the
+  // current px as the transition start point, flip the state class, then set
+  // the final px targets. The browser interpolates every intermediate frame.
+  function openSearch() {
+    if (isMobile() || !searchForm || !primaryNav) return;
+    if (isSearchExpanded()) return;             // keep expanded until a close
+    // 1) Freeze current sizes into explicit px so auto → px is not instant.
+    navNaturalWidth = primaryNav.offsetWidth || navNaturalWidth;
+    primaryNav.style.maxWidth = navNaturalWidth + 'px';
+    searchForm.style.width = searchForm.offsetWidth + 'px';
+    // 2) Adopt the locked start values, then switch state (batch both).
+    void navWrap.offsetWidth;                    // force reflow on start values
+    siteHeader.classList.add('search-expanded');
+    // 3) Target px = center width − right controls − gap; grow to fill.
+    const available = navWrap.clientWidth - headerActions.offsetWidth - EXPAND_GAP;
+    searchForm.style.width = Math.max(180, available) + 'px';
+    primaryNav.style.maxWidth = '0px';
+  }
+
+  function closeSearch() {
+    if (!isSearchExpanded() || !searchForm || !primaryNav) return;
+    // Reverse: grow nav back to its natural px and let the search shrink to
+    // its CSS clamp() base. Both animate together on the way out too.
+    primaryNav.style.maxWidth = navNaturalWidth + 'px';
+    searchForm.style.width = '';
+    siteHeader.classList.remove('search-expanded');
+    if (globalProductSearch) globalProductSearch.blur();
+  }
+
+  // Re-fit an already-expanded search to the current window width (resize).
+  function refitExpandedWidth() {
+    if (!isSearchExpanded() || !searchForm || !headerActions || !navWrap) return;
+    const available = navWrap.clientWidth - headerActions.offsetWidth - EXPAND_GAP;
+    searchForm.style.width = Math.max(180, available) + 'px';
+  }
+
+  globalProductSearch?.addEventListener('focus', openSearch);
+  searchForm?.addEventListener('click', function (event) {
+    if (event.target.closest('.search-submit')) return; // let the form submit
+    if (!isSearchExpanded()) {
+      openSearch();
+      globalProductSearch?.focus();
+    }
+  });
+  searchForm?.addEventListener('submit', function () {
+    // Execute the existing search; restore the navbar as it navigates.
+    closeSearch();
   });
 
   // ── Header scroll ──
@@ -2720,6 +2844,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── Global clicks ──
   document.addEventListener('click', function (event) {
+    if (isSearchExpanded() && event.target.closest && !event.target.closest('.header-search')) {
+      closeSearch();
+    }
     if (globalSearchSuggestions && !event.target.closest('.header-search')) {
       closeSearchSuggestions();
     }
@@ -2738,6 +2865,7 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') {
       closeMenu();
+      closeSearch();
       accountMenu?.classList.remove('open');
       accountTrigger?.setAttribute('aria-expanded', 'false');
       if (!isMobile() && catDropdown) {
@@ -2768,6 +2896,9 @@ document.addEventListener('DOMContentLoaded', function () {
         menuToggle.innerHTML = '<i class="bi bi-list"></i>';
         menuToggle.setAttribute('aria-expanded', 'false');
       }
+    }
+    if (isSearchExpanded()) {
+      if (isMobile()) closeSearch(); else refitExpandedWidth();
     }
     updateDropdownArrow();
   });

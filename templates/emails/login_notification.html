@@ -78,6 +78,20 @@
         .login-details-card .row .label { color: #555; font-weight: 600; }
         .login-details-card .row .value { color: #222; font-weight: 500; }
 
+        /* Login details table layout (table-based for reliable email-client rendering) */
+        .login-details-card table.details-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .login-details-card table.details-table td {
+            border-bottom: 1px solid #e8f5e9;
+        }
+        .login-details-card table.details-table tr:last-child td {
+            border-bottom: none;
+        }
+
         .alert-card {
             background: #fff8e1;
             border: 1px solid #ffe082;
@@ -211,42 +225,46 @@
             </p>
 
             <div class="login-details-card">
-                <div class="row">
-                    <span class="label">Date</span>
-                    <span class="value">{{ login_date }}</span>
-                </div>
-                <div class="row">
-                    <span class="label">Time</span>
-                    <span class="value">{{ login_time }}</span>
-                </div>
-                <div class="row">
-                    <span class="label">Email Address</span>
-                    <span class="value">{{ email }}</span>
-                </div>
-                {% if browser %}
-                <div class="row">
-                    <span class="label">Browser</span>
-                    <span class="value">{{ browser }}</span>
-                </div>
-                {% endif %}
-                {% if device %}
-                <div class="row">
-                    <span class="label">Device</span>
-                    <span class="value">{{ device }}</span>
-                </div>
-                {% endif %}
-                {% if os %}
-                <div class="row">
-                    <span class="label">Operating System</span>
-                    <span class="value">{{ os }}</span>
-                </div>
-                {% endif %}
-                {% if ip_address %}
-                <div class="row">
-                    <span class="label">IP Address</span>
-                    <span class="value">{{ ip_address }}</span>
-                </div>
-                {% endif %}
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="details-table" style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td width="150" style="width: 150px; padding: 12px 20px 12px 0; font-weight: bold; color: #555; vertical-align: top;">Date</td>
+                        <td style="padding: 12px 0; font-weight: normal; color: #222; vertical-align: top; word-break: break-word; overflow-wrap: break-word;">{{ login_date }}</td>
+                    </tr>
+                    <tr>
+                        <td width="150" style="width: 150px; padding: 12px 20px 12px 0; font-weight: bold; color: #555; vertical-align: top;">Time</td>
+                        <td style="padding: 12px 0; font-weight: normal; color: #222; vertical-align: top; word-break: break-word; overflow-wrap: break-word;">{{ login_time }}</td>
+                    </tr>
+                    <tr>
+                        <td width="150" style="width: 150px; padding: 12px 20px 12px 0; font-weight: bold; color: #555; vertical-align: top;">Email Address</td>
+                        <td style="padding: 12px 0; font-weight: normal; color: #222; vertical-align: top; word-break: break-word; overflow-wrap: break-word;">
+                            <a href="mailto:{{ email }}" style="color: #198754; text-decoration: none; word-break: break-word; overflow-wrap: break-word;">{{ email }}</a>
+                        </td>
+                    </tr>
+                    {% if browser %}
+                    <tr>
+                        <td width="150" style="width: 150px; padding: 12px 20px 12px 0; font-weight: bold; color: #555; vertical-align: top;">Browser</td>
+                        <td style="padding: 12px 0; font-weight: normal; color: #222; vertical-align: top; word-break: break-word; overflow-wrap: break-word;">{{ browser }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if device %}
+                    <tr>
+                        <td width="150" style="width: 150px; padding: 12px 20px 12px 0; font-weight: bold; color: #555; vertical-align: top;">Device</td>
+                        <td style="padding: 12px 0; font-weight: normal; color: #222; vertical-align: top; word-break: break-word; overflow-wrap: break-word;">{{ device }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if os %}
+                    <tr>
+                        <td width="150" style="width: 150px; padding: 12px 20px 12px 0; font-weight: bold; color: #555; vertical-align: top;">Operating System</td>
+                        <td style="padding: 12px 0; font-weight: normal; color: #222; vertical-align: top; word-break: break-word; overflow-wrap: break-word;">{{ os }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if ip_address %}
+                    <tr>
+                        <td width="150" style="width: 150px; padding: 12px 20px 12px 0; font-weight: bold; color: #555; vertical-align: top;">IP Address</td>
+                        <td style="padding: 12px 0; font-weight: normal; color: #222; vertical-align: top; word-break: break-word; overflow-wrap: break-word;">{{ ip_address }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
             </div>
 
             {% if security_warning %}

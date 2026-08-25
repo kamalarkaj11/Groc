@@ -64,19 +64,33 @@
             background: #f0fdf4;
             border: 1px solid #bbf7d0;
             border-radius: 10px;
-            padding: 20px;
+            padding: 10px 16px;
             margin-bottom: 24px;
         }
-        .account-card .row {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            font-size: 14px;
-            border-bottom: 1px solid #e8f5e9;
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        .account-card .row:last-child { border-bottom: none; }
-        .account-card .row .label { color: #555; font-weight: 600; }
-        .account-card .row .value { color: #222; font-weight: 500; }
+        .details-table .detail-label,
+        .details-table .detail-value {
+            padding: 12px 6px;
+            font-size: 14px;
+            line-height: 1.6;
+            vertical-align: top;
+        }
+        .details-table .detail-label {
+            width: 150px;
+            max-width: 150px;
+            color: #555;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .details-table .detail-value {
+            color: #222;
+            font-weight: 500;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
 
         .section-title {
             font-size: 16px;
@@ -201,20 +215,22 @@
 
             <div class="section-title">Account Details</div>
             <div class="account-card">
-                <div class="row">
-                    <span class="label">Registered Email</span>
-                    <span class="value">{{ email }}</span>
-                </div>
-                <div class="row">
-                    <span class="label">Account Created</span>
-                    <span class="value">{{ created_at }}</span>
-                </div>
-                {% if user_name %}
-                <div class="row">
-                    <span class="label">Name</span>
-                    <span class="value">{{ user_name }}</span>
-                </div>
-                {% endif %}
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%; border-collapse:collapse;">
+                    <tr>
+                        <td class="detail-label" style="width:150px; max-width:150px; padding:12px 6px; font-size:14px; font-weight:700; color:#555; vertical-align:top; text-align:left; border-bottom:1px solid #e8f5e9;">Registered Email</td>
+                        <td class="detail-value" style="padding:12px 6px; font-size:14px; font-weight:500; color:#222; vertical-align:top; text-align:left; border-bottom:1px solid #e8f5e9; overflow-wrap:break-word; word-break:break-word;">{{ email }}</td>
+                    </tr>
+                    <tr>
+                        <td class="detail-label" style="width:150px; max-width:150px; padding:12px 6px; font-size:14px; font-weight:700; color:#555; vertical-align:top; text-align:left; border-bottom:1px solid #e8f5e9;">Account Created</td>
+                        <td class="detail-value" style="padding:12px 6px; font-size:14px; font-weight:500; color:#222; vertical-align:top; text-align:left; border-bottom:1px solid #e8f5e9; overflow-wrap:break-word; word-break:break-word;">{{ created_at }}</td>
+                    </tr>
+                    {% if user_name %}
+                    <tr>
+                        <td class="detail-label" style="width:150px; max-width:150px; padding:12px 6px; font-size:14px; font-weight:700; color:#555; vertical-align:top; text-align:left;">Name</td>
+                        <td class="detail-value" style="padding:12px 6px; font-size:14px; font-weight:500; color:#222; vertical-align:top; text-align:left; overflow-wrap:break-word; word-break:break-word;">{{ user_name }}</td>
+                    </tr>
+                    {% endif %}
+                </table>
             </div>
 
             <div class="section-title">What You Can Do at GrocHub</div>

@@ -2265,7 +2265,12 @@ def about(request):
 
 
 def contact(request):
-    form = ContactForm()
+    """Render the contact page (GET) or process the contact form (POST).
+
+    The Contact page itself never creates a notification or popup. Popups are
+    shown only from the submit event triggered in the template, so opening the
+    page (GET) stays clean regardless of any pending Django messages.
+    """
     if request.method == 'POST':
         form = ContactForm(request.POST)
         if form.is_valid():
@@ -2278,12 +2283,26 @@ def contact(request):
                 send_contact_confirmation(contact_message)
             except Exception as e:
                 logger.error('Contact email notification failed: %s', e)
-            messages.success(
-                request,
+            success_message = (
                 'Message Sent Successfully! Thank you for contacting GrocHub. '
                 'Your message has been received and our team will respond as soon as possible.'
             )
+            # AJAX submission (the form now posts via fetch): return JSON so the
+            # popup is rendered by the submit event handler, no extra messages.
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': success_message})
+            # No-JS fallback: keep a Django message consumed on the next render.
+            messages.success(request, success_message)
             return redirect('store:contact')
+        # Invalid form: return a structured error for AJAX so the submit handler
+        # can show the popup; otherwise fall through to render the form errors.
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'message': 'Please fill in all required fields correctly and try again.',
+            })
+    else:
+        form = ContactForm()
     return render(request, 'contact.html', {'form': form})
 
 
