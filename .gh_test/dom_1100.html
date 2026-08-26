@@ -1,6 +1,8 @@
-{% load static %}
-{% load store_extras %}
-<style>
+﻿<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>body{margin:0;background:#eee;} 
   :root {
     --header-green: #16834c;
     --header-green-deep: #0f5132;
@@ -284,9 +286,9 @@
     min-width: 0;
   }
 
-  /* Primary navigation links. These collapse (max-width → 0) as the search
+  /* Primary navigation links. These collapse (max-width ΓåÆ 0) as the search
      expands. We animate max-width (px) rather than width:auto so the browser
-     can interpolate every intermediate frame → a truly smooth, continuous
+     can interpolate every intermediate frame ΓåÆ a truly smooth, continuous
      shrink that is synchronized with the search growth below. */
   .primary-nav {
     display: flex;
@@ -448,10 +450,10 @@
     margin-left: auto;
   }
 
-  /* ═══ EXPANDABLE SEARCH ═══
+  /* ΓòÉΓòÉΓòÉ EXPANDABLE SEARCH ΓòÉΓòÉΓòÉ
      A single state class `.search-expanded` on .site-header toggles the
      center dynamic zone between the navigation menu and the full-width
-     search field. The nav links fade/slide/collapse out (max-width → 0)
+     search field. The nav links fade/slide/collapse out (max-width ΓåÆ 0)
      while the search bar grows to all available width (set as a px by JS).
      Logo and the right-side controls (cart/notification/account) stay
      pinned because the nav's margin-right:auto was replaced by a fixed gap
@@ -803,32 +805,8 @@
   .menu-toggle:hover { background: rgba(25, 135, 84, 0.1); transform: translateY(-1px); }
   .mobile-cart { display: none; }
 
-  /* Mobile compact-bar controls: search button (hidden on desktop) */
-  .mobile-search-btn {
-    display: none;
-    width: 48px;
-    height: 48px;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    padding: 0;
-    border: 1px solid var(--header-line);
-    border-radius: 8px;
-    color: var(--header-green);
-    background: rgba(248, 252, 250, 0.92);
-    font-size: 1.3rem;
-    transition: transform 0.2s ease, background 0.2s ease;
-  }
-  .mobile-search-btn:hover {
-    background: rgba(25, 135, 84, 0.1);
-    transform: translateY(-1px);
-  }
-  .mobile-search-btn:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22);
-  }
-
-  /* Mobile compact-bar account button (hidden on desktop) */
+  /* Mobile compact-bar controls: search + account buttons (hidden on desktop) */
+  .mobile-search-btn,
   .mobile-account-btn {
     display: none;
     width: 48px;
@@ -844,222 +822,60 @@
     font-size: 1.3rem;
     transition: transform 0.2s ease, background 0.2s ease;
   }
+  .mobile-search-btn:hover,
   .mobile-account-btn:hover {
     background: rgba(25, 135, 84, 0.1);
     transform: translateY(-1px);
   }
+  .mobile-search-btn:focus-visible,
   .mobile-account-btn:focus-visible {
     outline: none;
     box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22);
   }
 
-  /* ============================
-     MOBILE NAV DRAWER — COMPACT
-     Hidden on desktop; activated in the ≤1100px media query. This replaces
-     the old full-width dropdown with a compact drawer under the header.
-     ============================ */
-  .mobile-overlay {
+  /* Mobile full-width search bar (opened below the navbar) */
+  .mobile-search-bar {
     display: none;
     position: fixed;
-    inset: 0;
-    z-index: 1050;
-    background: rgba(15, 40, 28, 0.42);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-  }
-  .mobile-overlay.open { opacity: 1; visibility: visible; }
-
-  .mobile-nav-drawer {
-    display: none;
-    position: fixed;
-    top: 0;   /* set by JS to sit just below the sticky header */
-    right: 0; /* set by JS to align with the header right edge */
-    z-index: 1200;
-    width: min(420px, calc(100vw - 16px));
-    max-width: 100%;
-    box-sizing: border-box;
-    max-height: calc(100vh - 96px);
-    overflow-y: auto;
-    overflow-x: hidden;
-    flex-direction: column;
-    padding: 0;
-    border: 1px solid var(--header-line);
-    border-radius: 18px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(247, 252, 249, 0.98)),
-      radial-gradient(circle at top right, rgba(34, 199, 169, 0.1), transparent 14rem);
-    box-shadow: var(--header-shadow);
-    transform: translateY(-14px);
-    opacity: 0;
-    visibility: hidden;
-    will-change: transform, opacity;
-    transition: transform 0.3s var(--transition-smooth), opacity 0.3s ease, visibility 0.3s ease;
-  }
-  .mobile-nav-drawer.open {
-    transform: translateY(0);
-    opacity: 1;
-    visibility: visible;
-  }
-
-  .mobile-drawer-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-shrink: 0;
-    padding: 12px 12px 12px 16px;
+    left: 0;
+    right: 0;
+    z-index: 1190;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 252, 249, 0.99));
     border-bottom: 1px solid var(--header-line);
+    box-shadow: var(--header-shadow);
   }
-  .mobile-drawer-brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--header-ink);
-    text-decoration: none;
-    padding: 2px 0;
-  }
-  .mobile-drawer-brand .brand-icon { width: 40px; height: 40px; font-size: 1.2rem; }
-  .mobile-drawer-brand .brand-name { font-size: 1.25rem; }
-  .mobile-drawer-brand .brand-tagline { font-size: 0.6rem; }
-  .mobile-drawer-brand .brand-text { display: grid; }
-
-  .mobile-drawer-close {
-    width: 44px;
-    height: 44px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-    border: 1px solid var(--header-line);
-    border-radius: 50%;
-    color: var(--header-green-deep);
-    background: rgba(248, 252, 250, 0.92);
-    font-size: 1.15rem;
-    transition: transform 0.25s ease, background 0.25s ease;
-  }
-  .mobile-drawer-close:hover { background: rgba(25, 135, 84, 0.12); transform: rotate(90deg); }
-  .mobile-drawer-close:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22); }
-
-  .mobile-menu { margin: 0; padding: 8px; }
-  .mobile-menu-list { margin: 0; padding: 0; list-style: none; }
-
-  .mobile-menu-link {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 48px;
-    width: 100%;
-    padding: 8px 14px;
-    border: 0;
-    border-radius: 12px;
-    background: transparent;
-    color: var(--header-ink);
-    font-family: inherit;
-    font-size: 0.95rem;
-    font-weight: 800;
-    text-align: left;
-    text-decoration: none;
-    cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
-  }
-  .mobile-menu-link > i:first-child {
-    width: 34px;
-    height: 34px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 34px;
-    border-radius: 10px;
-    color: var(--header-green-deep);
-    background: rgba(25, 135, 84, 0.1);
-    font-size: 1rem;
-  }
-  .mobile-menu-link:hover { background: var(--mega-hover); color: var(--header-green-deep); transform: translateX(2px); }
-  .mobile-menu-link:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22); }
-
-  .mobile-chevron {
-    margin-left: auto;
-    color: var(--header-muted);
-    font-size: 0.8rem;
-    transition: transform 0.3s var(--transition-smooth);
-  }
-  .mobile-has-submenu.expanded > .mobile-menu-link .mobile-chevron,
-  .mobile-account-section.expanded > .mobile-menu-link .mobile-chevron { transform: rotate(180deg); }
-
-  .mobile-submenu {
-    margin: 0;
-    padding: 0 0 0 12px;
-    list-style: none;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.32s var(--transition-smooth);
-  }
-  .mobile-submenu-item { padding: 2px 8px 2px 6px; }
-  .mobile-submenu-link {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 42px;
-    padding: 7px 12px 7px 14px;
-    border-radius: 10px;
-    border-left: 3px solid transparent;
-    color: #435047;
-    font-size: 0.9rem;
-    font-weight: 700;
-    text-decoration: none;
-    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-  }
-  .mobile-submenu-link > i:first-child {
-    width: 20px;
-    flex: 0 0 20px;
-    color: var(--header-green);
-    font-size: 0.95rem;
-    text-align: center;
-  }
-  .mobile-submenu-link:hover {
-    background: var(--mega-hover);
-    color: var(--header-green-deep);
-    border-left-color: var(--header-green);
-  }
-  .mobile-submenu-empty { display: block; padding: 8px 14px; color: var(--header-muted); font-size: 0.85rem; }
-
-  .mobile-search {
-    position: relative;
-    margin: 4px 12px 14px;
-    padding: 10px;
-    border: 1px solid var(--header-line);
-    border-radius: 14px;
-    background: rgba(248, 252, 250, 0.92);
-    box-sizing: border-box;
-  }
-  .mobile-search > i {
+  .mobile-search-bar.open { display: block; animation: mobileNavIn 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .mobile-search-form { position: relative; width: 100%; max-width: 100%; box-sizing: border-box; }
+  .mobile-search-form > i {
     position: absolute;
-    left: 24px;
+    left: 16px;
     top: 50%;
     transform: translateY(-50%);
     color: var(--header-muted);
     font-size: 1rem;
     pointer-events: none;
   }
-  .mobile-search input {
+  .mobile-search-form input {
     width: 100%;
-    min-height: 44px;
+    min-height: 46px;
     border: 1px solid var(--header-line);
     border-radius: 999px;
-    padding: 9px 52px 9px 40px;
+    padding: 10px 50px 10px 42px;
     color: var(--header-ink);
-    background: #fff;
+    background: rgba(248, 252, 250, 0.92);
     outline: none;
-    font-size: 0.92rem;
+    font-size: 0.95rem;
     box-sizing: border-box;
   }
-  .mobile-search input:focus {
-    border-color: rgba(25, 135, 84, 0.55);
-    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.12);
+  .mobile-search-form input:focus {
+    border-color: rgba(25, 135, 84, 0.5);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.1);
   }
-  .mobile-search button {
+  .mobile-search-form button {
     position: absolute;
-    right: 16px;
+    right: 6px;
     top: 50%;
     transform: translateY(-50%);
     width: 36px;
@@ -1073,14 +889,8 @@
     background: linear-gradient(135deg, var(--header-green), var(--header-mint));
   }
 
-  .mobile-account-section {
-    margin: 0 12px 14px;
-    padding-top: 8px;
-    border-top: 1px solid var(--header-line);
-  }
-
   /* ============================
-     MEGA DROPDOWN — PREMIUM
+     MEGA DROPDOWN ΓÇö PREMIUM
      ============================ */
 
   .cat-dropdown { position: static; }
@@ -1110,7 +920,7 @@
     overflow: hidden;
   }
 
-  /* Firefox — no scrollbar on outer dropdown */
+  /* Firefox ΓÇö no scrollbar on outer dropdown */
   .cat-dropdown-menu {
     scrollbar-width: none;
   }
@@ -1192,7 +1002,7 @@
     max-height: 560px;
   }
 
-  /* ---- Sidebar — Category List — Premium ---- */
+  /* ---- Sidebar ΓÇö Category List ΓÇö Premium ---- */
   .mega-sidebar {
     width: 290px;
     flex-shrink: 0;
@@ -1209,7 +1019,7 @@
     scroll-behavior: smooth;
   }
 
-  /* Chrome, Edge, Safari — Sidebar scrollbar */
+  /* Chrome, Edge, Safari ΓÇö Sidebar scrollbar */
   .mega-sidebar::-webkit-scrollbar { width: 5px; }
   .mega-sidebar::-webkit-scrollbar-track {
     background: rgba(22, 131, 76, 0.04);
@@ -1227,7 +1037,7 @@
     box-shadow: 0 3px 10px rgba(22, 131, 76, 0.45);
   }
 
-  /* Firefox — Sidebar scrollbar */
+  /* Firefox ΓÇö Sidebar scrollbar */
   .mega-sidebar {
     scrollbar-width: thin;
     scrollbar-color: var(--header-green) rgba(22, 131, 76, 0.04);
@@ -1422,7 +1232,7 @@
     transform: translateX(4px) scale(1.15);
   }
 
-  /* ---- Content Area — Premium ---- */
+  /* ---- Content Area ΓÇö Premium ---- */
   .mega-content {
     flex: 1;
     padding: 22px 26px;
@@ -1435,7 +1245,7 @@
     flex-direction: column;
   }
 
-  /* ---- Search inside mega — Premium ---- */
+  /* ---- Search inside mega ΓÇö Premium ---- */
   .mega-search {
     position: relative;
     margin-bottom: 20px;
@@ -1587,7 +1397,7 @@
     transform: translateX(3px);
   }
 
-  /* ---- Subcategory Scroll Container — ONLY scrollable area ---- */
+  /* ---- Subcategory Scroll Container ΓÇö ONLY scrollable area ---- */
   .mega-sub-scroll {
     max-height: 480px;
     overflow-y: auto;
@@ -1596,7 +1406,7 @@
     scroll-behavior: smooth;
   }
 
-  /* Chrome, Edge, Safari — Subcategory scrollbar */
+  /* Chrome, Edge, Safari ΓÇö Subcategory scrollbar */
   .mega-sub-scroll::-webkit-scrollbar { width: 6px; }
   .mega-sub-scroll::-webkit-scrollbar-track {
     background: rgba(22, 131, 76, 0.04);
@@ -1614,7 +1424,7 @@
     box-shadow: 0 3px 10px rgba(22, 131, 76, 0.45);
   }
 
-  /* Firefox — Subcategory scrollbar */
+  /* Firefox ΓÇö Subcategory scrollbar */
   .mega-sub-scroll {
     scrollbar-width: thin;
     scrollbar-color: var(--header-green) rgba(22, 131, 76, 0.04);
@@ -1944,42 +1754,117 @@
     .header-shell { min-height: 68px; }
     .menu-toggle { display: inline-flex; }
     .mobile-search-btn { display: inline-flex; margin-left: auto; }
-    .mobile-cart { display: inline-flex; }
-    .mobile-account-btn { display: inline-flex; }
+    .mobile-cart, .mobile-account-btn { display: inline-flex; }
     .desktop-cart { display: none; }
 
-    /* The desktop nav is hidden on mobile — the compact drawer replaces it. */
-    .nav-wrap { display: none; }
-
-    /* Compact mobile navigation drawer */
-    .mobile-overlay { display: block; }
-    .mobile-nav-drawer { display: flex; }
-
-    /* Subtle staggered entrance for drawer content */
-    .mobile-nav-drawer.open .mobile-menu-list > li,
-    .mobile-nav-drawer.open .mobile-search,
-    .mobile-nav-drawer.open .mobile-account-section {
-      animation: mobileMenuItemIn 0.3s ease both;
+    .nav-wrap {
+      position: fixed;
+      inset: 88px 8px auto 8px;
+      z-index: 1200;
+      display: none;
+      max-height: calc(100vh - 104px);
+      overflow-y: auto;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+      padding: 16px;
+      border: 1px solid var(--header-line);
+      border-radius: 8px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 252, 249, 0.99)),
+        radial-gradient(circle at top left, rgba(247, 201, 72, 0.12), transparent 16rem);
+      box-shadow: var(--header-shadow);
+      transform-origin: top center;
     }
-    .mobile-nav-drawer.open .mobile-menu-list > li:nth-child(2) { animation-delay: 0.04s; }
-    .mobile-nav-drawer.open .mobile-menu-list > li:nth-child(3) { animation-delay: 0.08s; }
-    .mobile-nav-drawer.open .mobile-menu-list > li:nth-child(4) { animation-delay: 0.12s; }
-    .mobile-nav-drawer.open .mobile-menu-list > li:nth-child(5) { animation-delay: 0.16s; }
-    .mobile-nav-drawer.open .mobile-search { animation-delay: 0.2s; }
-    .mobile-nav-drawer.open .mobile-account-section { animation-delay: 0.24s; }
+
+    .site-header.menu-open .nav-wrap,
+    .nav-wrap.open {
+      display: flex;
+      animation: mobileNavIn 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+
+    .primary-nav, .header-actions { width: 100%; flex-direction: column; align-items: stretch; }
+    .nav-link-custom, .account-trigger {
+      width: 100%;
+      justify-content: flex-start;
+      border-radius: 8px;
+      background: rgba(248, 252, 250, 0.94);
+      border: 1px solid var(--header-line);
+      box-shadow: 0 8px 18px rgba(15, 81, 50, 0.05);
+    }
+
+    .header-search { width: 100%; }
+
+    /* Mobile mega dropdown */
+    .cat-dropdown-menu {
+      position: static;
+      width: auto;
+      max-width: none;
+      transform: none;
+      opacity: 1;
+      visibility: visible;
+      box-shadow: none;
+      padding: 0;
+      display: none;
+      overflow: visible;
+      border: none;
+      border-radius: 0;
+    }
+    .cat-dropdown.open .cat-dropdown-menu { display: block; }
+    .cat-dropdown-menu::before { display: none; }
+
+    .mega-layout { flex-direction: column; min-height: auto; }
+    .mega-sidebar {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid var(--header-line);
+      padding: 8px 0;
+      max-height: 240px;
+    }
+    .mega-sidebar-item::after { display: none; }
+    .mega-sidebar-link { border-radius: 8px; padding: 10px 14px; margin: 2px 8px; }
+    .mega-sidebar-link::after { display: none; }
+
+    .mega-content { padding: 12px 8px; overflow: visible; }
+    .mega-panel { position: static; opacity: 1; transform: none; }
+    .mega-sub-scroll { max-height: none; overflow-y: visible; padding-right: 0; }
+    .mega-sub-grid { grid-template-columns: 1fr; }
+
+    .mega-sidebar-link .mega-chevron { transition: transform 0.25s ease; }
+    .mega-sidebar-item.active .mega-sidebar-link .mega-chevron { transform: rotate(90deg); }
+
+    .account-dropdown {
+      position: static;
+      display: none;
+      margin-top: 8px;
+      box-shadow: none;
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      background: rgba(255, 255, 255, 0.78);
+    }
+    .account-dropdown::before { display: none; }
+    .account-menu.open .account-dropdown { display: block; animation: mobileAccountDrop 0.22s ease both; }
   }
 
   @media (max-width: 480px) {
     .brand-icon { width: 42px; height: 42px; font-size: 1.35rem; }
     .brand-name { font-size: 1.2rem; }
     .header-shell { padding: 10px 12px; }
-    .mobile-cart, .menu-toggle, .mobile-search-btn, .mobile-account-btn { width: 44px; height: 44px; }
+    .mobile-cart, .menu-toggle, .mobile-search-btn, .mobile-account-btn { width: 42px; height: 42px; }
     .header-shell { gap: 10px; min-height: 60px; }
     .brand-text { display: none; }
-    .mobile-drawer-brand .brand-text { display: grid; }
-    .cart-action { width: 44px; height: 44px; font-size: 1.1rem; }
+    .header-search input { min-height: 40px; padding: 8px 42px 8px 38px; font-size: 0.85rem; }
+    .cart-action { width: 42px; height: 42px; font-size: 1.1rem; }
     .account-trigger { padding: 6px 12px; font-size: 0.8rem; }
     .account-name { max-width: 80px; }
+    .nav-wrap { inset: 76px 6px auto 6px; padding: 12px; }
+    .mega-sidebar-link { padding: 8px 12px; margin: 2px 6px; }
+    .mega-sidebar-link .mega-icon-wrap { width: 30px; height: 30px; }
+    .mega-content { padding: 10px 6px; }
+    .mega-sub-grid { gap: 6px; }
+    .mega-sub-card { padding: 10px 12px; gap: 8px; }
+    .mega-panel-header { flex-wrap: wrap; gap: 8px; }
+    .mega-panel-header .shop-now-btn { width: 100%; justify-content: center; }
   }
 
   /* Extra small screens */
@@ -1987,7 +1872,8 @@
     .site-header { width: calc(100% - 12px); margin-top: 6px; }
     .header-shell { padding: 8px 10px; gap: 8px; }
     .brand-icon { width: 36px; height: 36px; font-size: 1.15rem; }
-    .menu-toggle, .mobile-cart, .mobile-search-btn, .mobile-account-btn { width: 44px; height: 44px; }
+    .menu-toggle, .mobile-cart, .mobile-search-btn, .mobile-account-btn { width: 38px; height: 38px; }
+    .header-search input { min-height: 36px; font-size: 0.8rem; }
   }
 
   /* Keyframes */
@@ -1995,8 +1881,16 @@
     from { opacity: 0; transform: translateY(-14px); }
     to { opacity: 1; transform: translateY(0); }
   }
+  @keyframes mobileNavIn {
+    from { opacity: 0; transform: translateY(-10px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
   @keyframes mobileMenuItemIn {
     from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes mobileAccountDrop {
+    from { opacity: 0; transform: translateY(-5px); }
     to { opacity: 1; transform: translateY(0); }
   }
   @keyframes navIconPop {
@@ -2006,10 +1900,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .site-header, .site-header *, .mobile-nav-drawer, .mobile-nav-drawer *, .mobile-overlay {
-      animation: none !important;
-      transition-duration: 0.01ms !important;
-    }
+    .site-header, .site-header *, .nav-wrap.open { animation: none !important; transition-duration: 0.01ms !important; }
   }
 
   /* ============================
@@ -2397,40 +2288,34 @@
     }
   }
 </style>
+</head><body>
 
 <header class="site-header" id="siteHeader">
   <div class="header-shell">
-    <div class="header-particles">
-      <span></span><span></span><span></span><span></span><span></span>
-    </div>
-    <a href="{% url 'store:home' %}" class="brand-link" aria-label="GrocHub home">
+    <div class="header-particles"><span></span><span></span><span></span><span></span><span></span></div>
+    <a href="#" class="brand-link" aria-label="GrocHub home">
       <span class="brand-icon"><i class="bi bi-basket2-fill"></i></span>
       <span class="brand-text">
         <span class="brand-name">GrocHub</span>
         <span class="brand-tagline">Fresh Daily</span>
       </span>
     </a>
-
     <button class="mobile-search-btn" type="button" id="mobileSearchBtn" aria-label="Search" aria-expanded="false">
       <i class="bi bi-search"></i>
     </button>
-
-    <a href="{% url 'store:cart' %}" class="cart-action mobile-cart" aria-label="Cart">
+    <a href="#" class="cart-action mobile-cart" aria-label="Cart">
       <i class="bi bi-cart3"></i>
-      <span class="cart-count" id="cart-count-mobile">{{ cart_item_count|default:0 }}</span>
+      <span class="cart-count" id="cart-count-mobile">3</span>
     </a>
-
     <button class="mobile-account-btn" type="button" id="mobileAccountBtn" aria-label="Account" aria-expanded="false">
       <i class="bi bi-person"></i>
     </button>
-
     <button class="menu-toggle" type="button" id="menuToggle" aria-label="Toggle navigation" aria-expanded="false">
       <i class="bi bi-list"></i>
     </button>
-
     <div class="nav-wrap" id="navWrap">
       <ul class="primary-nav">
-        <li><a href="{% url 'store:home' %}" class="nav-link-custom"><i class="bi bi-house"></i> Home</a></li>
+        <li><a href="#" class="nav-link-custom"><i class="bi bi-house"></i> Home</a></li>
         <li class="cat-dropdown" id="catDropdown">
           <a href="#" role="button" aria-haspopup="true" aria-expanded="false" class="nav-link-custom" id="catDropdownTrigger">
             <i class="bi bi-grid"></i> Categories
@@ -2438,1086 +2323,90 @@
           </a>
           <div class="cat-dropdown-menu">
             <div class="mega-layout">
-              <!-- Sidebar: Categories -->
               <div class="mega-sidebar" id="catSidebar">
-                {% for category in global_categories %}
-                <div class="mega-sidebar-item" data-cat-index="{{ forloop.counter0 }}">
-                  <a href="{% url 'store:category_products' category.slug %}" class="mega-sidebar-link">
-                    <span class="mega-icon-wrap">
-                      {% if category.image %}
-                        <img src="{{ category.image.url }}" alt="">
-                      {% else %}
-                        <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i>
-                      {% endif %}
-                    </span>
-                    <span class="mega-text">
-                      <span class="cat-name">{{ category.name }}</span>
-                      <span class="cat-count">{{ category.active_product_count|default:0 }} items</span>
-                    </span>
-                    <i class="bi bi-chevron-right mega-chevron"></i>
-                  </a>
-                </div>
-                {% empty %}
-                <div class="mega-sidebar-item">
-                  <span class="mega-sidebar-link text-muted">No categories yet</span>
-                </div>
-                {% endfor %}
+                <div class="mega-sidebar-item"><span class="mega-sidebar-link text-muted">No categories yet</span></div>
               </div>
-
-              <!-- Content: Subcategory panels -->
               <div class="mega-content" id="megaContent">
-                <!-- Search -->
-                <div class="mega-search">
-                  <i class="bi bi-search mega-search-icon"></i>
-                  <input type="text" id="megaSearchInput" placeholder="Search within categories..." aria-label="Search categories">
-                </div>
-
-                {% for category in global_categories %}
-                <div class="mega-panel" data-panel-index="{{ forloop.counter0 }}" data-category-name="{{ category.name|lower }}">
-                  <div class="mega-panel-header">
-                    <span class="panel-icon">
-                      {% if category.image %}
-                        <img src="{{ category.image.url }}" alt="" width="18" height="18" style="border-radius:3px;object-fit:cover;">
-                      {% else %}
-                        <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i>
-                      {% endif %}
-                    </span>
-                    <h3>{{ category.name }}</h3>
-                    <a href="{% url 'store:category_products' category.slug %}" class="shop-now-btn">
-                      Shop Now <i class="bi bi-arrow-right"></i>
-                    </a>
-                  </div>
-                  <div class="mega-sub-scroll">
-                  <div class="mega-sub-grid">
-                    {% for sub in category.subcategories.all %}
-                    {% if sub.is_active %}
-                    <div class="mega-sub-section {% if sub.subsubcategories.all|length == 0 %}expanded{% endif %}" data-sub-index="{{ forloop.counter0 }}">
-                      <!-- Subcategory header -->
-                      <div class="mega-sub-section-header">
-                        <a href="{% url 'store:subcategory_products' category.slug sub.slug %}" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-decoration:none;color:inherit;">
-                          <span class="sub-icon">
-                            {% if sub.image %}
-                              <img src="{{ sub.image.url }}" alt="" width="16" height="16" style="border-radius:4px;object-fit:cover;">
-                            {% else %}
-                              <i class="bi {% if sub.icon %}{{ sub.icon }}{% else %}bi-tag{% endif %}"></i>
-                            {% endif %}
-                          </span>
-                          <span class="sub-name">{{ sub.name }}</span>
-                          <span class="sub-count">{{ global_subcategory_counts|get_item:sub.id|default:0 }}</span>
-                        </a>
-                        {% if sub.subsubcategories.all|length > 0 %}
-                        <span class="expand-toggle-btn" title="Toggle sub-items">
-                          <i class="bi bi-chevron-right expand-icon"></i>
-                        </span>
-                        {% endif %}
-                      </div>
-                      <!-- Sub-subcategories (expandable) -->
-                      {% if sub.subsubcategories.all|length > 0 %}
-                      <div class="mega-sub-section-content">
-                        <div class="mega-subsub-list">
-                          {% for subsub in sub.subsubcategories.all %}
-                          {% if subsub.is_active %}
-                          <a href="{% url 'store:subsubcategory_products' category.slug sub.slug subsub.slug %}" class="mega-subsub-link">
-                            <span class="subsub-icon">
-                              {% if subsub.image %}
-                                <img src="{{ subsub.image.url }}" alt="" width="14" height="14" style="border-radius:3px;object-fit:cover;">
-                              {% else %}
-                                <i class="bi {% if subsub.icon %}{{ subsub.icon }}{% else %}bi-dot{% endif %}"></i>
-                              {% endif %}
-                            </span>
-                            <span class="subsub-text">{{ subsub.name }}</span>
-                            <span class="subsub-count">{{ global_subsubcategory_counts|get_item:subsub.id|default:0 }}</span>
-                          </a>
-                          {% endif %}
-                          {% empty %}
-                          <div class="mega-no-subsub">No items yet</div>
-                          {% endfor %}
-                        </div>
-                      </div>
-                      {% endif %}
-                    </div>
-                    {% endif %}
-                    {% empty %}
-                    <div style="grid-column: 1/-1; padding: 16px; color: var(--header-muted); font-size: 0.85rem; text-align: center;">
-                      <i class="bi bi-inbox" style="font-size:1.5rem;display:block;margin-bottom:6px;"></i>
-                      No subcategories yet
-                    </div>
-                    {% endfor %}
-                  </div>
-                  </div>
-                </div>
-                {% empty %}
                 <div class="mega-panel active" data-panel-index="0" style="display:flex;align-items:center;justify-content:center;">
-                  <div style="padding:40px 20px;text-align:center;color:var(--header-muted);">
-                    <i class="bi bi-box-seam" style="font-size:2.5rem;display:block;margin-bottom:12px;color:var(--header-green);"></i>
-                    <p style="font-weight:700;margin:0;">Categories will appear here</p>
-                    <p style="font-size:0.8rem;margin:4px 0 0;">Add categories from the Django admin panel.</p>
-                  </div>
+                  <div style="padding:40px 20px;text-align:center;color:var(--header-muted);">No categories</div>
                 </div>
-                {% endfor %}
               </div>
             </div>
           </div>
         </li>
-        <li><a href="{% url 'store:product_list' %}" class="nav-link-custom"><i class="bi bi-bag"></i> Products</a></li>
-        <li><a href="{% url 'store:about' %}" class="nav-link-custom"><i class="bi bi-info-circle"></i> About</a></li>
-        <li><a href="{% url 'store:contact' %}" class="nav-link-custom"><i class="bi bi-chat-dots"></i> Contact</a></li>
+        <li><a href="#" class="nav-link-custom"><i class="bi bi-bag"></i> Products</a></li>
+        <li><a href="#" class="nav-link-custom"><i class="bi bi-info-circle"></i> About</a></li>
+        <li><a href="#" class="nav-link-custom"><i class="bi bi-chat-dots"></i> Contact</a></li>
       </ul>
-
-      <form action="{% url 'store:product_list' %}" method="get" class="header-search">
+      <form action="#" method="get" class="header-search">
         <i class="bi bi-search search-icon"></i>
         <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products" autocomplete="off" id="globalProductSearch">
-        <button type="submit" class="search-submit" aria-label="Search">
-          <i class="bi bi-arrow-right-short"></i>
-        </button>
-        <div class="search-suggestions" id="globalSearchSuggestions" role="listbox" aria-label="Search suggestions"></div>
+        <button type="submit" class="search-submit" aria-label="Search"><i class="bi bi-arrow-right-short"></i></button>
+        <div class="search-suggestions" id="globalSearchSuggestions"></div>
       </form>
-
       <div class="header-actions">
-        <a href="{% url 'store:cart' %}" class="cart-action desktop-cart" aria-label="Cart">
+        <a href="#" class="cart-action desktop-cart" aria-label="Cart">
           <i class="bi bi-cart3"></i>
-          <span class="cart-count" id="cart-count-desktop">{{ cart_item_count|default:0 }}</span>
+          <span class="cart-count" id="cart-count-desktop">3</span>
         </a>
-
-        {% if user.is_authenticated %}
         <div class="notification-center" id="notificationCenter">
           <button class="notification-bell" type="button" id="notificationBellBtn" aria-label="Notifications" aria-expanded="false">
             <i class="bi bi-bell-fill"></i>
-            <span class="notification-badge" id="notificationBadge" {% if unread_notification_count == 0 %}style="display:none"{% endif %}>{{ unread_notification_count }}</span>
+            <span class="notification-badge" id="notificationBadge">2</span>
           </button>
-          <div class="notification-dropdown" id="notificationDropdown">
-            <div class="notification-header">
-              <h4 class="notification-header-title">Notifications</h4>
-              <div class="notification-header-actions">
-                <button type="button" class="notification-action-btn" id="notifMarkAllRead" title="Mark all as read">
-                  <i class="bi bi-check2-all"></i>
-                </button>
-                <button type="button" class="notification-action-btn" id="notifClearAll" title="Clear all">
-                  <i class="bi bi-trash3"></i>
-                </button>
-              </div>
-            </div>
-            <div class="notification-list" id="notificationList">
-              <div class="notification-loading">
-                <i class="bi bi-arrow-repeat notification-spin"></i> Loading...
-              </div>
-            </div>
-            <div class="notification-footer">
-              <a href="{% url 'store:notifications' %}" class="notification-footer-link">
-                View all notifications <i class="bi bi-arrow-right"></i>
-              </a>
-            </div>
-          </div>
         </div>
-        {% endif %}
-
         <div class="account-menu" id="accountMenu">
-          {% if user.is_authenticated %}
           <button class="account-trigger" type="button" aria-expanded="false" aria-controls="profileDropdown">
             <i class="bi bi-person-circle"></i>
-            <span class="account-name">{{ user.first_name|default:user.username }}</span>
+            <span class="account-name">Arkap Kamal</span>
             <i class="bi bi-chevron-down"></i>
           </button>
-          <ul class="account-dropdown" id="profileDropdown">
-            <li><a href="{% url 'store:profile' %}" class="dropdown-link-custom"><i class="bi bi-person"></i> Profile</a></li>
-            <li><a href="{% url 'store:profile_orders' %}" class="dropdown-link-custom"><i class="bi bi-bag-check"></i> My Orders</a></li>
-            {% if request.user.is_superuser %}
-            <li><a href="{% url 'api_settings:api_settings_page' %}" class="dropdown-link-custom"><i class="bi bi-gear"></i> API Settings</a></li>
-            {% endif %}
-            <li><a href="/logout" class="dropdown-link-custom"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
-          </ul>
-          {% else %}
-          <button class="account-trigger" type="button" aria-expanded="false" aria-controls="authDropdown">
-            <i class="bi bi-person"></i>
-            <span>Account</span>
-            <i class="bi bi-chevron-down"></i>
-          </button>
-          <ul class="account-dropdown" id="authDropdown">
-            <li><a href="/login/" class="dropdown-link-custom"><i class="bi bi-box-arrow-in-right"></i> Login</a></li>
-            <li><a href="{% url 'store:signup_method' %}" class="dropdown-link-custom"><i class="bi bi-person-plus"></i> Signup</a></li>
-          </ul>
-          {% endif %}
         </div>
       </div>
     </div>
   </div>
-</header>
-
-  <div class="mobile-overlay" id="mobileOverlay"></div>
-
-  <aside class="mobile-nav-drawer" id="mobileNavDrawer" aria-hidden="true" aria-label="Mobile navigation">
-    <div class="mobile-drawer-header">
-      <a href="{% url 'store:home' %}" class="mobile-drawer-brand" aria-label="GrocHub home">
-        <span class="brand-icon"><i class="bi bi-basket2-fill"></i></span>
-        <span class="brand-text">
-          <span class="brand-name">GrocHub</span>
-          <span class="brand-tagline">Fresh Daily</span>
-        </span>
-      </a>
-      <button type="button" class="mobile-drawer-close" id="mobileDrawerClose" aria-label="Close menu">
-        <i class="bi bi-x-lg"></i>
-      </button>
-    </div>
-
-    <nav class="mobile-menu" aria-label="Primary">
-      <ul class="mobile-menu-list">
-        <li class="mobile-menu-item">
-          <a href="{% url 'store:home' %}" class="mobile-menu-link"><i class="bi bi-house-door"></i><span>Home</span></a>
-        </li>
-        <li class="mobile-menu-item mobile-has-submenu">
-          <button type="button" class="mobile-menu-link mobile-menu-toggle" id="mobileCatToggle" aria-expanded="false" aria-controls="mobileCategoriesList">
-            <i class="bi bi-grid"></i><span>Categories</span><i class="bi bi-chevron-down mobile-chevron" aria-hidden="true"></i>
-          </button>
-          <ul class="mobile-submenu" id="mobileCategoriesList">
-            {% for category in global_categories %}
-            <li class="mobile-submenu-item">
-              <a href="{% url 'store:category_products' category.slug %}" class="mobile-submenu-link">
-                <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i><span>{{ category.name }}</span>
-              </a>
-            </li>
-            {% empty %}
-            <li class="mobile-submenu-item"><span class="mobile-submenu-empty">No categories yet</span></li>
-            {% endfor %}
-          </ul>
-        </li>
-        <li class="mobile-menu-item">
-          <a href="{% url 'store:product_list' %}" class="mobile-menu-link"><i class="bi bi-bag"></i><span>Products</span></a>
-        </li>
-        <li class="mobile-menu-item">
-          <a href="{% url 'store:about' %}" class="mobile-menu-link"><i class="bi bi-info-circle"></i><span>About</span></a>
-        </li>
-        <li class="mobile-menu-item">
-          <a href="{% url 'store:contact' %}" class="mobile-menu-link"><i class="bi bi-chat-dots"></i><span>Contact</span></a>
-        </li>
-      </ul>
-    </nav>
-
-    <form action="{% url 'store:product_list' %}" method="get" class="mobile-search" role="search" id="mobileDrawerSearchForm">
+  <div class="mobile-search-bar" id="mobileSearchBar">
+    <form action="#" method="get" class="mobile-search-form" role="search">
       <i class="bi bi-search"></i>
       <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products" autocomplete="off" id="mobileSearchInput">
       <button type="submit" aria-label="Search"><i class="bi bi-arrow-right-short"></i></button>
     </form>
+  </div>
+</header>
 
-    <div class="mobile-account-section">
-      <button type="button" class="mobile-menu-link mobile-menu-toggle" id="mobileAccountToggle" aria-expanded="false" aria-controls="mobileAccountList">
-        <i class="bi bi-person"></i><span>My Account</span><i class="bi bi-chevron-down mobile-chevron" aria-hidden="true"></i>
-      </button>
-      <ul class="mobile-submenu" id="mobileAccountList">
-        {% if user.is_authenticated %}
-        <li class="mobile-submenu-item">
-          <a href="{% url 'store:profile' %}" class="mobile-submenu-link"><i class="bi bi-person"></i><span>Profile</span></a>
-        </li>
-        <li class="mobile-submenu-item">
-          <a href="{% url 'store:profile_orders' %}" class="mobile-submenu-link"><i class="bi bi-bag-check"></i><span>My Orders</span></a>
-        </li>
-        {% if request.user.is_superuser %}
-        <li class="mobile-submenu-item">
-          <a href="{% url 'api_settings:api_settings_page' %}" class="mobile-submenu-link"><i class="bi bi-gear"></i><span>API Settings</span></a>
-        </li>
-        {% endif %}
-        <li class="mobile-submenu-item">
-          <a href="/logout" class="mobile-submenu-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a>
-        </li>
-        {% else %}
-        <li class="mobile-submenu-item">
-          <a href="/login/" class="mobile-submenu-link"><i class="bi bi-box-arrow-in-right"></i><span>Sign In</span></a>
-        </li>
-        <li class="mobile-submenu-item">
-          <a href="{% url 'store:signup_method' %}" class="mobile-submenu-link"><i class="bi bi-person-plus"></i><span>Create Account</span></a>
-        </li>
-        {% endif %}
-      </ul>
-    </div>
-  </aside>
+<pre id="results"><div>MEASURE syn {"width":1074,"docClient":1074,"docScroll":1074,"hscroll":false,"headerLeft":8,"headerRight":1066,"navClient":0,"pnW":0,"shW":0,"acW":0,"gap":16,"req":32,"slack":-32}</div></pre>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const siteHeader = document.getElementById('siteHeader');
-  const navWrap = document.getElementById('navWrap');
-  const menuToggle = document.getElementById('menuToggle');
-  const accountMenu = document.getElementById('accountMenu');
-  const accountTrigger = accountMenu?.querySelector('.account-trigger');
-  const catDropdown = document.getElementById('catDropdown');
-  const catDropdownTrigger = document.getElementById('catDropdownTrigger');
-  const catSidebar = document.getElementById('catSidebar');
-  const megaContent = document.getElementById('megaContent');
-  const megaSearchInput = document.getElementById('megaSearchInput');
-  const globalProductSearch = document.getElementById('globalProductSearch');
-  const globalSearchSuggestions = document.getElementById('globalSearchSuggestions');
-  const sidebarItems = catSidebar?.querySelectorAll('.mega-sidebar-item') || [];
-  const panels = megaContent?.querySelectorAll('.mega-panel') || [];
-  const mobileSearchBtn = document.getElementById('mobileSearchBtn');
-  const mobileAccountBtn = document.getElementById('mobileAccountBtn');
-  const mobileOverlay = document.getElementById('mobileOverlay');
-  const mobileNavDrawer = document.getElementById('mobileNavDrawer');
-  const mobileDrawerClose = document.getElementById('mobileDrawerClose');
-  const mobileSearchInput = document.getElementById('mobileSearchInput');
-  const mobileCatToggle = document.getElementById('mobileCatToggle');
-  const mobileAccountToggle = document.getElementById('mobileAccountToggle');
-  const mobileCategoriesList = document.getElementById('mobileCategoriesList');
-  const mobileAccountList = document.getElementById('mobileAccountList');
-  const mobileDrawerSearchForm = document.getElementById('mobileDrawerSearchForm');
-
-  const isMobile = () => window.innerWidth <= 1100;
-
-  // ── Dynamic arrow position for centered mega dropdown ──
-  function updateDropdownArrow() {
-    const dropdown = document.querySelector('.cat-dropdown-menu');
-    const trigger = document.getElementById('catDropdownTrigger');
-    if (!dropdown || !trigger || window.innerWidth <= 1100) {
-      if (dropdown) dropdown.style.removeProperty('--arrow-left');
-      return;
-    }
-    const triggerRect = trigger.getBoundingClientRect();
-    const dropdownRect = dropdown.getBoundingClientRect();
-    const triggerCenter = triggerRect.left + triggerRect.width / 2;
-    const relativeLeft = triggerCenter - dropdownRect.left;
-    dropdown.style.setProperty('--arrow-left', relativeLeft + 'px');
-  }
-
-  // ── Ripple effect on click ──
-  function createRipple(event, element) {
-    const existingRipple = element.querySelector('.ripple');
-    if (existingRipple) existingRipple.remove();
-
-    const circle = document.createElement('span');
-    const diameter = Math.max(element.clientWidth, element.clientHeight);
-    const radius = diameter / 2;
-    const rect = element.getBoundingClientRect();
-
-    circle.style.width = circle.style.height = `${diameter}px`;
-    circle.style.left = `${event.clientX - rect.left - radius}px`;
-    circle.style.top = `${event.clientY - rect.top - radius}px`;
-    circle.classList.add('ripple');
-
-    element.appendChild(circle);
-    setTimeout(() => circle.remove(), 600);
-  }
-
-  document.querySelectorAll('.nav-link-custom, .account-trigger').forEach(el => {
-    el.addEventListener('click', (e) => createRipple(e, el));
-  });
-
-  // AJAX product search suggestions
-  let productSearchTimer = null;
-  function closeSearchSuggestions() {
-    if (globalSearchSuggestions) {
-      globalSearchSuggestions.classList.remove('open');
-      globalSearchSuggestions.innerHTML = '';
-    }
-  }
-
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"']/g, char => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
-    }[char]));
-  }
-
-  function renderSearchSuggestions(results) {
-    if (!globalSearchSuggestions) return;
-    if (!results.length) {
-      closeSearchSuggestions();
-      return;
-    }
-    globalSearchSuggestions.innerHTML = results.map(item => {
-      const title = escapeHtml(item.title);
-      const category = escapeHtml(item.category || 'Grocery');
-      const price = escapeHtml(item.price);
-      const url = encodeURI(item.url || '#');
-      const image = item.image
-        ? `<img src="${escapeHtml(item.image)}" alt="">`
-        : '<i class="bi bi-basket2"></i>';
-      return `
-        <a class="suggestion-link" href="${url}" role="option">
-          <span class="suggestion-thumb">${image}</span>
-          <span>
-            <span class="suggestion-title">${title}</span>
-            <span class="suggestion-meta">${category}</span>
-          </span>
-          <span class="suggestion-price">Rs. ${price}</span>
-        </a>
-      `;
-    }).join('');
-    globalSearchSuggestions.classList.add('open');
-  }
-
-  globalProductSearch?.addEventListener('input', function () {
-    clearTimeout(productSearchTimer);
-    const query = this.value.trim();
-    if (query.length < 2) {
-      closeSearchSuggestions();
-      return;
-    }
-    productSearchTimer = setTimeout(() => {
-      fetch(`/api/products/search/?q=${encodeURIComponent(query)}`)
-        .then(response => response.ok ? response.json() : { results: [] })
-        .then(data => renderSearchSuggestions(data.results || []))
-        .catch(closeSearchSuggestions);
-    }, 280);
-  });
-
-  // ── Expandable search (desktop) ────────────────────────────────
-  // A single state class .search-expanded + a dynamically measured width
-  // lets the search field take over the whole center zone, while the logo
-  // and the right-side controls (cart/notification/account) stay fixed.
-  const searchForm = document.querySelector('.header-search');
-  const headerActions = document.querySelector('.header-actions');
-  const primaryNav = document.querySelector('.primary-nav');
-  const EXPAND_GAP = 18; // right margin between the search and the controls
-  const isSearchExpanded = () => siteHeader?.classList.contains('search-expanded');
-  let navNaturalWidth = 1200; // measured on first open; collapsed state
-
-  // The nav links are collapsed via a px max-width and the search grows via
-  // a px width, so BOTH values are animated by CSS transitions → the two
-  // movements stay visually synchronized and never "jump". We only lock the
-  // current px as the transition start point, flip the state class, then set
-  // the final px targets. The browser interpolates every intermediate frame.
-  function openSearch() {
-    if (isMobile() || !searchForm || !primaryNav) return;
-    if (isSearchExpanded()) return;             // keep expanded until a close
-    // 1) Freeze current sizes into explicit px so auto → px is not instant.
-    navNaturalWidth = primaryNav.offsetWidth || navNaturalWidth;
-    primaryNav.style.maxWidth = navNaturalWidth + 'px';
-    searchForm.style.width = searchForm.offsetWidth + 'px';
-    // 2) Adopt the locked start values, then switch state (batch both).
-    void navWrap.offsetWidth;                    // force reflow on start values
-    siteHeader.classList.add('search-expanded');
-    // 3) Target px = center width − right controls − gap; grow to fill.
-    const available = navWrap.clientWidth - headerActions.offsetWidth - EXPAND_GAP;
-    searchForm.style.width = Math.max(180, available) + 'px';
-    primaryNav.style.maxWidth = '0px';
-  }
-
-  function closeSearch() {
-    if (!isSearchExpanded() || !searchForm || !primaryNav) return;
-    // Reverse: grow nav back to its natural px and let the search shrink to
-    // its CSS clamp() base. Both animate together on the way out too.
-    primaryNav.style.maxWidth = navNaturalWidth + 'px';
-    searchForm.style.width = '';
-    siteHeader.classList.remove('search-expanded');
-    if (globalProductSearch) globalProductSearch.blur();
-  }
-
-  // Re-fit an already-expanded search to the current window width (resize).
-  function refitExpandedWidth() {
-    if (!isSearchExpanded() || !searchForm || !headerActions || !navWrap) return;
-    const available = navWrap.clientWidth - headerActions.offsetWidth - EXPAND_GAP;
-    searchForm.style.width = Math.max(180, available) + 'px';
-  }
-
-  globalProductSearch?.addEventListener('focus', openSearch);
-  searchForm?.addEventListener('click', function (event) {
-    if (event.target.closest('.search-submit')) return; // let the form submit
-    if (!isSearchExpanded()) {
-      openSearch();
-      globalProductSearch?.focus();
-    }
-  });
-  searchForm?.addEventListener('submit', function () {
-    // Execute the existing search; restore the navbar as it navigates.
-    closeSearch();
-  });
-
-  // ── Header scroll ──
-  function updateHeaderScrollState() {
-    siteHeader?.classList.toggle('is-scrolled', window.scrollY > 24);
-  }
-
-  // ── Mobile drawer (compact navigation) ──
-  function positionMobileDrawer() {
-    if (!mobileNavDrawer || !siteHeader) return;
-    const rect = siteHeader.getBoundingClientRect();
-    // Sit just below the sticky header, aligned with its right edge.
-    mobileNavDrawer.style.top = Math.max(8, rect.bottom + 8) + 'px';
-    mobileNavDrawer.style.right = Math.max(0, window.innerWidth - rect.right + 8) + 'px';
-  }
-
-  // Animate a submenu's height (Categories / Account) with a smooth transition.
-  function setMobileSubmenu(listEl, expanded) {
-    if (!listEl) return;
-    if (expanded) {
-      const targetHeight = listEl.scrollHeight;
-      listEl.style.maxHeight = targetHeight + 'px';
-      listEl.style.overflowY = 'hidden';
-      const onEnd = () => {
-        listEl.style.maxHeight = 'none';
-        listEl.style.overflowY = 'auto';
-        listEl.removeEventListener('transitionend', onEnd);
-      };
-      listEl.addEventListener('transitionend', onEnd);
-    } else {
-      listEl.style.maxHeight = '0';
-      listEl.style.overflowY = 'hidden';
-    }
-  }
-
-  function openMobileDrawer(options) {
-    if (!mobileNavDrawer) return;
-    siteHeader?.classList.add('menu-open');
-    mobileNavDrawer.classList.add('open');
-    mobileNavDrawer.setAttribute('aria-hidden', 'false');
-    mobileOverlay?.classList.add('open');
-    menuToggle?.setAttribute('aria-expanded', 'true');
-    if (menuToggle) menuToggle.innerHTML = '<i class="bi bi-x-lg"></i>';
-    document.body.style.overflow = 'hidden';
-    positionMobileDrawer();
-    if (options?.focusSearch) {
-      setTimeout(() => mobileSearchInput?.focus(), 90);
-    }
-  }
-
-  function closeMobileDrawer() {
-    if (!mobileNavDrawer) return;
-    mobileNavDrawer.classList.remove('open');
-    mobileNavDrawer.setAttribute('aria-hidden', 'true');
-    mobileOverlay?.classList.remove('open');
-    siteHeader?.classList.remove('menu-open');
-    menuToggle?.setAttribute('aria-expanded', 'false');
-    if (menuToggle) menuToggle.innerHTML = '<i class="bi bi-list"></i>';
-    mobileCatToggle?.setAttribute('aria-expanded', 'false');
-    mobileAccountToggle?.setAttribute('aria-expanded', 'false');
-    setMobileSubmenu(mobileCategoriesList, false);
-    setMobileSubmenu(mobileAccountList, false);
-    document.body.style.overflow = '';
-  }
-
-  function isMobileDrawerOpen() {
-    return mobileNavDrawer?.classList.contains('open') || false;
-  }
-
-  function toggleMobileDrawer() {
-    if (isMobileDrawerOpen()) closeMobileDrawer();
-    else openMobileDrawer();
-  }
-
-  // Legacy alias so existing handlers (Escape / outside click / link taps)
-  // keep working unchanged.
-  function closeMenu() {
-    if (isMobile()) closeMobileDrawer();
-  }
-
-  menuToggle?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleMobileDrawer();
-  });
-
-  mobileDrawerClose?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    closeMobileDrawer();
-  });
-
-  mobileOverlay?.addEventListener('click', function () {
-    closeMobileDrawer();
-  });
-
-  mobileAccountBtn?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    openMobileDrawer({ focusSearch: false });
-    // Reveal the account actions immediately.
-    mobileAccountToggle?.setAttribute('aria-expanded', 'true');
-    setMobileSubmenu(mobileAccountList, true);
-    setTimeout(() => mobileAccountToggle?.focus(), 90);
-  });
-
-  mobileSearchBtn?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    openMobileDrawer({ focusSearch: true });
-  });
-
-  // ── Expandable Categories / Account submenus ──
-  function toggleMobileSubmenu(toggleBtn, listEl, sectionEl) {
-    if (!toggleBtn || !listEl) return;
-    const willExpand = toggleBtn.getAttribute('aria-expanded') !== 'true';
-    toggleBtn.setAttribute('aria-expanded', willExpand ? 'true' : 'false');
-    sectionEl?.classList.toggle('expanded', willExpand);
-    setMobileSubmenu(listEl, willExpand);
-  }
-
-  mobileCatToggle?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleMobileSubmenu(mobileCatToggle, mobileCategoriesList, mobileCatToggle.closest('.mobile-has-submenu'));
-  });
-
-  mobileAccountToggle?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleMobileSubmenu(mobileAccountToggle, mobileAccountList, mobileAccountToggle.closest('.mobile-account-section'));
-  });
-
-  mobileDrawerSearchForm?.addEventListener('submit', function () {
-    // The page navigates to search results; close the drawer as it does so.
-    closeMobileDrawer();
-  });
-  mobileSearchInput?.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') closeMobileDrawer();
-  });
-
-  window.addEventListener('scroll', positionMobileDrawer, { passive: true });
-  window.addEventListener('resize', positionMobileDrawer);
-
-  // ── Account dropdown ──
-  accountTrigger?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    const isOpen = accountMenu.classList.toggle('open');
-    accountTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  });
-
-  // ── Mega dropdown logic ──
-  let catHoverTimeout = null;
-  let catCloseTimeout = null;
-  const HOVER_DELAY = 80;
-  const CLOSE_DELAY = 200;
-
-  function activateFirstPanel() {
-    sidebarItems.forEach(item => item.classList.remove('active'));
-    panels.forEach(panel => panel.classList.remove('active'));
-    if (sidebarItems.length > 0 && panels.length > 0) {
-      sidebarItems[0].classList.add('active');
-      panels[0].classList.add('active');
-    }
-  }
-
-  function setActivePanel(targetItem) {
-    const index = targetItem.dataset.catIndex;
-    sidebarItems.forEach(item => item.classList.remove('active'));
-    panels.forEach(panel => panel.classList.remove('active'));
-    targetItem.classList.add('active');
-    const targetPanel = megaContent.querySelector(`.mega-panel[data-panel-index="${index}"]`);
-    if (targetPanel) {
-      targetPanel.classList.add('active');
-      // Reset scroll position when switching categories
-      const scrollContainer = targetPanel.querySelector('.mega-sub-scroll');
-      if (scrollContainer) scrollContainer.scrollTop = 0;
-    }
-  }
-
-  function openCatDropdown() {
-    clearTimeout(catCloseTimeout);
-    catHoverTimeout = setTimeout(() => {
-      catDropdown?.classList.add('menu-open');
-      if (!catSidebar.querySelector('.mega-sidebar-item.active')) {
-        activateFirstPanel();
-      }
-      updateDropdownArrow();
-    }, HOVER_DELAY);
-  }
-
-  function closeCatDropdown() {
-    clearTimeout(catHoverTimeout);
-    catCloseTimeout = setTimeout(() => {
-      catDropdown?.classList.remove('menu-open');
-      activateFirstPanel();
-    }, CLOSE_DELAY);
-  }
-
-  // Desktop: hover on trigger
-  if (catDropdown && catDropdownTrigger) {
-    catDropdownTrigger.addEventListener('mouseenter', function () {
-      if (!isMobile()) openCatDropdown();
-    });
-
-    catDropdown.addEventListener('mouseenter', function () {
-      if (!isMobile()) { clearTimeout(catCloseTimeout); clearTimeout(catHoverTimeout); }
-    });
-
-    catDropdown.addEventListener('mouseleave', function () {
-      if (!isMobile()) closeCatDropdown();
-    });
-  }
-
-  // Desktop: hover sidebar item
-  sidebarItems.forEach(function (item) {
-    item.addEventListener('mouseenter', function () {
-      if (!isMobile()) setActivePanel(item);
-    });
-
-    const link = item.querySelector('.mega-sidebar-link');
-    if (link) {
-      link.addEventListener('click', function (event) {
-        if (isMobile()) {
-          event.preventDefault();
-          event.stopPropagation();
-          const wasActive = item.classList.contains('active');
-          sidebarItems.forEach(i => i.classList.remove('active'));
-          panels.forEach(p => p.classList.remove('active'));
-          if (!wasActive) {
-            item.classList.add('active');
-            const index = item.dataset.catIndex;
-            const targetPanel = megaContent.querySelector(`.mega-panel[data-panel-index="${index}"]`);
-            if (targetPanel) targetPanel.classList.add('active');
-          }
-        }
-      });
-    }
-  });
-
-  // Click trigger toggles dropdown on mobile and desktop
-  if (catDropdownTrigger) {
-    catDropdownTrigger.addEventListener('click', function (event) {
-      const currentlyOpen = catDropdown.classList.contains('menu-open') || catDropdown.classList.contains('open');
-      event.preventDefault();
-      event.stopPropagation();
-      if (isMobile()) {
-        catDropdown.classList.toggle('open');
-      } else {
-        catDropdown.classList.toggle('menu-open');
-      }
-      const isOpen = catDropdown.classList.contains('menu-open') || catDropdown.classList.contains('open');
-      catDropdownTrigger.setAttribute('aria-expanded', String(isOpen));
-      if (isOpen) activateFirstPanel();
-      if (!isMobile() && currentlyOpen && !catDropdown.classList.contains('menu-open')) {
-        activateFirstPanel();
-      }
-      updateDropdownArrow();
-    });
-
-    catDropdownTrigger.addEventListener('keydown', function (event) {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        catDropdownTrigger.click();
-      }
-    });
-  }
-
-  // ── Mega search filter ──
-  if (megaSearchInput) {
-    megaSearchInput.addEventListener('input', function () {
-      const query = this.value.toLowerCase().trim();
-      const activePanel = megaContent.querySelector('.mega-panel.active');
-      if (!activePanel) return;
-      const scrollContainer = activePanel.querySelector('.mega-sub-scroll');
-      const sections = activePanel.querySelectorAll('.mega-sub-section');
-      sections.forEach(section => {
-        const text = section.textContent.toLowerCase();
-        if (text.includes(query)) {
-          section.style.display = '';
-          if (query && section.querySelector('.mega-sub-section-content')) {
-            section.classList.add('expanded');
-          }
-        } else {
-          section.style.display = 'none';
-        }
-      });
-      // Reset scroll position when searching
-      if (scrollContainer && query) {
-        scrollContainer.scrollTop = 0;
-      }
-    });
-  }
-
-  // ── Sub-subcategory expand/collapse with smooth animation ──
-  megaContent?.addEventListener('click', function (event) {
-    const expandIcon = event.target.closest('.expand-icon');
-    const toggleBtn = event.target.closest('.expand-toggle-btn');
-    const target = expandIcon || toggleBtn;
-    if (target) {
-      event.preventDefault();
-      event.stopPropagation();
-      const section = target.closest('.mega-sub-section');
-      if (!section) return;
-
-      const content = section.querySelector('.mega-sub-section-content');
-      if (!content) return;
-
-      const isExpanding = !section.classList.contains('expanded');
-
-      if (isExpanding) {
-        section.classList.add('expanded');
-        // Animate open
-        const targetHeight = content.scrollHeight;
-        content.style.maxHeight = '0';
-        content.style.overflowY = 'hidden';
-        // Force reflow
-        content.offsetHeight;
-        content.style.maxHeight = targetHeight + 'px';
-        content.style.overflowY = 'auto';
-
-        const onTransitionEnd = () => {
-          if (section.classList.contains('expanded')) {
-            content.style.maxHeight = 'none';
-            content.style.overflowY = 'auto';
-          }
-          content.removeEventListener('transitionend', onTransitionEnd);
-        };
-        content.addEventListener('transitionend', onTransitionEnd);
-      } else {
-        // Animate close
-        content.style.maxHeight = content.scrollHeight + 'px';
-        // Force reflow
-        content.offsetHeight;
-        content.style.maxHeight = '0';
-        content.style.overflowY = 'hidden';
-        section.classList.remove('expanded');
-      }
-      return;
-    }
-  });
-
-  // Initialize already-expanded sections with proper height
-  document.querySelectorAll('.mega-sub-section.expanded .mega-sub-section-content').forEach(content => {
-    content.style.maxHeight = 'none';
-    content.style.overflowY = 'auto';
-  });
-
-  // ── Global clicks ──
-  document.addEventListener('click', function (event) {
-    if (isSearchExpanded() && event.target.closest && !event.target.closest('.header-search')) {
-      closeSearch();
-    }
-    if (globalSearchSuggestions && !event.target.closest('.header-search')) {
-      closeSearchSuggestions();
-    }
-    if (accountMenu && !accountMenu.contains(event.target)) {
-      accountMenu.classList.remove('open');
-      accountTrigger?.setAttribute('aria-expanded', 'false');
-    }
-    // Close the drawer when tapping outside both the header AND the drawer.
-    const clickedOutside =
-      siteHeader && !siteHeader.contains(event.target) &&
-      mobileNavDrawer && !mobileNavDrawer.contains(event.target) &&
-      mobileOverlay && !mobileOverlay.contains(event.target);
-    if (clickedOutside) closeMobileDrawer();
-    if (!isMobile() && catDropdown && !catDropdown.contains(event.target)) {
-      catDropdown.classList.remove('menu-open');
-      activateFirstPanel();
-    }
-  });
-
-  // ── Escape key ──
-  document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape') {
-      closeMobileDrawer();
-      closeSearch();
-      accountMenu?.classList.remove('open');
-      accountTrigger?.setAttribute('aria-expanded', 'false');
-      if (!isMobile() && catDropdown) {
-        catDropdown.classList.remove('menu-open');
-        activateFirstPanel();
-      }
-    }
-  });
-
-  // ── Nav links close mobile drawer ──
-  navWrap?.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', function () {
-      if (isMobile() && link.closest('.mega-sidebar-link')) return;
-      closeMenu();
-    });
-  });
-  mobileNavDrawer?.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', function () {
-      closeMobileDrawer();
-    });
-  });
-
-  // ── Initialize ──
-  updateHeaderScrollState();
-  window.addEventListener('scroll', updateHeaderScrollState, { passive: true });
-
-  window.addEventListener('resize', function () {
-    if (!isMobile()) {
-      catDropdown?.classList.remove('open');
-      closeMobileDrawer();
-      if (menuToggle) {
-        menuToggle.innerHTML = '<i class="bi bi-list"></i>';
-        menuToggle.setAttribute('aria-expanded', 'false');
-      }
-    }
-    if (isSearchExpanded()) {
-      if (isMobile()) closeSearch(); else refitExpandedWidth();
-    }
-    updateDropdownArrow();
-  });
-
-  // ── Notification Center ──
-  const notifCenter = document.getElementById('notificationCenter');
-  const notifBellBtn = document.getElementById('notificationBellBtn');
-  const notifDropdown = document.getElementById('notificationDropdown');
-  const notifList = document.getElementById('notificationList');
-  const notifBadge = document.getElementById('notificationBadge');
-  const notifMarkAllBtn = document.getElementById('notifMarkAllRead');
-  const notifClearAllBtn = document.getElementById('notifClearAll');
-
-  let notifLoaded = false;
-
-  // Only initialize notification center for authenticated users
-  if (notifCenter) {
-    function getNotifCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
-
-  function getNotifTypeIcon(type) {
-    const map = {
-      auth: 'bi-shield-lock',
-      order: 'bi-bag-check',
-      profile: 'bi-person-gear',
-      system: 'bi-info-circle',
-    };
-    return map[type] || 'bi-bell';
-  }
-
-  function escapeHtml(str) {
-    const d = document.createElement('div');
-    d.textContent = str || '';
-    return d.innerHTML;
-  }
-
-  function renderNotificationItem(n) {
-    const unreadClass = n.is_read ? '' : ' notification-item--unread';
-    const toggleIcon = n.is_read ? 'bi-envelope' : 'bi-envelope-open';
-    const toggleTitle = n.is_read ? 'Mark as unread' : 'Mark as read';
-    return `
-      <div class="notification-item${unreadClass}" data-id="${n.id}" data-read="${n.is_read}">
-        <div class="notification-type-icon notification-type-icon--${n.type}">
-          <i class="bi ${getNotifTypeIcon(n.type)}"></i>
-        </div>
-        <div class="notification-body">
-          <p class="notification-title">${escapeHtml(n.title)}</p>
-          <p class="notification-message">${escapeHtml(n.message)}</p>
-          <span class="notification-time">${escapeHtml(n.time_ago)}</span>
-        </div>
-        <div class="notification-item-actions">
-          <button type="button" class="notification-item-btn notif-toggle-read" title="${toggleTitle}">
-            <i class="bi ${toggleIcon}"></i>
-          </button>
-          <button type="button" class="notification-item-btn notification-item-btn--delete notif-delete" title="Delete">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        </div>
-      </div>
-    `;
-  }
-
-  function updateBellVisibility(unreadCount) {
-    if (notifBadge) {
-      notifBadge.textContent = unreadCount || 0;
-      notifBadge.style.display = unreadCount > 0 ? '' : 'none';
-    }
-  }
-
-  function loadNotifications() {
-    fetch('/api/notifications/')
-      .then(r => r.ok ? r.json() : { notifications: [], unread_count: 0, total_count: 0 })
-      .then(data => {
-        if (!notifList) return;
-        if (data.notifications.length === 0) {
-          notifList.innerHTML = `
-            <div class="notification-empty">
-              <i class="bi bi-bell-slash"></i>
-              <p>No notifications yet</p>
-            </div>
-          `;
-        } else {
-          notifList.innerHTML = data.notifications.map(renderNotificationItem).join('');
-        }
-        updateBellVisibility(data.unread_count);
-        notifLoaded = true;
-      })
-      .catch(() => {});
-  }
-
-  function pollUnreadCount() {
-    fetch('/api/notifications/unread-count/')
-      .then(r => r.ok ? r.json() : { unread_count: 0, total_count: 0 })
-      .then(data => {
-        const prev = parseInt(notifBadge?.textContent || '0', 10);
-        updateBellVisibility(data.unread_count);
-        if (data.unread_count > prev && notifLoaded) {
-          loadNotifications();
-        }
-      })
-      .catch(() => {});
-  }
-
-  function notifPost(url, body) {
-    return fetch(url, {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': getNotifCookie('csrftoken'),
-        'Content-Type': 'application/json',
-      },
-      body: body ? JSON.stringify(body) : '{}',
-    }).then(r => r.ok ? r.json() : {});
-  }
-
-  notifBellBtn?.addEventListener('click', function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = notifCenter.classList.toggle('open');
-    notifBellBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    if (isOpen && !notifLoaded) {
-      loadNotifications();
-    } else if (isOpen) {
-      loadNotifications();
-    }
-  });
-
-  notifList?.addEventListener('click', function (e) {
-    const toggleBtn = e.target.closest('.notif-toggle-read');
-    const deleteBtn = e.target.closest('.notif-delete');
-    const item = e.target.closest('.notification-item');
-
-    if (toggleBtn && item) {
-      const id = item.dataset.id;
-      const isRead = item.dataset.read === 'true';
-      const url = isRead ? '/api/notifications/mark-unread/' : '/api/notifications/mark-read/';
-      notifPost(url, { id: id }).then(() => loadNotifications());
-    }
-
-    if (deleteBtn && item) {
-      const id = item.dataset.id;
-      notifPost('/api/notifications/delete/', { id: id }).then(() => loadNotifications());
-    }
-  });
-
-  notifMarkAllBtn?.addEventListener('click', function () {
-    notifPost('/api/notifications/mark-all-read/').then(() => loadNotifications());
-  });
-
-  notifClearAllBtn?.addEventListener('click', function () {
-    notifPost('/api/notifications/clear-all/').then(() => {
-      loadNotifications();
-    });
-  });
-
-  // Close notification dropdown on outside click
-  document.addEventListener('click', function (e) {
-    if (notifCenter && !notifCenter.contains(e.target)) {
-      notifCenter.classList.remove('open');
-      notifBellBtn?.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && notifCenter) {
-      notifCenter.classList.remove('open');
-      notifBellBtn?.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  // Poll for new notifications every 30 seconds (authenticated users only)
-  setInterval(pollUnreadCount, 30000);
-  }
-});
+function __MEASURE(label) {
+  var doc = document.documentElement;
+  var header = document.getElementById('siteHeader');
+  var shell = document.querySelector('.header-shell');
+  var navWrap = document.getElementById('navWrap');
+  var nav = document.querySelector('.primary-nav');
+  var search = document.querySelector('.header-search');
+  var actions = document.querySelector('.header-actions');
+  var g = navWrap ? parseFloat(getComputedStyle(navWrap).gap) || 0 : 0;
+  var result = {
+    width: window.innerWidth,
+    docClient: doc.clientWidth,
+    docScroll: doc.scrollWidth,
+    hscroll: doc.scrollWidth > doc.clientWidth,
+    headerLeft: Math.round(header.getBoundingClientRect().left),
+    headerRight: Math.round(header.getBoundingClientRect().right),
+    navClient: navWrap ? navWrap.clientWidth : -1,
+    pnW: nav ? nav.scrollWidth : -1,
+    shW: search ? Math.round(search.getBoundingClientRect().width) : -1,
+    acW: actions ? Math.round(actions.getBoundingClientRect().width) : -1,
+    gap: g,
+    req: navWrap ? Math.round(nav.scrollWidth + search.getBoundingClientRect().width + actions.getBoundingClientRect().width + g*2) : -1,
+    slack: navWrap ? Math.round(navWrap.clientWidth - (nav.scrollWidth + search.getBoundingClientRect().width + actions.getBoundingClientRect().width + g*2)) : -1
+  };
+  var pre = document.getElementById('results');
+  var d = document.createElement('div');
+  d.textContent = 'MEASURE ' + (label||'') + ' ' + JSON.stringify(result);
+  pre.appendChild(d);
+}
+__MEASURE('syn');
 </script>
+
+</body></html>

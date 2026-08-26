@@ -1,0 +1,4 @@
+[2026-08-26 16:36:02,103] WARNING kombu.connection No hostname was supplied. Reverting to default 'localhost'
+[2026-08-26 16:36:02,114] INFO store.tasks === LOGIN SMS EVENT === User 52 | LoginActivity 51 ===
+[2026-08-26 16:36:04,458] INFO store.tasks Login SMS task completed for user 52: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SMba22518354d31d0f367dfcab300079e6'}
+[2026-08-26 16:36:04,543] INFO celery.app.trace Task store.tasks.send_login_sms_task[a15f7cdc-780e-4287-ab2d-9f92b8d76651] succeeded in 2.437000000001717s: {'status': 'success', 'channel': 'sms', 'recipient': '+917560073621', 'twilio_sid': 'SMba22518354d31d0f367dfcab300079e6'}
