@@ -4112,8 +4112,7 @@
           {% for category in global_categories %}
           <li class="mobile-submenu-item">
             <a href="{% url 'store:category_products' category.slug %}" class="mobile-submenu-link">
-              <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i><span>{{
-                category.name }}</span>
+              <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i><span>{{ category.name }}</span>
             </a>
           </li>
           {% empty %}
