@@ -106,12 +106,38 @@ async function functionalTest(send) {
       overlayOpen: overlay.classList.contains('open'),
       bodyOverflow: document.body.style.overflow };
 
+    // SEARCH ICON must open ONLY the dedicated search bar — never the menu.
+    var searchBar = get('mobileSearchBar');
+    var searchField = get('mobileSearchField');
+    var searchClose = get('mobileSearchClose');
     searchBtn.click();
     await wait(330);
-    out.afterSearchBtn = { drawerOpen: drawer.classList.contains('open'),
-      focusedInput: document.activeElement === searchInput,
-      drawerRight: Math.round(drawer.getBoundingClientRect().right),
-      vw2: window.innerWidth };
+    out.afterSearchBtn = {
+      drawerOpen: drawer.classList.contains('open'),           // MUST stay false
+      menuIconIsX: toggle.innerHTML.indexOf('bi-x-lg') > -1,   // hamburger untouched
+      searchBarOpen: !!searchBar && searchBar.classList.contains('open'),
+      searchBtnExpanded: searchBtn.getAttribute('aria-expanded'),
+      focusedField: document.activeElement === searchField,     // auto-focus works
+      searchWidth: searchBar ? Math.round(searchBar.getBoundingClientRect().width) : -1,
+      searchLeft: searchBar ? Math.round(searchBar.getBoundingClientRect().left) : -1,
+      searchRight: searchBar ? Math.round(searchBar.getBoundingClientRect().right) : -1,
+      hscroll: document.documentElement.scrollWidth > document.documentElement.clientWidth
+    };
+
+    // Typing + submit hits the existing search endpoint (GET /products/?q=…)
+    out.searchFormAction = get('mobileSearchForm') ? get('mobileSearchForm').getAttribute('action') : null;
+    searchField.value = 'milk';
+    searchField.dispatchEvent(new Event('input', { bubbles: true }));
+    out.typedOk = searchField.value === 'milk';
+
+    // Close button closes ONLY the search interface.
+    searchClose.click();
+    await wait(330);
+    out.afterSearchClose = {
+      searchBarOpen: searchBar.classList.contains('open'),      // search gone
+      drawerOpen: drawer.classList.contains('open'),            // menu still closed
+      focusBackOnTrigger: document.activeElement === searchBtn
+    };
 
     overlay.click();
     await wait(330);

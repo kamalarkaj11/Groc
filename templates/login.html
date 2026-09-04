@@ -251,20 +251,55 @@
     transform: translateY(-2px);
   }
 
-  .toggle-password-btn {
+  .password-toggle-wrap {
+    position: relative;
+  }
+
+  .password-toggle-wrap .form-control {
+    padding-right: 140px;
+  }
+
+  .password-toggle-btn {
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 100px;
+    height: 36px;
+    padding: 4px 12px;
     background: none;
     border: 1px solid var(--auth-line);
-    color: var(--auth-green);
     border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 0.9rem;
+    color: var(--auth-green);
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    z-index: 10;
+    white-space: nowrap;
   }
 
-  .toggle-password-btn:hover {
+  .password-toggle-btn:hover {
     background: var(--auth-soft);
+    color: #0f5132;
+  }
+
+  @media (max-width: 576px) {
+    .password-toggle-wrap .form-control {
+      padding-right: 120px;
+    }
+
+    .password-toggle-btn {
+      right: 6px;
+      min-width: 86px;
+      height: 32px;
+      padding: 3px 10px;
+      font-size: 0.76rem;
+    }
   }
 
   .remember-check {
@@ -320,11 +355,6 @@
       <form method="post" id="login-form">
         {% csrf_token %}
         {{ form|crispy }}
-        <div class="text-end mb-3">
-          <button type="button" id="toggle-password-btn" class="toggle-password-btn">
-            <i class="bi bi-eye" id="login-password-icon"></i> Show password
-          </button>
-        </div>
         <div class="remember-check">
           <input class="form-check-input" type="checkbox" value="1" id="remember_me" name="remember_me">
           <label class="form-check-label" for="remember_me">
@@ -354,41 +384,38 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const toggleButton = document.getElementById('toggle-password-btn');
-    const passwordIcon = document.getElementById('login-password-icon');
     const form = document.getElementById('login-form');
+    if (!form) return;
 
-    if (!toggleButton || !form) return;
+    const passwordInput = form.querySelector('input[type="password"]');
+    if (!passwordInput) return;
 
-    toggleButton.addEventListener('click', function() {
-        const passwordField = form.querySelector('input[type="password"]');
-        if (!passwordField) {
-            const allInputs = form.querySelectorAll('input[type="password"], input[type="text"]');
-            allInputs.forEach((input) => {
-                if (input.id && input.id.includes('password')) {
-                    if (input.type === 'password') {
-                        input.type = 'text';
-                        if (passwordIcon) passwordIcon.className = 'bi bi-eye-slash';
-                        toggleButton.innerHTML = '<i class="bi bi-eye-slash"></i> Hide password';
-                    } else {
-                        input.type = 'password';
-                        if (passwordIcon) passwordIcon.className = 'bi bi-eye';
-                        toggleButton.innerHTML = '<i class="bi bi-eye"></i> Show password';
-                    }
-                }
-            });
-            return;
-        }
+    // Wrap the password input so the show/hide control lives inside the field
+    const wrapper = document.createElement('div');
+    wrapper.className = 'password-toggle-wrap';
+    passwordInput.parentNode.insertBefore(wrapper, passwordInput);
+    wrapper.appendChild(passwordInput);
 
-        if (passwordField.type === 'password') {
-            passwordField.type = 'text';
-            if (passwordIcon) passwordIcon.className = 'bi bi-eye-slash';
-            toggleButton.innerHTML = '<i class="bi bi-eye-slash"></i> Hide password';
+    // Create the show/hide password control (inside the password field)
+    const button = document.createElement('button');
+    button.type = 'button'; // ensures the control never submits the login form
+    button.id = 'toggle-password-btn';
+    button.className = 'password-toggle-btn';
+    button.setAttribute('aria-label', 'Show password');
+    button.innerHTML = '<i class="bi bi-eye"></i> Show';
+    wrapper.appendChild(button);
+
+    button.addEventListener('click', function() {
+        const isHidden = passwordInput.type === 'password';
+        passwordInput.type = isHidden ? 'text' : 'password';
+        if (isHidden) {
+            this.innerHTML = '<i class="bi bi-eye-slash"></i> Hide';
+            this.setAttribute('aria-label', 'Hide password');
         } else {
-            passwordField.type = 'password';
-            if (passwordIcon) passwordIcon.className = 'bi bi-eye';
-            toggleButton.innerHTML = '<i class="bi bi-eye"></i> Show password';
+            this.innerHTML = '<i class="bi bi-eye"></i> Show';
+            this.setAttribute('aria-label', 'Show password');
         }
+        passwordInput.focus();
     });
 });
 </script>

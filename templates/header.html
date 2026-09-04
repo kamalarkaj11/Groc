@@ -2,15 +2,15 @@
 {% load store_extras %}
 <style>
   :root {
-    --header-green: #16834c;
-    --header-green-deep: #0f5132;
+    --header-green: #087f5b;
+    --header-green-deep: #064e3b;
     --header-mint: #22c7a9;
     --header-yellow: #f7c948;
     --header-ink: #17251d;
     --header-muted: #69756f;
     --header-line: rgba(25, 135, 84, 0.16);
     --header-soft: #f5fbf7;
-    --header-shadow: 0 18px 48px rgba(15, 81, 50, 0.16);
+    --header-shadow: 0 10px 30px rgba(6, 78, 59, 0.10);
     --mega-bg: #ffffff;
     --mega-sidebar-bg: #f8faf9;
     --mega-hover: rgba(22, 131, 76, 0.08);
@@ -18,10 +18,11 @@
     --mega-accent-gradient: linear-gradient(135deg, var(--header-green), var(--header-mint));
     --mega-card-gradient: linear-gradient(135deg, rgba(247, 252, 249, 0.6), rgba(255, 255, 255, 0.9));
     --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --header-radius: 24px;
   }
 
   /* ============================
-     SITE HEADER
+     SITE HEADERB
      ============================ */
 
   .site-header {
@@ -34,32 +35,49 @@
     font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
     animation: headerDropIn 0.55s ease both;
     transition: top 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
-    /* Clip the decorative aurora glow / shimmer horizontally so it can never
-       push the page out of the viewport (no horizontal scrollbar), while still
-       letting dropdowns extend below the header (overflow-y stays visible). */
-    overflow-x: clip;
+    /* The header must NOT clip its descendants. The Categories mega-dropdown
+       and its hover-bridge extend below the header, and ANY overflow clipping
+       on this element (overflow-x: clip / hidden / auto) clips those children
+       in BOTH axes to the header's padding box — making the dropdown invisible
+       and un-hoverable as soon as the cursor crosses the header's bottom edge.
+       Horizontal page scrolling is prevented instead by bounding the decorative
+       aurora / shimmer backgrounds to the header box (see .site-header::before
+       and .header-shell::before below), so no clip is needed here. */
   }
 
   /* Animated aurora background glow */
   .site-header::before {
     content: "";
     position: absolute;
-    inset: -40px;
+    top: -24px;
+    right: 0;
+    bottom: -24px;
+    left: 0;
     z-index: -1;
-    background: 
-      radial-gradient(ellipse at 20% 50%, rgba(22, 131, 76, 0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 50%, rgba(34, 199, 169, 0.06) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 0%, rgba(247, 201, 72, 0.04) 0%, transparent 40%);
-    filter: blur(20px);
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(8, 127, 91, 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 50%, rgba(34, 199, 169, 0.04) 0%, transparent 50%);
+    filter: blur(14px);
     animation: auroraShift 8s ease-in-out infinite alternate;
     pointer-events: none;
-    border-radius: 24px;
+    border-radius: var(--header-radius);
   }
 
   @keyframes auroraShift {
-    0% { opacity: 0.6; transform: scale(1) translateX(0); }
-    50% { opacity: 1; transform: scale(1.05) translateX(5px); }
-    100% { opacity: 0.7; transform: scale(1.02) translateX(-3px); }
+    0% {
+      opacity: 0.6;
+      transform: scale(1) translateX(0);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1.05) translateX(5px);
+    }
+
+    100% {
+      opacity: 0.7;
+      transform: scale(1.02) translateX(-3px);
+    }
   }
 
   .site-header.is-scrolled {
@@ -69,14 +87,13 @@
   .header-shell {
     display: flex;
     align-items: center;
-    gap: 20px;
-    min-height: 78px;
-    padding: 12px 16px;
-    border: 1px solid var(--header-line);
-    border-radius: 16px;
+    gap: 18px;
+    min-height: 74px;
+    padding: 10px 16px;
+    border: 1px solid rgba(8, 127, 91, 0.12);
+    border-radius: var(--header-radius);
     background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(247, 252, 249, 0.95)),
-      radial-gradient(circle at 5% 50%, rgba(247, 201, 72, 0.16), transparent 18rem);
+      linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(245, 252, 248, 0.92));
     box-shadow: var(--header-shadow);
     backdrop-filter: blur(18px);
     overflow: visible;
@@ -89,13 +106,13 @@
     content: "";
     position: absolute;
     top: 0;
-    left: -100%;
+    left: 0;
     width: 50%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
     animation: shimmerSweep 6s ease-in-out infinite;
     pointer-events: none;
-    border-radius: 16px;
+    border-radius: var(--header-radius);
   }
 
   /* Floating decorative particles */
@@ -165,15 +182,40 @@
   }
 
   @keyframes floatParticle {
-    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.15; }
-    25% { transform: translate(8px, -12px) scale(1.2); opacity: 0.25; }
-    50% { transform: translate(-5px, -20px) scale(0.8); opacity: 0.1; }
-    75% { transform: translate(12px, -8px) scale(1.1); opacity: 0.2; }
+
+    0%,
+    100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.15;
+    }
+
+    25% {
+      transform: translate(8px, -12px) scale(1.2);
+      opacity: 0.25;
+    }
+
+    50% {
+      transform: translate(-5px, -20px) scale(0.8);
+      opacity: 0.1;
+    }
+
+    75% {
+      transform: translate(12px, -8px) scale(1.1);
+      opacity: 0.2;
+    }
   }
 
   @keyframes shimmerSweep {
-    0%, 20% { left: -50%; }
-    80%, 100% { left: 150%; }
+
+    0%,
+    20% {
+      transform: translateX(-100%);
+    }
+
+    80%,
+    100% {
+      transform: translateX(300%);
+    }
   }
 
   /* Decorative gradient separator at bottom */
@@ -209,17 +251,17 @@
   }
 
   .brand-icon {
-    width: 50px;
-    height: 50px;
+    width: 44px;
+    height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: 13px;
     color: #fff;
-    background: linear-gradient(135deg, var(--header-green-deep), var(--header-green) 58%, var(--header-mint));
-    box-shadow: 0 14px 28px rgba(22, 131, 76, 0.28);
-    font-size: 1.55rem;
-    transition: transform 0.24s ease, box-shadow 0.24s ease;
+    background: linear-gradient(135deg, var(--header-green-deep), var(--header-green) 60%, var(--header-mint));
+    box-shadow: 0 10px 20px rgba(8, 127, 91, 0.24);
+    font-size: 1.4rem;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
     position: relative;
   }
 
@@ -227,8 +269,8 @@
   .brand-icon::before {
     content: "";
     position: absolute;
-    inset: -4px;
-    border-radius: 10px;
+    inset: -3px;
+    border-radius: 15px;
     background: linear-gradient(135deg, var(--header-green), var(--header-mint));
     opacity: 0;
     filter: blur(8px);
@@ -237,18 +279,31 @@
   }
 
   @keyframes iconPulseGlow {
-    0%, 100% { opacity: 0; transform: scale(1); }
-    50% { opacity: 0.35; transform: scale(1.08); }
+
+    0%,
+    100% {
+      opacity: 0;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 0.35;
+      transform: scale(1.08);
+    }
   }
 
   .brand-link:hover .brand-icon {
-    box-shadow: 0 18px 32px rgba(22, 131, 76, 0.34);
-    transform: rotate(-5deg) scale(1.05);
+    box-shadow: 0 14px 26px rgba(8, 127, 91, 0.30);
+    transform: scale(1.08);
   }
 
-  .brand-text { display: grid; line-height: 1.05; }
+  .brand-text {
+    display: grid;
+    line-height: 1.05;
+  }
+
   .brand-name {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 950;
     letter-spacing: 0;
     background: linear-gradient(135deg, var(--header-green-deep), var(--header-green) 50%, var(--header-mint));
@@ -257,6 +312,7 @@
     -webkit-text-fill-color: transparent;
     transition: transform 0.2s ease;
   }
+
   .brand-tagline {
     color: var(--header-muted);
     font-size: 0.72rem;
@@ -271,8 +327,14 @@
     border: 1px solid rgba(22, 131, 76, 0.1);
   }
 
-  .brand-link:hover .brand-name { transform: translateX(2px); }
-  .brand-name, .brand-tagline { transition: color 0.2s ease, transform 0.2s ease; }
+  .brand-link:hover .brand-name {
+    transform: translateX(0);
+  }
+
+  .brand-name,
+  .brand-tagline {
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
 
   /* Nav wrap */
   .nav-wrap {
@@ -291,7 +353,7 @@
   .primary-nav {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 7px;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -300,7 +362,12 @@
     max-width: none;
     overflow: hidden;
     white-space: nowrap;
-    will-change: max-width, opacity, transform;
+    /* NOTE: do NOT add `transform` (or any layout-affecting property) here.
+       `will-change: transform` would make this element a containing block
+       for the absolutely-positioned categories mega-menu, so the 1100px-wide
+       dropdown would center over the nav strip instead of the whole header and
+       overflow the viewport on narrow desktop widths (<= ~1330px). */
+    will-change: max-width, opacity;
     /* opacity/transform fade quickly; max-width/margin match the search timing */
     transition:
       opacity 0.35s var(--transition-smooth),
@@ -315,14 +382,14 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    min-height: 42px;
-    padding: 8px 16px;
+    min-height: 44px;
+    padding: 9px 17px;
     border: 0;
     border-radius: 999px;
     color: #435047;
     background: transparent;
-    font-weight: 750;
-    font-size: 0.88rem;
+    font-weight: 700;
+    font-size: 0.9rem;
     text-decoration: none;
     white-space: nowrap;
     position: relative;
@@ -384,7 +451,7 @@
     transition: opacity 0.22s ease, transform 0.22s ease;
   }
 
-.nav-link-custom:hover,
+  .nav-link-custom:hover,
   .account-trigger:hover {
     color: var(--header-green-deep);
     background: rgba(25, 135, 84, 0.1);
@@ -398,7 +465,10 @@
     transform: scaleX(1);
   }
 
-  .nav-link-custom i, .account-trigger i { color: var(--header-green); }
+  .nav-link-custom i,
+  .account-trigger i {
+    color: var(--header-green);
+  }
 
   /* Active state (for routes, if you add 'active' class later) */
   .nav-link-custom.active,
@@ -456,7 +526,9 @@
      Logo and the right-side controls (cart/notification/account) stay
      pinned because the nav's margin-right:auto was replaced by a fixed gap
      and .header-actions uses margin-left:auto. */
-  .site-header.search-expanded .nav-wrap { gap: 0; }
+  .site-header.search-expanded .nav-wrap {
+    gap: 0;
+  }
 
   .site-header.search-expanded .primary-nav {
     opacity: 0;
@@ -474,7 +546,9 @@
     margin-right: 18px;
   }
 
-  .site-header.search-expanded .header-actions { flex: 0 0 auto; }
+  .site-header.search-expanded .header-actions {
+    flex: 0 0 auto;
+  }
 
   /* Prominent active search field */
   .site-header.search-expanded .header-search input {
@@ -487,11 +561,12 @@
 
   .header-search {
     position: relative;
-    width: clamp(205px, 23vw, 310px);
+    width: clamp(185px, 20.5vw, 268px);
     flex: 0 1 auto;
     min-width: 0;
     transition: width 0.5s var(--transition-smooth), margin-right 0.5s var(--transition-smooth), flex 0.5s var(--transition-smooth);
   }
+
   .header-search input {
     width: 100%;
     min-height: 44px;
@@ -509,6 +584,7 @@
   .header-search input::placeholder {
     transition: opacity 0.2s ease, transform 0.2s ease;
   }
+
   .header-search input:focus::placeholder {
     opacity: 0.5;
     transform: translateX(4px);
@@ -517,7 +593,7 @@
   .header-search input:focus {
     border-color: rgba(25, 135, 84, 0.5);
     background: #fff;
-    box-shadow: 
+    box-shadow:
       0 0 0 4px rgba(25, 135, 84, 0.1),
       0 4px 16px rgba(22, 131, 76, 0.08);
   }
@@ -540,12 +616,32 @@
   }
 
   @keyframes focusGlowPulse {
-    0%, 100% { opacity: 0.25; }
-    50% { opacity: 0.45; }
+
+    0%,
+    100% {
+      opacity: 0.25;
+    }
+
+    50% {
+      opacity: 0.45;
+    }
   }
 
-  .search-icon { position: absolute; left: 16px; top: 50%; color: var(--header-muted); transform: translateY(-50%); transition: opacity 0.3s var(--transition-smooth), transform 0.3s var(--transition-smooth), color 0.3s ease; }
-  .site-header.search-expanded .search-icon { opacity: 1; transform: translateY(-50%) scale(1); color: var(--header-green); }
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    color: var(--header-muted);
+    transform: translateY(-50%);
+    transition: opacity 0.3s var(--transition-smooth), transform 0.3s var(--transition-smooth), color 0.3s ease;
+  }
+
+  .site-header.search-expanded .search-icon {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+    color: var(--header-green);
+  }
+
   .search-submit {
     position: absolute;
     right: 5px;
@@ -562,7 +658,11 @@
     transform: translateY(-50%);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .search-submit:hover { box-shadow: 0 10px 20px rgba(22, 131, 76, 0.22); transform: translateY(-50%) scale(1.04); }
+
+  .search-submit:hover {
+    box-shadow: 0 10px 20px rgba(22, 131, 76, 0.22);
+    transform: translateY(-50%) scale(1.04);
+  }
 
   .search-suggestions {
     position: absolute;
@@ -590,9 +690,12 @@
     padding: 10px;
     color: var(--header-ink);
     text-decoration: none;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   }
 
-  .suggestion-link + .suggestion-link {
+  .suggestion-link+.suggestion-link {
     border-top: 1px solid rgba(25, 135, 84, 0.08);
   }
 
@@ -601,6 +704,18 @@
     color: var(--header-green-deep);
     background: rgba(25, 135, 84, 0.08);
     outline: none;
+  }
+
+  .suggestion-link:hover {
+    background: linear-gradient(135deg, rgba(25, 135, 84, 0.08), rgba(34, 199, 169, 0.05));
+  }
+
+  .suggestion-link:hover .suggestion-title {
+    color: var(--header-green-deep);
+  }
+
+  .suggestion-link:hover .suggestion-price {
+    color: var(--header-green-deep);
   }
 
   .suggestion-thumb {
@@ -644,17 +759,17 @@
 
   .cart-action {
     position: relative;
-    width: 48px;
-    height: 48px;
+    width: 46px;
+    height: 46px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
     border-radius: 50%;
     color: var(--header-green-deep);
-    background: linear-gradient(135deg, rgba(25, 135, 84, 0.1), rgba(32, 201, 151, 0.12));
+    background: linear-gradient(135deg, rgba(8, 127, 91, 0.10), rgba(32, 201, 151, 0.16));
     text-decoration: none;
-    font-size: 1.25rem;
+    font-size: 1.18rem;
     transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
   }
 
@@ -675,13 +790,17 @@
   .cart-action:hover::before {
     opacity: 0.7;
   }
+
   .cart-action:hover {
     color: var(--header-green-deep);
-    background: rgba(25, 135, 84, 0.16);
-    box-shadow: 0 12px 22px rgba(22, 131, 76, 0.14);
-    transform: translateY(-2px);
+    background: rgba(8, 127, 91, 0.14);
+    box-shadow: 0 10px 22px rgba(8, 127, 91, 0.16);
+    transform: translateY(-2px) scale(1.05);
   }
-  .cart-action:hover i { animation: navIconPop 0.38s ease; }
+
+  .cart-action:hover i {
+    animation: navIconPop 0.38s ease;
+  }
 
   .cart-count {
     position: absolute;
@@ -703,14 +822,32 @@
   }
 
   @keyframes countPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.08); }
+
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.08);
+    }
   }
 
   /* Account menu */
-  .account-menu { position: relative; }
-  .account-trigger { background: rgba(248, 252, 250, 0.92); border: 1px solid var(--header-line); }
-  .account-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+  .account-menu {
+    position: relative;
+  }
+
+  .account-trigger {
+    background: rgba(248, 252, 250, 0.92);
+    border: 1px solid var(--header-line);
+  }
+
+  .account-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
   .account-dropdown {
     position: absolute;
@@ -718,10 +855,10 @@
     right: 0;
     min-width: 220px;
     margin: 0;
-    padding: 10px;
+    padding: 12px;
     list-style: none;
     border: 1px solid var(--header-line);
-    border-radius: 8px;
+    border-radius: 20px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 252, 249, 0.98)),
       radial-gradient(circle at top right, rgba(34, 199, 169, 0.12), transparent 12rem);
     box-shadow: var(--header-shadow);
@@ -731,6 +868,7 @@
     transform-origin: top right;
     transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
   }
+
   .account-dropdown::before {
     content: "";
     position: absolute;
@@ -743,6 +881,7 @@
     background: rgba(255, 255, 255, 0.99);
     transform: rotate(45deg);
   }
+
   .account-menu.open .account-dropdown {
     opacity: 1;
     visibility: visible;
@@ -756,7 +895,7 @@
     position: relative;
     z-index: 1;
     padding: 12px 12px;
-    border-radius: 8px;
+    border-radius: 12px;
     color: #3f4d46;
     font-weight: 800;
     text-decoration: none;
@@ -764,11 +903,27 @@
     transform: translateY(6px);
     transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
   }
-  .account-menu.open .dropdown-link-custom { opacity: 1; transform: translateY(0); }
-  .account-menu.open .account-dropdown li:nth-child(1) .dropdown-link-custom { transition-delay: 0.04s; }
-  .account-menu.open .account-dropdown li:nth-child(2) .dropdown-link-custom { transition-delay: 0.08s; }
-  .account-menu.open .account-dropdown li:nth-child(3) .dropdown-link-custom { transition-delay: 0.12s; }
-  .account-menu.open .account-dropdown li:nth-child(4) .dropdown-link-custom { transition-delay: 0.16s; }
+
+  .account-menu.open .dropdown-link-custom {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .account-menu.open .account-dropdown li:nth-child(1) .dropdown-link-custom {
+    transition-delay: 0.04s;
+  }
+
+  .account-menu.open .account-dropdown li:nth-child(2) .dropdown-link-custom {
+    transition-delay: 0.08s;
+  }
+
+  .account-menu.open .account-dropdown li:nth-child(3) .dropdown-link-custom {
+    transition-delay: 0.12s;
+  }
+
+  .account-menu.open .account-dropdown li:nth-child(4) .dropdown-link-custom {
+    transition-delay: 0.16s;
+  }
 
   .dropdown-link-custom i {
     width: 32px;
@@ -782,8 +937,18 @@
     background: rgba(25, 135, 84, 0.1);
     transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
   }
-  .dropdown-link-custom:hover { color: var(--header-green-deep); background: rgba(25, 135, 84, 0.09); transform: translateX(2px); }
-  .dropdown-link-custom:hover i { color: #fff; background: var(--mega-accent-gradient); transform: rotate(-5deg) scale(1.05); }
+
+  .dropdown-link-custom:hover {
+    color: var(--header-green-deep);
+    background: rgba(25, 135, 84, 0.09);
+    transform: translateX(2px);
+  }
+
+  .dropdown-link-custom:hover i {
+    color: #fff;
+    background: var(--mega-accent-gradient);
+    transform: rotate(-5deg) scale(1.05);
+  }
 
   /* Menu toggle & mobile cart */
   .menu-toggle {
@@ -794,14 +959,21 @@
     justify-content: center;
     flex: 0 0 auto;
     border: 1px solid var(--header-line);
-    border-radius: 8px;
+    border-radius: 14px;
     color: var(--header-green);
     background: rgba(248, 252, 250, 0.92);
     font-size: 1.45rem;
     transition: transform 0.2s ease, background 0.2s ease;
   }
-  .menu-toggle:hover { background: rgba(25, 135, 84, 0.1); transform: translateY(-1px); }
-  .mobile-cart { display: none; }
+
+  .menu-toggle:hover {
+    background: rgba(25, 135, 84, 0.1);
+    transform: translateY(-1px);
+  }
+
+  .mobile-cart {
+    display: none;
+  }
 
   /* Mobile compact-bar controls: search button (hidden on desktop) */
   .mobile-search-btn {
@@ -819,10 +991,12 @@
     font-size: 1.3rem;
     transition: transform 0.2s ease, background 0.2s ease;
   }
+
   .mobile-search-btn:hover {
     background: rgba(25, 135, 84, 0.1);
     transform: translateY(-1px);
   }
+
   .mobile-search-btn:focus-visible {
     outline: none;
     box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22);
@@ -844,13 +1018,344 @@
     font-size: 1.3rem;
     transition: transform 0.2s ease, background 0.2s ease;
   }
+
   .mobile-account-btn:hover {
     background: rgba(25, 135, 84, 0.1);
     transform: translateY(-1px);
   }
+
   .mobile-account-btn:focus-visible {
     outline: none;
     box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22);
+  }
+
+  /* ============================
+     DEDICATED ACCOUNT / AUTH PANEL
+     Opened ONLY by the Profile icon (#mobileAccountBtn). Fully independent
+     from the navigation drawer (#mobileNavDrawer), which stays controlled
+     exclusively by the hamburger (#menuToggle). Guests get Login / Create
+     Account actions; signed-in users get Profile / Orders / Logout — every
+     action points to the EXISTING GrocHub routes (no duplicate auth logic).
+     ============================ */
+  .mobile-auth-panel {
+    display: none;
+    position: fixed;
+    top: 0;
+    /* set by JS, sits just below the sticky header */
+    right: 8px;
+    /* aligned under the compact-bar controls */
+    z-index: 1200;
+    width: min(320px, calc(100vw - 16px));
+    /* never overflows the viewport */
+    box-sizing: border-box;
+    padding: 12px;
+    border: 1px solid var(--header-line);
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(247, 252, 249, 0.96));
+    backdrop-filter: blur(18px);
+    box-shadow: var(--header-shadow);
+  }
+
+  .mobile-auth-panel.open {
+    display: block;
+    /* Same fast entrance language as the dedicated search bar: fade-in plus a
+       slight scale-up from the profile-icon corner. ~260ms (200–300ms band). */
+    animation: mobileAuthIn 0.26s var(--transition-smooth) both;
+    transform-origin: top right;
+  }
+
+  @keyframes mobileAuthIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.96);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .mobile-auth-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 4px 12px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(22, 131, 76, 0.12);
+  }
+
+  .mobile-auth-avatar {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 40px;
+    border-radius: 999px;
+    color: #fff;
+    font-size: 1.25rem;
+    background: var(--mega-accent-gradient);
+    box-shadow: 0 6px 14px rgba(22, 131, 76, 0.28);
+  }
+
+  .mobile-auth-greeting {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1 1 auto;
+    line-height: 1.25;
+  }
+
+  .mobile-auth-greeting strong {
+    color: var(--header-ink);
+    font-size: 0.92rem;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-auth-greeting small {
+    color: var(--header-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .mobile-auth-close {
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 40px;
+    padding: 0;
+    border: 1px solid var(--header-line);
+    border-radius: 8px;
+    color: var(--header-green);
+    background: rgba(248, 252, 250, 0.92);
+    font-size: 1rem;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .mobile-auth-close:hover {
+    background: rgba(25, 135, 84, 0.1);
+    transform: translateY(-1px);
+  }
+
+  .mobile-auth-close:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22);
+  }
+
+  .mobile-auth-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mobile-auth-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 12px;
+    border-radius: 12px;
+    color: #3f4d46;
+    font-weight: 800;
+    font-size: 0.88rem;
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .mobile-auth-link i {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 36px;
+    border-radius: 9px;
+    color: var(--header-green-deep);
+    background: rgba(25, 135, 84, 0.1);
+    transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  }
+
+  .mobile-auth-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+  }
+
+  .ma-title {
+    color: inherit;
+    font-weight: 800;
+  }
+
+  .ma-desc {
+    color: var(--header-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .mobile-auth-link:hover {
+    color: var(--header-green-deep);
+    background: rgba(25, 135, 84, 0.09);
+    transform: translateX(2px);
+  }
+
+  .mobile-auth-link:hover i {
+    color: #fff;
+    background: var(--mega-accent-gradient);
+    transform: rotate(-5deg) scale(1.05);
+  }
+
+  .mobile-auth-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22);
+  }
+
+  /* Primary CTA (Login) — brand gradient */
+  .mobile-auth-link.is-primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--header-green), var(--header-mint));
+    box-shadow: 0 8px 20px rgba(22, 131, 76, 0.26);
+  }
+
+  .mobile-auth-link.is-primary i {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.18);
+  }
+
+  .mobile-auth-link.is-primary .ma-desc {
+    color: rgba(255, 255, 255, 0.82);
+  }
+
+  .mobile-auth-link.is-primary:hover {
+    color: #fff;
+    background: linear-gradient(135deg, var(--header-green-deep), var(--header-green));
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(22, 131, 76, 0.32);
+  }
+
+  .mobile-auth-link.is-primary:hover i {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.24);
+    transform: rotate(-5deg) scale(1.05);
+  }
+
+  /* Logout — subtle danger tone */
+  .mobile-auth-link.is-danger {
+    color: #b02a37;
+  }
+
+  .mobile-auth-link.is-danger i {
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+  }
+
+  .mobile-auth-link.is-danger:hover {
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.08);
+    transform: translateX(2px);
+  }
+
+  .mobile-auth-link.is-danger:hover i {
+    color: #fff;
+    background: #dc3545;
+    transform: rotate(-5deg) scale(1.05);
+  }
+
+  /* ============================
+     DEDICATED MOBILE SEARCH BAR
+     Opened ONLY by the Search icon (#mobileSearchBtn). This component is
+     fully independent from the navigation drawer (#mobileNavDrawer), which
+     is controlled exclusively by the hamburger button (#menuToggle).
+     ============================ */
+  .mobile-search-bar {
+    display: none;
+    position: fixed;
+    top: 0;
+    /* set by JS, sits just below the sticky header */
+    left: 8px;
+    /* keeps the bar inside the viewport — no h-scroll */
+    right: 8px;
+    z-index: 1200;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid var(--header-line);
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(247, 252, 249, 0.96));
+    backdrop-filter: blur(18px);
+    box-shadow: var(--header-shadow);
+  }
+
+  .mobile-search-bar.open {
+    display: flex;
+    /* Fast, natural entrance: fade-in + slight scale-up (expanding outward
+       from the search-icon corner) + a soft drop into place. ~260ms. */
+    animation: mobileSearchIn 0.26s var(--transition-smooth) both;
+    transform-origin: top right;
+  }
+
+  @keyframes mobileSearchIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.96);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Reuse the exact pill-input design language of the drawer's search form */
+  .mobile-search-bar .mobile-search {
+    margin: 0;
+    flex: 1 1 auto;
+    border: 0;
+    background: transparent;
+    padding: 0;
+  }
+
+  .mobile-search-close {
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border: 1px solid var(--header-line);
+    border-radius: 50%;
+    color: var(--header-green-deep);
+    background: rgba(248, 252, 250, 0.92);
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: transform 0.25s ease, background 0.25s ease;
+  }
+
+  .mobile-search-close:hover {
+    background: rgba(25, 135, 84, 0.12);
+    transform: rotate(90deg);
+  }
+
+  .mobile-search-close:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22);
+  }
+
+  /* Safety net: the mobile search interface never exists on desktop widths */
+  @media (min-width: 1101px) {
+    .mobile-search-bar {
+      display: none !important;
+    }
   }
 
   /* ============================
@@ -868,13 +1373,19 @@
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
   }
-  .mobile-overlay.open { opacity: 1; visibility: visible; }
+
+  .mobile-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
 
   .mobile-nav-drawer {
     display: none;
     position: fixed;
-    top: 0;   /* set by JS to sit just below the sticky header */
-    right: 0; /* set by JS to align with the header right edge */
+    top: 0;
+    /* set by JS to sit just below the sticky header */
+    right: 0;
+    /* set by JS to align with the header right edge */
     z-index: 1200;
     width: min(420px, calc(100vw - 16px));
     max-width: 100%;
@@ -895,6 +1406,7 @@
     will-change: transform, opacity;
     transition: transform 0.3s var(--transition-smooth), opacity 0.3s ease, visibility 0.3s ease;
   }
+
   .mobile-nav-drawer.open {
     transform: translateY(0);
     opacity: 1;
@@ -910,6 +1422,7 @@
     padding: 12px 12px 12px 16px;
     border-bottom: 1px solid var(--header-line);
   }
+
   .mobile-drawer-brand {
     display: inline-flex;
     align-items: center;
@@ -918,10 +1431,24 @@
     text-decoration: none;
     padding: 2px 0;
   }
-  .mobile-drawer-brand .brand-icon { width: 40px; height: 40px; font-size: 1.2rem; }
-  .mobile-drawer-brand .brand-name { font-size: 1.25rem; }
-  .mobile-drawer-brand .brand-tagline { font-size: 0.6rem; }
-  .mobile-drawer-brand .brand-text { display: grid; }
+
+  .mobile-drawer-brand .brand-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .mobile-drawer-brand .brand-name {
+    font-size: 1.25rem;
+  }
+
+  .mobile-drawer-brand .brand-tagline {
+    font-size: 0.6rem;
+  }
+
+  .mobile-drawer-brand .brand-text {
+    display: grid;
+  }
 
   .mobile-drawer-close {
     width: 44px;
@@ -937,11 +1464,27 @@
     font-size: 1.15rem;
     transition: transform 0.25s ease, background 0.25s ease;
   }
-  .mobile-drawer-close:hover { background: rgba(25, 135, 84, 0.12); transform: rotate(90deg); }
-  .mobile-drawer-close:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22); }
 
-  .mobile-menu { margin: 0; padding: 8px; }
-  .mobile-menu-list { margin: 0; padding: 0; list-style: none; }
+  .mobile-drawer-close:hover {
+    background: rgba(25, 135, 84, 0.12);
+    transform: rotate(90deg);
+  }
+
+  .mobile-drawer-close:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22);
+  }
+
+  .mobile-menu {
+    margin: 0;
+    padding: 8px;
+  }
+
+  .mobile-menu-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
 
   .mobile-menu-link {
     display: flex;
@@ -962,7 +1505,8 @@
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
   }
-  .mobile-menu-link > i:first-child {
+
+  .mobile-menu-link>i:first-child {
     width: 34px;
     height: 34px;
     display: inline-flex;
@@ -974,8 +1518,17 @@
     background: rgba(25, 135, 84, 0.1);
     font-size: 1rem;
   }
-  .mobile-menu-link:hover { background: var(--mega-hover); color: var(--header-green-deep); transform: translateX(2px); }
-  .mobile-menu-link:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22); }
+
+  .mobile-menu-link:hover {
+    background: var(--mega-hover);
+    color: var(--header-green-deep);
+    transform: translateX(2px);
+  }
+
+  .mobile-menu-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.22);
+  }
 
   .mobile-chevron {
     margin-left: auto;
@@ -983,8 +1536,11 @@
     font-size: 0.8rem;
     transition: transform 0.3s var(--transition-smooth);
   }
-  .mobile-has-submenu.expanded > .mobile-menu-link .mobile-chevron,
-  .mobile-account-section.expanded > .mobile-menu-link .mobile-chevron { transform: rotate(180deg); }
+
+  .mobile-has-submenu.expanded>.mobile-menu-link .mobile-chevron,
+  .mobile-account-section.expanded>.mobile-menu-link .mobile-chevron {
+    transform: rotate(180deg);
+  }
 
   .mobile-submenu {
     margin: 0;
@@ -994,7 +1550,11 @@
     overflow: hidden;
     transition: max-height 0.32s var(--transition-smooth);
   }
-  .mobile-submenu-item { padding: 2px 8px 2px 6px; }
+
+  .mobile-submenu-item {
+    padding: 2px 8px 2px 6px;
+  }
+
   .mobile-submenu-link {
     display: flex;
     align-items: center;
@@ -1009,19 +1569,27 @@
     text-decoration: none;
     transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   }
-  .mobile-submenu-link > i:first-child {
+
+  .mobile-submenu-link>i:first-child {
     width: 20px;
     flex: 0 0 20px;
     color: var(--header-green);
     font-size: 0.95rem;
     text-align: center;
   }
+
   .mobile-submenu-link:hover {
     background: var(--mega-hover);
     color: var(--header-green-deep);
     border-left-color: var(--header-green);
   }
-  .mobile-submenu-empty { display: block; padding: 8px 14px; color: var(--header-muted); font-size: 0.85rem; }
+
+  .mobile-submenu-empty {
+    display: block;
+    padding: 8px 14px;
+    color: var(--header-muted);
+    font-size: 0.85rem;
+  }
 
   .mobile-search {
     position: relative;
@@ -1032,7 +1600,8 @@
     background: rgba(248, 252, 250, 0.92);
     box-sizing: border-box;
   }
-  .mobile-search > i {
+
+  .mobile-search>i {
     position: absolute;
     left: 24px;
     top: 50%;
@@ -1041,6 +1610,7 @@
     font-size: 1rem;
     pointer-events: none;
   }
+
   .mobile-search input {
     width: 100%;
     min-height: 44px;
@@ -1053,10 +1623,12 @@
     font-size: 0.92rem;
     box-sizing: border-box;
   }
+
   .mobile-search input:focus {
     border-color: rgba(25, 135, 84, 0.55);
     box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.12);
   }
+
   .mobile-search button {
     position: absolute;
     right: 16px;
@@ -1083,7 +1655,45 @@
      MEGA DROPDOWN — PREMIUM
      ============================ */
 
-  .cat-dropdown { position: static; }
+  .cat-dropdown {
+    position: static;
+  }
+
+  /* ── Continuous hover-zone bridge (pure CSS, always in sync) ──
+     The mega-menu floats 16px below the header shell, so the strip between the
+     Categories trigger and the menu is a mouse-unreachable dead zone: crossing
+     it fires mouseleave → the menu flashes closed. This invisible pseudo-element
+     fills exactly that strip, so trigger + bridge + mega-menu behave as ONE
+     connected hover zone.
+
+     Both this bridge and the menu (.cat-dropdown-menu) are absolutely positioned
+     against the SAME containing block (.header-shell) and derive their offset
+     from the same live `100%` value:
+       bridge box : [100% - 16px, 100% + 16px]
+       menu top   :  100% + 16px        → touches the bridge bottom EXACTLY,
+     so the hover zone stays seamless even while the header's animated min-height
+     transition is running — there is no JS-computed geometry to go stale. The
+     bridge is inert while closed (visibility:hidden → no pointer events) and
+     only spans the empty strip under the shell, so it never blocks sibling
+     navbar items. */
+  .cat-dropdown::after {
+    content: "";
+    position: absolute;
+    top: calc(100% - 16px);
+    height: 32px;
+    width: 1100px;
+    max-width: calc(100vw - 32px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1290;
+    pointer-events: auto;
+    visibility: hidden;
+  }
+
+  .cat-dropdown.menu-open::after,
+  .cat-dropdown:hover::after {
+    visibility: visible;
+  }
 
   .cat-dropdown-menu {
     position: absolute;
@@ -1093,21 +1703,25 @@
     width: 1100px;
     max-width: calc(100vw - 32px);
     padding: 0;
-    border: 1px solid rgba(22, 131, 76, 0.12);
-    border-radius: 18px;
-    background: linear-gradient(180deg, 
-      rgba(255, 255, 255, 0.99), 
-      rgba(247, 252, 249, 0.97));
+    border: 1px solid rgba(8, 127, 91, 0.10);
+    border-radius: 22px;
+    background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.99),
+        rgba(247, 252, 249, 0.98));
     backdrop-filter: blur(20px);
-    box-shadow: 
-      0 32px 80px rgba(15, 81, 50, 0.22),
-      0 8px 24px rgba(0, 0, 0, 0.08),
+    box-shadow:
+      0 18px 44px rgba(6, 78, 59, 0.12),
+      0 4px 14px rgba(0, 0, 0, 0.05),
       inset 0 1px 0 rgba(255, 255, 255, 0.8);
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
     z-index: 1300;
     overflow: hidden;
+    /* Explicit: the open dropdown must always be interactive. (visibility:hidden
+       below the fold keeps it inert while closed; pointer-events auto applies
+       as soon as it is shown.) */
+    pointer-events: auto;
   }
 
   /* Firefox — no scrollbar on outer dropdown */
@@ -1122,7 +1736,17 @@
     animation: dropdownFadeIn 0.24s ease forwards;
   }
 
-  .cat-dropdown.menu-open > .nav-link-custom {
+  /* Single parent hover container: #catDropdown contains the trigger, the hover
+     bridge and the mega-menu together, so hovering any part of them opens the
+     menu and keeps it open while moving between them — no separate
+     trigger/dropdown hover states, no gap, no flicker. */
+  .cat-dropdown:hover .cat-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .cat-dropdown.menu-open>.nav-link-custom {
     color: var(--header-green-deep);
     background: rgba(22, 131, 76, 0.12);
     box-shadow: 0 14px 30px rgba(22, 131, 76, 0.14);
@@ -1133,6 +1757,7 @@
       opacity: 0;
       transform: translateX(-50%) translateY(-12px);
     }
+
     to {
       opacity: 1;
       transform: translateX(-50%) translateY(0);
@@ -1147,9 +1772,9 @@
     height: 16px;
     border-left: 1px solid rgba(22, 131, 76, 0.12);
     border-top: 1px solid rgba(22, 131, 76, 0.12);
-    background: linear-gradient(135deg, 
-      rgba(255, 255, 255, 0.99), 
-      rgba(247, 252, 249, 0.97));
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.99),
+        rgba(247, 252, 249, 0.97));
     left: var(--arrow-left, 50%);
     transform: translateX(-50%) rotate(45deg);
     z-index: 1;
@@ -1160,12 +1785,12 @@
     content: "";
     position: absolute;
     inset: 0;
-    border-radius: 18px;
+    border-radius: 22px;
     padding: 1px;
-    background: linear-gradient(135deg, 
-      transparent 0%, 
-      rgba(22, 131, 76, 0.3) 50%, 
-      transparent 100%);
+    background: linear-gradient(135deg,
+        transparent 0%,
+        rgba(22, 131, 76, 0.3) 50%,
+        transparent 100%);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
@@ -1181,8 +1806,15 @@
   }
 
   @keyframes borderGlow {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.6; }
+
+    0%,
+    100% {
+      opacity: 0.3;
+    }
+
+    50% {
+      opacity: 0.6;
+    }
   }
 
   /* ---- Layout ---- */
@@ -1196,9 +1828,9 @@
   .mega-sidebar {
     width: 290px;
     flex-shrink: 0;
-    background: linear-gradient(180deg, 
-      rgba(248, 252, 250, 0.95), 
-      rgba(240, 250, 245, 0.9));
+    background: linear-gradient(180deg,
+        rgba(248, 252, 250, 0.95),
+        rgba(240, 250, 245, 0.9));
     border-right: 1px solid rgba(22, 131, 76, 0.1);
     padding: 14px 0;
     position: relative;
@@ -1210,18 +1842,23 @@
   }
 
   /* Chrome, Edge, Safari — Sidebar scrollbar */
-  .mega-sidebar::-webkit-scrollbar { width: 5px; }
+  .mega-sidebar::-webkit-scrollbar {
+    width: 5px;
+  }
+
   .mega-sidebar::-webkit-scrollbar-track {
     background: rgba(22, 131, 76, 0.04);
     border-radius: 999px;
     margin: 4px 0;
   }
+
   .mega-sidebar::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, var(--header-green), var(--header-mint));
     border-radius: 999px;
     box-shadow: 0 2px 6px rgba(22, 131, 76, 0.3);
     transition: background 0.2s ease;
   }
+
   .mega-sidebar::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, var(--header-green-deep), var(--header-green));
     box-shadow: 0 3px 10px rgba(22, 131, 76, 0.45);
@@ -1233,7 +1870,10 @@
     scrollbar-color: var(--header-green) rgba(22, 131, 76, 0.04);
   }
 
-  .mega-sidebar-item { position: relative; }
+  .mega-sidebar-item {
+    position: relative;
+  }
+
   .mega-sidebar-item::after {
     content: "";
     position: absolute;
@@ -1266,9 +1906,9 @@
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, 
-      rgba(22, 131, 76, 0.08), 
-      rgba(34, 199, 169, 0.06));
+    background: linear-gradient(135deg,
+        rgba(22, 131, 76, 0.08),
+        rgba(34, 199, 169, 0.06));
     opacity: 0;
     transition: opacity 0.28s ease;
     border-radius: 12px;
@@ -1283,16 +1923,19 @@
     transform: translateY(-50%);
     width: 4px;
     height: 0;
-    background: linear-gradient(180deg, 
-      var(--header-green), 
-      var(--header-mint), 
-      var(--header-yellow));
+    background: linear-gradient(180deg,
+        var(--header-green),
+        var(--header-mint),
+        var(--header-yellow));
     border-radius: 999px;
     transition: height 0.28s var(--transition-smooth);
     box-shadow: 0 0 12px rgba(22, 131, 76, 0.4);
   }
 
-  .mega-sidebar-link > * { position: relative; z-index: 1; }
+  .mega-sidebar-link>* {
+    position: relative;
+    z-index: 1;
+  }
 
   .mega-sidebar-link .mega-icon-wrap {
     width: 36px;
@@ -1301,14 +1944,14 @@
     align-items: center;
     justify-content: center;
     border-radius: 10px;
-    background: linear-gradient(135deg, 
-      rgba(25, 135, 84, 0.08), 
-      rgba(34, 199, 169, 0.06));
+    background: linear-gradient(135deg,
+        rgba(25, 135, 84, 0.08),
+        rgba(34, 199, 169, 0.06));
     color: var(--header-green);
     font-size: 1.05rem;
     flex-shrink: 0;
     transition: all 0.28s var(--transition-smooth);
-    box-shadow: 
+    box-shadow:
       0 2px 6px rgba(0, 0, 0, 0.04),
       inset 0 1px 0 rgba(255, 255, 255, 0.5);
     overflow: hidden;
@@ -1321,12 +1964,11 @@
     position: absolute;
     inset: -3px;
     border-radius: 12px;
-    background: conic-gradient(
-      from 0deg, 
-      var(--header-green), 
-      var(--header-mint), 
-      var(--header-yellow), 
-      var(--header-green));
+    background: conic-gradient(from 0deg,
+        var(--header-green),
+        var(--header-mint),
+        var(--header-yellow),
+        var(--header-green));
     opacity: 0;
     transition: opacity 0.3s ease;
     z-index: -1;
@@ -1340,7 +1982,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .mega-sidebar-link .mega-icon-wrap img {
@@ -1350,18 +1994,23 @@
     object-fit: cover;
   }
 
-  .mega-sidebar-link .mega-text { flex: 1; min-width: 0; }
-  .mega-sidebar-link .mega-text .cat-name { 
-    display: block; 
-    white-space: nowrap; 
-    overflow: hidden; 
+  .mega-sidebar-link .mega-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mega-sidebar-link .mega-text .cat-name {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
     text-overflow: ellipsis;
     transition: color 0.2s ease;
   }
-  .mega-sidebar-link .mega-text .cat-count { 
-    display: block; 
-    font-size: 0.72rem; 
-    color: var(--header-muted); 
+
+  .mega-sidebar-link .mega-text .cat-count {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--header-muted);
     font-weight: 600;
     transition: color 0.2s ease;
   }
@@ -1376,12 +2025,12 @@
   /* Sidebar hover / active - Premium */
   .mega-sidebar-item:hover .mega-sidebar-link,
   .mega-sidebar-item.active .mega-sidebar-link {
-    background: linear-gradient(135deg, 
-      rgba(22, 131, 76, 0.12), 
-      rgba(34, 199, 169, 0.08));
+    background: linear-gradient(135deg,
+        rgba(22, 131, 76, 0.12),
+        rgba(34, 199, 169, 0.08));
     color: var(--header-green-deep);
     border-color: rgba(22, 131, 76, 0.15);
-    box-shadow: 
+    box-shadow:
       0 4px 12px rgba(22, 131, 76, 0.1),
       inset 0 1px 0 rgba(255, 255, 255, 0.6);
   }
@@ -1392,8 +2041,8 @@
   }
 
   .mega-sidebar-item:hover .mega-sidebar-link::after,
-  .mega-sidebar-item.active .mega-sidebar-link::after { 
-    height: 65%; 
+  .mega-sidebar-item.active .mega-sidebar-link::after {
+    height: 65%;
   }
 
   .mega-sidebar-item:hover .mega-sidebar-link .mega-icon-wrap,
@@ -1401,7 +2050,7 @@
     color: #fff;
     background: var(--mega-accent-gradient);
     transform: scale(1.1) rotate(-5deg);
-    box-shadow: 
+    box-shadow:
       0 6px 16px rgba(22, 131, 76, 0.35),
       0 2px 6px rgba(0, 0, 0, 0.1);
   }
@@ -1427,9 +2076,9 @@
     flex: 1;
     padding: 22px 26px;
     min-width: 0;
-    background: linear-gradient(180deg, 
-      rgba(255, 255, 255, 0.98), 
-      rgba(247, 252, 249, 0.95));
+    background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.98),
+        rgba(247, 252, 249, 0.95));
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -1441,6 +2090,7 @@
     margin-bottom: 20px;
     padding: 0 2px;
   }
+
   .mega-search input {
     width: 100%;
     min-height: 46px;
@@ -1449,31 +2099,35 @@
     padding: 11px 46px 11px 42px;
     font-size: 0.9rem;
     color: var(--header-ink);
-    background: linear-gradient(135deg, 
-      rgba(248, 252, 250, 0.9), 
-      rgba(255, 255, 255, 0.95));
+    background: linear-gradient(135deg,
+        rgba(248, 252, 250, 0.9),
+        rgba(255, 255, 255, 0.95));
     outline: none;
     transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-    box-shadow: 
+    box-shadow:
       0 2px 8px rgba(0, 0, 0, 0.03),
       inset 0 1px 0 rgba(255, 255, 255, 0.8);
   }
+
   .mega-search input:focus {
     border-color: var(--header-green);
-    box-shadow: 
+    box-shadow:
       0 0 0 4px rgba(25, 135, 84, 0.1),
       0 4px 16px rgba(22, 131, 76, 0.12);
     background: #fff;
   }
+
   .mega-search input::placeholder {
     color: var(--header-muted);
     font-weight: 500;
     transition: opacity 0.2s ease, transform 0.2s ease;
   }
+
   .mega-search input:focus::placeholder {
     opacity: 0.6;
     transform: translateX(3px);
   }
+
   .mega-search-icon {
     position: absolute;
     left: 14px;
@@ -1483,8 +2137,9 @@
     font-size: 0.95rem;
     transition: color 0.2s ease;
   }
-  .mega-search input:focus + .mega-search-icon,
-  .mega-search input:focus ~ .mega-search-icon {
+
+  .mega-search input:focus+.mega-search-icon,
+  .mega-search input:focus~.mega-search-icon {
     color: var(--header-green);
   }
 
@@ -1496,11 +2151,21 @@
     min-height: 0;
     flex-direction: column;
   }
-  .mega-panel.active { display: flex; }
+
+  .mega-panel.active {
+    display: flex;
+  }
 
   @keyframes megaPanelIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .mega-panel-header {
@@ -1532,20 +2197,20 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    background: linear-gradient(135deg, 
-      rgba(25, 135, 84, 0.1), 
-      rgba(34, 199, 169, 0.08));
+    background: linear-gradient(135deg,
+        rgba(25, 135, 84, 0.1),
+        rgba(34, 199, 169, 0.08));
     color: var(--header-green);
     font-size: 0.9rem;
     transition: all 0.2s ease;
-    box-shadow: 
+    box-shadow:
       0 2px 6px rgba(0, 0, 0, 0.04),
       inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
   .mega-panel-header .panel-icon img {
     border-radius: 6px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .mega-panel-header h3 {
@@ -1554,7 +2219,7 @@
     font-size: 1.05rem;
     font-weight: 900;
     color: var(--header-green-deep);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
   }
 
   .mega-panel-header .shop-now-btn {
@@ -1597,18 +2262,23 @@
   }
 
   /* Chrome, Edge, Safari — Subcategory scrollbar */
-  .mega-sub-scroll::-webkit-scrollbar { width: 6px; }
+  .mega-sub-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+
   .mega-sub-scroll::-webkit-scrollbar-track {
     background: rgba(22, 131, 76, 0.04);
     border-radius: 999px;
     margin: 4px 0;
   }
+
   .mega-sub-scroll::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, var(--header-green), var(--header-mint));
     border-radius: 999px;
     box-shadow: 0 2px 6px rgba(22, 131, 76, 0.3);
     transition: background 0.2s ease;
   }
+
   .mega-sub-scroll::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(180deg, var(--header-green-deep), var(--header-green));
     box-shadow: 0 3px 10px rgba(22, 131, 76, 0.45);
@@ -1637,9 +2307,9 @@
     font-weight: 750;
     font-size: 0.88rem;
     text-decoration: none;
-    background: linear-gradient(135deg, 
-      rgba(247, 252, 249, 0.6), 
-      rgba(255, 255, 255, 0.9));
+    background: linear-gradient(135deg,
+        rgba(247, 252, 249, 0.6),
+        rgba(255, 255, 255, 0.9));
     backdrop-filter: blur(8px);
     border: 1px solid transparent;
     transition: all 0.25s var(--transition-smooth);
@@ -1670,14 +2340,14 @@
     align-items: center;
     justify-content: center;
     border-radius: 10px;
-    background: linear-gradient(135deg, 
-      rgba(25, 135, 84, 0.08), 
-      rgba(34, 199, 169, 0.06));
+    background: linear-gradient(135deg,
+        rgba(25, 135, 84, 0.08),
+        rgba(34, 199, 169, 0.06));
     color: var(--header-green);
     font-size: 0.9rem;
     flex-shrink: 0;
     transition: all 0.25s var(--transition-smooth);
-    box-shadow: 
+    box-shadow:
       0 2px 6px rgba(0, 0, 0, 0.04),
       inset 0 1px 0 rgba(255, 255, 255, 0.5);
     overflow: hidden;
@@ -1686,18 +2356,20 @@
 
   .mega-sub-card .sub-icon img {
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   }
 
-  .mega-sub-card .sub-text { flex: 1; }
+  .mega-sub-card .sub-text {
+    flex: 1;
+  }
 
   .mega-sub-card .sub-count {
     font-size: 0.72rem;
     color: var(--header-muted);
     font-weight: 700;
-    background: linear-gradient(135deg, 
-      rgba(25, 135, 84, 0.06), 
-      rgba(34, 199, 169, 0.04));
+    background: linear-gradient(135deg,
+        rgba(25, 135, 84, 0.06),
+        rgba(34, 199, 169, 0.04));
     padding: 3px 10px;
     border-radius: 999px;
     border: 1px solid rgba(22, 131, 76, 0.06);
@@ -1707,11 +2379,11 @@
 
   .mega-sub-card:hover {
     border-color: var(--header-green);
-    background: linear-gradient(135deg, 
-      rgba(22, 131, 76, 0.1), 
-      rgba(34, 199, 169, 0.08));
+    background: linear-gradient(135deg,
+        rgba(22, 131, 76, 0.1),
+        rgba(34, 199, 169, 0.08));
     transform: translateX(5px) scale(1.01);
-    box-shadow: 
+    box-shadow:
       0 6px 18px rgba(22, 131, 76, 0.12),
       0 2px 6px rgba(0, 0, 0, 0.06);
   }
@@ -1724,15 +2396,15 @@
     background: var(--mega-accent-gradient);
     color: #fff;
     transform: scale(1.12) rotate(-6deg);
-    box-shadow: 
+    box-shadow:
       0 6px 14px rgba(22, 131, 76, 0.35),
       0 2px 6px rgba(0, 0, 0, 0.1);
   }
 
   .mega-sub-card:hover .sub-count {
-    background: linear-gradient(135deg, 
-      rgba(22, 131, 76, 0.12), 
-      rgba(34, 199, 169, 0.1));
+    background: linear-gradient(135deg,
+        rgba(22, 131, 76, 0.12),
+        rgba(34, 199, 169, 0.1));
     color: var(--header-green-deep);
     border-color: rgba(22, 131, 76, 0.15);
     box-shadow: 0 2px 6px rgba(22, 131, 76, 0.08);
@@ -1743,9 +2415,9 @@
     margin-bottom: 16px;
     border: 1px solid rgba(22, 131, 76, 0.08);
     border-radius: 12px;
-    background: linear-gradient(135deg, 
-      rgba(247, 252, 249, 0.4), 
-      rgba(255, 255, 255, 0.7));
+    background: linear-gradient(135deg,
+        rgba(247, 252, 249, 0.4),
+        rgba(255, 255, 255, 0.7));
     overflow: hidden;
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
@@ -1768,37 +2440,37 @@
     background: rgba(22, 131, 76, 0.04);
   }
 
-  .mega-sub-section-header > a {
+  .mega-sub-section-header>a {
     border-radius: 8px;
     transition: background 0.2s ease;
   }
 
-  .mega-sub-section-header > a:hover {
+  .mega-sub-section-header>a:hover {
     background: rgba(22, 131, 76, 0.08);
   }
 
-  .mega-sub-section-header > a .sub-icon {
+  .mega-sub-section-header>a .sub-icon {
     width: 30px;
     height: 30px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    background: linear-gradient(135deg, 
-      rgba(25, 135, 84, 0.1), 
-      rgba(34, 199, 169, 0.06));
+    background: linear-gradient(135deg,
+        rgba(25, 135, 84, 0.1),
+        rgba(34, 199, 169, 0.06));
     color: var(--header-green);
     font-size: 0.85rem;
     flex-shrink: 0;
     transition: all 0.2s ease;
   }
 
-  .mega-sub-section-header > a .sub-icon img {
+  .mega-sub-section-header>a .sub-icon img {
     border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
 
-  .mega-sub-section-header > a .sub-name {
+  .mega-sub-section-header>a .sub-name {
     flex: 1;
     font-weight: 800;
     font-size: 0.88rem;
@@ -1806,13 +2478,13 @@
     min-width: 0;
   }
 
-  .mega-sub-section-header > a .sub-count {
+  .mega-sub-section-header>a .sub-count {
     font-size: 0.7rem;
     color: var(--header-muted);
     font-weight: 700;
-    background: linear-gradient(135deg, 
-      rgba(25, 135, 84, 0.06), 
-      rgba(34, 199, 169, 0.04));
+    background: linear-gradient(135deg,
+        rgba(25, 135, 84, 0.06),
+        rgba(34, 199, 169, 0.04));
     padding: 2px 8px;
     border-radius: 999px;
     border: 1px solid rgba(22, 131, 76, 0.06);
@@ -1879,9 +2551,9 @@
   }
 
   .mega-subsub-link:hover {
-    background: linear-gradient(135deg, 
-      rgba(22, 131, 76, 0.08), 
-      rgba(34, 199, 169, 0.06));
+    background: linear-gradient(135deg,
+        rgba(22, 131, 76, 0.08),
+        rgba(34, 199, 169, 0.06));
     color: var(--header-green-deep);
     transform: translateX(3px);
   }
@@ -1903,7 +2575,9 @@
     border-radius: 4px;
   }
 
-  .mega-subsub-link .subsub-text { flex: 1; }
+  .mega-subsub-link .subsub-text {
+    flex: 1;
+  }
 
   .mega-subsub-link .subsub-count {
     font-size: 0.65rem;
@@ -1925,88 +2599,707 @@
 
   /* ---- Responsive: Tablet ---- */
   @media (max-width: 1080px) {
-    .header-shell { gap: 12px; }
-    .brand-tagline { display: none; }
-    .nav-link-custom, .account-trigger { padding-left: 11px; padding-right: 11px; }
-    .cat-dropdown-menu { width: 850px; }
-    .mega-sidebar { width: 240px; }
-    .mega-sub-grid { grid-template-columns: repeat(2, 1fr); }
-    .mega-subsub-list { grid-template-columns: repeat(2, 1fr); }
-    .mega-panel { padding: 0; }
-    .mega-content { padding: 16px; }
+    .header-shell {
+      gap: 12px;
+    }
+
+    .brand-tagline {
+      display: none;
+    }
+
+    .nav-link-custom,
+    .account-trigger {
+      padding-left: 11px;
+      padding-right: 11px;
+    }
+
+    .cat-dropdown-menu {
+      width: 850px;
+    }
+
+    /* Keep the hover bridge aligned with the narrower menu */
+    .cat-dropdown::after {
+      width: 850px;
+    }
+
+    .mega-sidebar {
+      width: 240px;
+    }
+
+    .mega-sub-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mega-subsub-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mega-panel {
+      padding: 0;
+    }
+
+    .mega-content {
+      padding: 16px;
+    }
+  }
+
+  /* ======================================================================
+     DESKTOP / TABLET REDESIGN  (≥1101px ONLY)
+     ----------------------------------------------------------------------
+     Everything in this block applies exclusively to the redesigned desktop
+     and laptop/tablet navbar. It is scoped with `min-width: 1101px`, which is
+     exactly one pixel above the existing mobile breakpoint (max-width:1100px),
+     so the mobile navbar and its styles are NEVER overridden or touched.
+
+     All existing classes, IDs, routes, dropdown/mega/search/cart/account
+     logic and JavaScript hooks are preserved — this is a pure visual layer
+     refinement plus responsive tuning so nothing cramps or overflows from
+     1920px all the way down to the mobile breakpoint.
+     ====================================================================== */
+  @media (min-width: 1101px) {
+    /* ---- Header shell: soft, premium frosted glass ---- */
+    .site-header {
+      top: 14px;
+      width: min(1240px, calc(100% - 32px));
+      margin: 14px auto 0;
+    }
+
+    .site-header.is-scrolled {
+      top: 8px;
+    }
+
+    /* Calmer ambient glow behind the glass */
+    .site-header::before {
+      top: -28px;
+      right: 0;
+      bottom: -28px;
+      left: 0;
+      background:
+        radial-gradient(ellipse at 18% 40%, rgba(8, 127, 91, 0.06) 0%, transparent 52%),
+        radial-gradient(ellipse at 82% 42%, rgba(34, 199, 169, 0.05) 0%, transparent 52%),
+        radial-gradient(ellipse at 50% 0%, rgba(247, 201, 72, 0.045) 0%, transparent 42%);
+      filter: blur(18px);
+      border-radius: 26px;
+    }
+
+    .header-shell {
+      gap: clamp(12px, 1.5vw, 24px);
+      min-height: 72px;
+      padding: 10px clamp(16px, 2vw, 26px);
+      border: 1px solid rgba(8, 127, 91, 0.12);
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(246, 251, 248, 0.9));
+      box-shadow:
+        0 18px 40px -18px rgba(6, 78, 59, 0.20),
+        0 6px 16px -8px rgba(6, 78, 59, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(22px) saturate(1.35);
+      -webkit-backdrop-filter: blur(22px) saturate(1.35);
+    }
+
+    .site-header.is-scrolled .header-shell {
+      min-height: 66px;
+      padding-top: 8px;
+      padding-bottom: 8px;
+      box-shadow:
+        0 24px 48px -20px rgba(6, 78, 59, 0.28),
+        0 8px 18px -8px rgba(6, 78, 59, 0.10),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    }
+
+    /* Softer shimmer sweep (less distracting on the new glass) */
+    .header-shell::before {
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+      animation-duration: 9s;
+    }
+
+    .header-shell::after {
+      opacity: 0.28;
+    }
+
+    /* ---- Brand ---- */
+    .brand-link {
+      gap: 11px;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+    }
+
+    .brand-name {
+      font-size: 1.28rem;
+      letter-spacing: -0.01em;
+    }
+
+    /* ---- Nav area ---- */
+    .nav-wrap {
+      gap: clamp(12px, 1.6vw, 22px);
+      flex: 1 1 auto;
+    }
+
+    .primary-nav {
+      gap: 4px;
+      flex: 0 0 auto;
+    }
+
+    .nav-link-custom,
+    .account-trigger {
+      gap: 8px;
+      min-height: 44px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      color: #3c4a43;
+      font-weight: 750;
+      font-size: 0.92rem;
+      transition: color 0.22s ease, background 0.25s ease, box-shadow 0.25s ease, transform 0.22s ease;
+    }
+
+    .nav-link-custom::before,
+    .account-trigger::before {
+      background: linear-gradient(135deg, rgba(8, 127, 91, 0.09), rgba(34, 199, 169, 0.07), rgba(247, 201, 72, 0.03));
+    }
+
+    /* Elegant pill fill on hover */
+    .nav-link-custom:hover,
+    .account-trigger:hover {
+      color: var(--header-green-deep);
+      background: rgba(8, 127, 91, 0.09);
+      box-shadow: 0 6px 16px -6px rgba(6, 78, 59, 0.22);
+      transform: translateY(-1px);
+    }
+
+    /* Slim underline indicator for nav links (active page clearly visible) */
+    .nav-link-custom::after {
+      bottom: 5px;
+      width: 22px;
+      height: 3px;
+      margin-left: -11px;
+      background: linear-gradient(90deg, var(--header-green), var(--header-mint));
+    }
+
+    /* The Account trigger does not need an underline bar */
+    .account-trigger::after {
+      display: none;
+    }
+
+    .nav-link-custom:hover::after,
+    .nav-link-custom.active::after {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+
+    .nav-link-custom.active,
+    .account-trigger.active {
+      color: var(--header-green-deep);
+      background: rgba(8, 127, 91, 0.12);
+      box-shadow: 0 8px 18px -8px rgba(6, 78, 59, 0.26);
+    }
+
+    .nav-link-custom.active::before,
+    .account-trigger.active::before {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+
+    /* Categories trigger: consistent chevron */
+    .cat-dropdown>.nav-link-custom>i:last-child {
+      font-size: 0.62rem;
+      margin-left: 1px;
+      transition: transform 0.25s ease;
+    }
+
+    .cat-dropdown.menu-open>.nav-link-custom>i:last-child {
+      transform: rotate(180deg);
+    }
+
+    /* Keyboard accessibility */
+    .nav-link-custom:focus-visible,
+    .account-trigger:focus-visible,
+    .search-submit:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(8, 127, 91, 0.22), 0 10px 24px -8px rgba(6, 78, 59, 0.18);
+      transform: translateY(-1px);
+    }
+
+    /* ---- Header actions (cart, bell, account) ---- */
+    .header-actions {
+      gap: 12px;
+      margin-left: 0; /* let the search flex-grow distribute the extra space */
+    }
+
+    /* Cart: modern rounded-square container with a soft lift */
+    .cart-action {
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(8, 127, 91, 0.14);
+      border-radius: 16px;
+      color: var(--header-green-deep);
+      background: linear-gradient(135deg, #ffffff, rgba(240, 249, 245, 0.95));
+      box-shadow: 0 2px 8px -2px rgba(6, 78, 59, 0.10);
+      font-size: 1.18rem;
+    }
+
+    .cart-action::before {
+      display: none; /* remove the spinning conic ring for a clean premium look */
+    }
+
+    .cart-action:hover {
+      color: var(--header-green-deep);
+      background: linear-gradient(135deg, rgba(8, 127, 91, 0.10), rgba(34, 199, 169, 0.10));
+      box-shadow: 0 10px 20px -8px rgba(8, 127, 91, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .cart-action:hover i {
+      animation: navIconPop 0.36s ease;
+    }
+
+    /* Notification bell: matches the cart's rounded-square style */
+    .notification-bell {
+      width: 48px;
+      height: 48px;
+      border: 1px solid rgba(8, 127, 91, 0.14);
+      border-radius: 16px;
+      color: var(--header-green-deep);
+      background: linear-gradient(135deg, #ffffff, rgba(240, 249, 245, 0.95));
+      box-shadow: 0 2px 8px -2px rgba(6, 78, 59, 0.10);
+    }
+
+    .notification-bell:hover {
+      background: linear-gradient(135deg, rgba(8, 127, 91, 0.10), rgba(34, 199, 169, 0.10));
+      box-shadow: 0 10px 20px -8px rgba(8, 127, 91, 0.35);
+      transform: translateY(-2px);
+    }
+
+    /* Account: modern pill container */
+    .account-trigger {
+      border: 1px solid rgba(8, 127, 91, 0.14);
+      background: linear-gradient(135deg, #ffffff, rgba(240, 249, 245, 0.9));
+      box-shadow: 0 2px 8px -2px rgba(6, 78, 59, 0.08);
+    }
+
+    .account-trigger:hover {
+      background: linear-gradient(135deg, rgba(8, 127, 91, 0.09), rgba(34, 199, 169, 0.08));
+    }
+
+    .account-trigger>i:last-child {
+      font-size: 0.62rem;
+      color: var(--header-muted);
+      transition: transform 0.25s ease, color 0.25s ease;
+    }
+
+    .account-menu.open .account-trigger>i:last-child {
+      transform: rotate(180deg);
+      color: var(--header-green);
+    }
+
+    .account-name {
+      max-width: 110px;
+    }
+
+    /* Dropdown cards: refined, layered shadow + rounded corners */
+    .account-dropdown {
+      border-radius: 18px;
+      box-shadow:
+        0 22px 50px -16px rgba(6, 78, 59, 0.28),
+        0 6px 18px -8px rgba(6, 78, 59, 0.10);
+      border: 1px solid rgba(8, 127, 91, 0.12);
+    }
+
+    .notification-dropdown {
+      border-radius: 18px;
+      box-shadow:
+        0 22px 50px -16px rgba(6, 78, 59, 0.28),
+        0 6px 18px -8px rgba(6, 78, 59, 0.10);
+      border: 1px solid rgba(8, 127, 91, 0.12);
+    }
+
+    /* ---- Search: clean, integrated, focus glow ---- */
+    .header-search {
+      width: clamp(170px, 20vw, 420px);
+      flex: 1 1 auto;
+      min-width: 160px;
+    }
+
+    .header-search input {
+      min-height: 44px;
+      border: 1.5px solid rgba(8, 127, 91, 0.18);
+      border-radius: 999px;
+      padding: 10px 48px 10px 43px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      transition: border-color 0.22s ease, box-shadow 0.22s ease, background 0.22s ease;
+    }
+
+    .header-search input:focus {
+      border-color: rgba(8, 127, 91, 0.55);
+      background: #fff;
+      box-shadow:
+        0 0 0 4px rgba(8, 127, 91, 0.12),
+        0 6px 20px -8px rgba(6, 78, 59, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .header-search:focus-within::before {
+      background: linear-gradient(135deg, var(--header-green), var(--header-mint), var(--header-yellow));
+      opacity: 0.35;
+    }
+
+    .search-icon {
+      color: var(--header-muted);
+    }
+
+    .site-header.search-expanded .search-icon,
+    .header-search:focus-within .search-icon {
+      color: var(--header-green);
+    }
+
+    .search-submit {
+      width: 36px;
+      height: 36px;
+      right: 5px;
+    }
+
+    .search-suggestions {
+      border-radius: 16px;
+      box-shadow:
+        0 22px 50px -16px rgba(6, 78, 59, 0.30),
+        0 6px 18px -8px rgba(6, 78, 59, 0.10);
+      border: 1px solid rgba(8, 127, 91, 0.12);
+    }
+
+    .suggestion-link {
+      padding: 10px 12px;
+    }
+
+    .suggestion-thumb {
+      border-radius: 10px;
+    }
+
+    /* ---- Categories mega dropdown: modern card ---- */
+    .cat-dropdown-menu {
+      width: 1100px;
+      border-radius: 24px;
+      border: 1px solid rgba(8, 127, 91, 0.10);
+      box-shadow:
+        0 26px 60px -20px rgba(6, 78, 59, 0.30),
+        0 8px 20px -10px rgba(6, 78, 59, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+    }
+
+    .cat-dropdown-menu::after {
+      border-radius: 24px;
+    }
+  }
+
+  /* ---- Responsive: Compact laptop / tablet desktop tier (1101–1279px) ----
+     The desktop navbar gracefully tightens so nothing cramps, wraps or
+     overflows before handing off to the mobile navbar exactly at 1100px. */
+  @media (min-width: 1101px) and (max-width: 1279px) {
+    .brand-tagline {
+      display: none;
+    }
+
+    .brand-name {
+      font-size: 1.15rem;
+    }
+
+    .header-shell {
+      gap: 12px;
+      padding: 10px 14px;
+    }
+
+    .nav-wrap {
+      gap: 12px;
+    }
+
+    .primary-nav {
+      gap: 2px;
+    }
+
+    .nav-link-custom,
+    .account-trigger {
+      padding: 8px 11px;
+      font-size: 0.87rem;
+      gap: 7px;
+      min-height: 42px;
+    }
+
+    .header-search {
+      width: clamp(150px, 24vw, 230px);
+      min-width: 144px;
+    }
+
+    .header-actions {
+      gap: 8px;
+    }
+
+    .cart-action,
+    .notification-bell {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+    }
+
+    /* Show the account as a tidy icon(+chevron) button to keep breathing room */
+    .account-trigger .account-name,
+    .account-trigger>span:not(.account-name) {
+      max-width: 0;
+      opacity: 0;
+      visibility: hidden;
+      font-size: 0;
+    }
+
+    .account-trigger {
+      padding: 8px 11px;
+    }
+
+    /* Mega menu adapts to narrower desktop widths without overflowing */
+    .cat-dropdown-menu {
+      width: min(900px, calc(100vw - 28px));
+    }
+
+    .cat-dropdown::after {
+      width: min(900px, calc(100vw - 28px));
+    }
+
+    .mega-sidebar {
+      width: 250px;
+    }
+
+    .mega-content {
+      padding: 18px 20px;
+    }
+
+    .mega-sub-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mega-subsub-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   /* ---- Responsive: Mobile/Tablet ----
      The switch happens well before the desktop navbar can overflow, so the
      compact/mobile navbar is always shown once ~1180px and below is reached. */
   @media (max-width: 1100px) {
-    .site-header { top: 8px; width: min(100% - 16px, 1180px); margin-top: 8px; }
-    .header-shell { min-height: 68px; }
-    .menu-toggle { display: inline-flex; }
-    .mobile-search-btn { display: inline-flex; margin-left: auto; }
-    .mobile-cart { display: inline-flex; }
-    .mobile-account-btn { display: inline-flex; }
-    .desktop-cart { display: none; }
+    .site-header {
+      top: 8px;
+      width: min(100% - 16px, 1180px);
+      margin-top: 8px;
+    }
+
+    .header-shell {
+      min-height: 68px;
+    }
+
+    .menu-toggle {
+      display: inline-flex;
+    }
+
+    .mobile-search-btn {
+      display: inline-flex;
+      margin-left: auto;
+    }
+
+    .mobile-cart {
+      display: inline-flex;
+    }
+
+    .mobile-account-btn {
+      display: inline-flex;
+    }
+
+    .desktop-cart {
+      display: none;
+    }
 
     /* The desktop nav is hidden on mobile — the compact drawer replaces it. */
-    .nav-wrap { display: none; }
+    .nav-wrap {
+      display: none;
+    }
+
+    /* The hover mega-menu (and its bridge) only exists on the desktop navbar;
+       make sure the bridge can never intercept taps in the compact layout. */
+    .cat-dropdown::after {
+      display: none;
+    }
 
     /* Compact mobile navigation drawer */
-    .mobile-overlay { display: block; }
-    .mobile-nav-drawer { display: flex; }
+    .mobile-overlay {
+      display: block;
+    }
+
+    .mobile-nav-drawer {
+      display: flex;
+    }
 
     /* Subtle staggered entrance for drawer content */
-    .mobile-nav-drawer.open .mobile-menu-list > li,
+    .mobile-nav-drawer.open .mobile-menu-list>li,
     .mobile-nav-drawer.open .mobile-search,
     .mobile-nav-drawer.open .mobile-account-section {
       animation: mobileMenuItemIn 0.3s ease both;
     }
-    .mobile-nav-drawer.open .mobile-menu-list > li:nth-child(2) { animation-delay: 0.04s; }
-    .mobile-nav-drawer.open .mobile-menu-list > li:nth-child(3) { animation-delay: 0.08s; }
-    .mobile-nav-drawer.open .mobile-menu-list > li:nth-child(4) { animation-delay: 0.12s; }
-    .mobile-nav-drawer.open .mobile-menu-list > li:nth-child(5) { animation-delay: 0.16s; }
-    .mobile-nav-drawer.open .mobile-search { animation-delay: 0.2s; }
-    .mobile-nav-drawer.open .mobile-account-section { animation-delay: 0.24s; }
+
+    .mobile-nav-drawer.open .mobile-menu-list>li:nth-child(2) {
+      animation-delay: 0.04s;
+    }
+
+    .mobile-nav-drawer.open .mobile-menu-list>li:nth-child(3) {
+      animation-delay: 0.08s;
+    }
+
+    .mobile-nav-drawer.open .mobile-menu-list>li:nth-child(4) {
+      animation-delay: 0.12s;
+    }
+
+    .mobile-nav-drawer.open .mobile-menu-list>li:nth-child(5) {
+      animation-delay: 0.16s;
+    }
+
+    .mobile-nav-drawer.open .mobile-search {
+      animation-delay: 0.2s;
+    }
+
+    .mobile-nav-drawer.open .mobile-account-section {
+      animation-delay: 0.24s;
+    }
   }
 
   @media (max-width: 480px) {
-    .brand-icon { width: 42px; height: 42px; font-size: 1.35rem; }
-    .brand-name { font-size: 1.2rem; }
-    .header-shell { padding: 10px 12px; }
-    .mobile-cart, .menu-toggle, .mobile-search-btn, .mobile-account-btn { width: 44px; height: 44px; }
-    .header-shell { gap: 10px; min-height: 60px; }
-    .brand-text { display: none; }
-    .mobile-drawer-brand .brand-text { display: grid; }
-    .cart-action { width: 44px; height: 44px; font-size: 1.1rem; }
-    .account-trigger { padding: 6px 12px; font-size: 0.8rem; }
-    .account-name { max-width: 80px; }
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      font-size: 1.35rem;
+    }
+
+    .brand-name {
+      font-size: 1.2rem;
+    }
+
+    .header-shell {
+      padding: 10px 12px;
+    }
+
+    .mobile-cart,
+    .menu-toggle,
+    .mobile-search-btn,
+    .mobile-account-btn {
+      width: 44px;
+      height: 44px;
+    }
+
+    .header-shell {
+      gap: 10px;
+      min-height: 60px;
+    }
+
+    .brand-text {
+      display: none;
+    }
+
+    .mobile-drawer-brand .brand-text {
+      display: grid;
+    }
+
+    .cart-action {
+      width: 44px;
+      height: 44px;
+      font-size: 1.1rem;
+    }
+
+    .account-trigger {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    .account-name {
+      max-width: 80px;
+    }
   }
 
   /* Extra small screens */
   @media (max-width: 360px) {
-    .site-header { width: calc(100% - 12px); margin-top: 6px; }
-    .header-shell { padding: 8px 10px; gap: 8px; }
-    .brand-icon { width: 36px; height: 36px; font-size: 1.15rem; }
-    .menu-toggle, .mobile-cart, .mobile-search-btn, .mobile-account-btn { width: 44px; height: 44px; }
+    .site-header {
+      width: calc(100% - 12px);
+      margin-top: 6px;
+    }
+
+    .header-shell {
+      padding: 8px 10px;
+      gap: 8px;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      font-size: 1.15rem;
+    }
+
+    .menu-toggle,
+    .mobile-cart,
+    .mobile-search-btn,
+    .mobile-account-btn {
+      width: 44px;
+      height: 44px;
+    }
   }
 
   /* Keyframes */
   @keyframes headerDropIn {
-    from { opacity: 0; transform: translateY(-14px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(-14px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
+
   @keyframes mobileMenuItemIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
+
   @keyframes navIconPop {
-    0% { transform: scale(1); }
-    45% { transform: scale(1.18) rotate(-6deg); }
-    100% { transform: scale(1); }
+    0% {
+      transform: scale(1);
+    }
+
+    45% {
+      transform: scale(1.18) rotate(-6deg);
+    }
+
+    100% {
+      transform: scale(1);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .site-header, .site-header *, .mobile-nav-drawer, .mobile-nav-drawer *, .mobile-overlay {
+
+    .site-header,
+    .site-header *,
+    .mobile-nav-drawer,
+    .mobile-nav-drawer *,
+    .mobile-overlay,
+    .mobile-search-bar,
+    .mobile-search-bar *,
+    .mobile-auth-panel,
+    .mobile-auth-panel * {
       animation: none !important;
       transition-duration: 0.01ms !important;
     }
@@ -2052,13 +3345,33 @@
   }
 
   @keyframes bellRing {
-    0% { transform: rotate(0); }
-    15% { transform: rotate(14deg); }
-    30% { transform: rotate(-12deg); }
-    45% { transform: rotate(8deg); }
-    60% { transform: rotate(-6deg); }
-    75% { transform: rotate(3deg); }
-    100% { transform: rotate(0); }
+    0% {
+      transform: rotate(0);
+    }
+
+    15% {
+      transform: rotate(14deg);
+    }
+
+    30% {
+      transform: rotate(-12deg);
+    }
+
+    45% {
+      transform: rotate(8deg);
+    }
+
+    60% {
+      transform: rotate(-6deg);
+    }
+
+    75% {
+      transform: rotate(3deg);
+    }
+
+    100% {
+      transform: rotate(0);
+    }
   }
 
   .notification-badge {
@@ -2091,7 +3404,7 @@
     flex-direction: column;
     border: 1px solid var(--header-line);
     border-radius: 14px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.99), rgba(247,252,249,0.98));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 252, 249, 0.98));
     box-shadow: var(--header-shadow);
     opacity: 0;
     visibility: hidden;
@@ -2111,7 +3424,7 @@
     height: 14px;
     border-left: 1px solid var(--header-line);
     border-top: 1px solid var(--header-line);
-    background: rgba(255,255,255,0.99);
+    background: rgba(255, 255, 255, 0.99);
     transform: rotate(45deg);
   }
 
@@ -2126,7 +3439,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 14px 16px;
-    border-bottom: 1px solid rgba(22,131,76,0.1);
+    border-bottom: 1px solid rgba(22, 131, 76, 0.1);
   }
 
   .notification-header-title {
@@ -2158,7 +3471,7 @@
 
   .notification-action-btn:hover {
     color: var(--header-green-deep);
-    background: rgba(22,131,76,0.1);
+    background: rgba(22, 131, 76, 0.1);
   }
 
   .notification-list {
@@ -2168,8 +3481,14 @@
     scroll-behavior: smooth;
   }
 
-  .notification-list::-webkit-scrollbar { width: 5px; }
-  .notification-list::-webkit-scrollbar-track { background: rgba(22,131,76,0.04); }
+  .notification-list::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .notification-list::-webkit-scrollbar-track {
+    background: rgba(22, 131, 76, 0.04);
+  }
+
   .notification-list::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, var(--header-green), var(--header-mint));
     border-radius: 999px;
@@ -2179,18 +3498,18 @@
     display: flex;
     gap: 12px;
     padding: 12px 16px;
-    border-bottom: 1px solid rgba(22,131,76,0.06);
+    border-bottom: 1px solid rgba(22, 131, 76, 0.06);
     transition: background 0.15s ease;
     position: relative;
     cursor: default;
   }
 
   .notification-item:hover {
-    background: rgba(22,131,76,0.04);
+    background: rgba(22, 131, 76, 0.04);
   }
 
   .notification-item--unread {
-    background: rgba(22,131,76,0.03);
+    background: rgba(22, 131, 76, 0.03);
   }
 
   .notification-item--unread::before {
@@ -2218,19 +3537,22 @@
 
   .notification-type-icon--auth {
     color: #6366f1;
-    background: rgba(99,102,241,0.1);
+    background: rgba(99, 102, 241, 0.1);
   }
+
   .notification-type-icon--order {
     color: #059669;
-    background: rgba(5,150,105,0.1);
+    background: rgba(5, 150, 105, 0.1);
   }
+
   .notification-type-icon--profile {
     color: #d97706;
-    background: rgba(217,119,6,0.1);
+    background: rgba(217, 119, 6, 0.1);
   }
+
   .notification-type-icon--system {
     color: #6b7280;
-    background: rgba(107,114,128,0.1);
+    background: rgba(107, 114, 128, 0.1);
   }
 
   .notification-body {
@@ -2295,12 +3617,12 @@
 
   .notification-item-btn:hover {
     color: var(--header-green-deep);
-    background: rgba(22,131,76,0.1);
+    background: rgba(22, 131, 76, 0.1);
   }
 
   .notification-item-btn--delete:hover {
     color: #dc3545;
-    background: rgba(220,53,69,0.1);
+    background: rgba(220, 53, 69, 0.1);
   }
 
   .notification-empty {
@@ -2336,12 +3658,14 @@
   }
 
   @keyframes notifSpin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .notification-footer {
     padding: 12px 16px;
-    border-top: 1px solid rgba(22,131,76,0.1);
+    border-top: 1px solid rgba(22, 131, 76, 0.1);
     text-align: center;
   }
 
@@ -2363,11 +3687,13 @@
       display: flex;
       justify-content: center;
     }
+
     .notification-bell {
       width: 42px;
       height: 42px;
       font-size: 1.1rem;
     }
+
     .notification-dropdown {
       position: fixed;
       top: 80px;
@@ -2377,6 +3703,7 @@
       max-height: calc(100vh - 100px);
       border-radius: 12px;
     }
+
     .notification-dropdown::before {
       display: none;
     }
@@ -2388,6 +3715,7 @@
       height: 38px;
       font-size: 1rem;
     }
+
     .notification-badge {
       min-width: 18px;
       height: 18px;
@@ -2411,7 +3739,8 @@
       </span>
     </a>
 
-    <button class="mobile-search-btn" type="button" id="mobileSearchBtn" aria-label="Search" aria-expanded="false">
+    <button class="mobile-search-btn" type="button" id="mobileSearchBtn" aria-label="Search" aria-expanded="false"
+      aria-controls="mobileSearchBar">
       <i class="bi bi-search"></i>
     </button>
 
@@ -2432,7 +3761,8 @@
       <ul class="primary-nav">
         <li><a href="{% url 'store:home' %}" class="nav-link-custom"><i class="bi bi-house"></i> Home</a></li>
         <li class="cat-dropdown" id="catDropdown">
-          <a href="#" role="button" aria-haspopup="true" aria-expanded="false" class="nav-link-custom" id="catDropdownTrigger">
+          <a href="#" role="button" aria-haspopup="true" aria-expanded="false" class="nav-link-custom"
+            id="catDropdownTrigger">
             <i class="bi bi-grid"></i> Categories
             <i class="bi bi-chevron-down" style="font-size:0.6rem;margin-left:2px;"></i>
           </a>
@@ -2445,9 +3775,9 @@
                   <a href="{% url 'store:category_products' category.slug %}" class="mega-sidebar-link">
                     <span class="mega-icon-wrap">
                       {% if category.image %}
-                        <img src="{{ category.image.url }}" alt="">
+                      <img src="{{ category.image.url }}" alt="">
                       {% else %}
-                        <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i>
+                      <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i>
                       {% endif %}
                     </span>
                     <span class="mega-text">
@@ -2469,17 +3799,20 @@
                 <!-- Search -->
                 <div class="mega-search">
                   <i class="bi bi-search mega-search-icon"></i>
-                  <input type="text" id="megaSearchInput" placeholder="Search within categories..." aria-label="Search categories">
+                  <input type="text" id="megaSearchInput" placeholder="Search within categories..."
+                    aria-label="Search categories">
                 </div>
 
                 {% for category in global_categories %}
-                <div class="mega-panel" data-panel-index="{{ forloop.counter0 }}" data-category-name="{{ category.name|lower }}">
+                <div class="mega-panel" data-panel-index="{{ forloop.counter0 }}"
+                  data-category-name="{{ category.name|lower }}">
                   <div class="mega-panel-header">
                     <span class="panel-icon">
                       {% if category.image %}
-                        <img src="{{ category.image.url }}" alt="" width="18" height="18" style="border-radius:3px;object-fit:cover;">
+                      <img src="{{ category.image.url }}" alt="" width="18" height="18"
+                        style="border-radius:3px;object-fit:cover;">
                       {% else %}
-                        <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i>
+                      <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i>
                       {% endif %}
                     </span>
                     <h3>{{ category.name }}</h3>
@@ -2488,68 +3821,77 @@
                     </a>
                   </div>
                   <div class="mega-sub-scroll">
-                  <div class="mega-sub-grid">
-                    {% for sub in category.subcategories.all %}
-                    {% if sub.is_active %}
-                    <div class="mega-sub-section {% if sub.subsubcategories.all|length == 0 %}expanded{% endif %}" data-sub-index="{{ forloop.counter0 }}">
-                      <!-- Subcategory header -->
-                      <div class="mega-sub-section-header">
-                        <a href="{% url 'store:subcategory_products' category.slug sub.slug %}" style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-decoration:none;color:inherit;">
-                          <span class="sub-icon">
-                            {% if sub.image %}
-                              <img src="{{ sub.image.url }}" alt="" width="16" height="16" style="border-radius:4px;object-fit:cover;">
-                            {% else %}
-                              <i class="bi {% if sub.icon %}{{ sub.icon }}{% else %}bi-tag{% endif %}"></i>
-                            {% endif %}
-                          </span>
-                          <span class="sub-name">{{ sub.name }}</span>
-                          <span class="sub-count">{{ global_subcategory_counts|get_item:sub.id|default:0 }}</span>
-                        </a>
-                        {% if sub.subsubcategories.all|length > 0 %}
-                        <span class="expand-toggle-btn" title="Toggle sub-items">
-                          <i class="bi bi-chevron-right expand-icon"></i>
-                        </span>
-                        {% endif %}
-                      </div>
-                      <!-- Sub-subcategories (expandable) -->
-                      {% if sub.subsubcategories.all|length > 0 %}
-                      <div class="mega-sub-section-content">
-                        <div class="mega-subsub-list">
-                          {% for subsub in sub.subsubcategories.all %}
-                          {% if subsub.is_active %}
-                          <a href="{% url 'store:subsubcategory_products' category.slug sub.slug subsub.slug %}" class="mega-subsub-link">
-                            <span class="subsub-icon">
-                              {% if subsub.image %}
-                                <img src="{{ subsub.image.url }}" alt="" width="14" height="14" style="border-radius:3px;object-fit:cover;">
+                    <div class="mega-sub-grid">
+                      {% for sub in category.subcategories.all %}
+                      {% if sub.is_active %}
+                      <div class="mega-sub-section {% if sub.subsubcategories.all|length == 0 %}expanded{% endif %}"
+                        data-sub-index="{{ forloop.counter0 }}">
+                        <!-- Subcategory header -->
+                        <div class="mega-sub-section-header">
+                          <a href="{% url 'store:subcategory_products' category.slug sub.slug %}"
+                            style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-decoration:none;color:inherit;">
+                            <span class="sub-icon">
+                              {% if sub.image %}
+                              <img src="{{ sub.image.url }}" alt="" width="16" height="16"
+                                style="border-radius:4px;object-fit:cover;">
                               {% else %}
-                                <i class="bi {% if subsub.icon %}{{ subsub.icon }}{% else %}bi-dot{% endif %}"></i>
+                              <i class="bi {% if sub.icon %}{{ sub.icon }}{% else %}bi-tag{% endif %}"></i>
                               {% endif %}
                             </span>
-                            <span class="subsub-text">{{ subsub.name }}</span>
-                            <span class="subsub-count">{{ global_subsubcategory_counts|get_item:subsub.id|default:0 }}</span>
+                            <span class="sub-name">{{ sub.name }}</span>
+                            <span class="sub-count">{{ global_subcategory_counts|get_item:sub.id|default:0 }}</span>
                           </a>
+                          {% if sub.subsubcategories.all|length > 0 %}
+                          <span class="expand-toggle-btn" title="Toggle sub-items">
+                            <i class="bi bi-chevron-right expand-icon"></i>
+                          </span>
                           {% endif %}
-                          {% empty %}
-                          <div class="mega-no-subsub">No items yet</div>
-                          {% endfor %}
                         </div>
+                        <!-- Sub-subcategories (expandable) -->
+                        {% if sub.subsubcategories.all|length > 0 %}
+                        <div class="mega-sub-section-content">
+                          <div class="mega-subsub-list">
+                            {% for subsub in sub.subsubcategories.all %}
+                            {% if subsub.is_active %}
+                            <a href="{% url 'store:subsubcategory_products' category.slug sub.slug subsub.slug %}"
+                              class="mega-subsub-link">
+                              <span class="subsub-icon">
+                                {% if subsub.image %}
+                                <img src="{{ subsub.image.url }}" alt="" width="14" height="14"
+                                  style="border-radius:3px;object-fit:cover;">
+                                {% else %}
+                                <i class="bi {% if subsub.icon %}{{ subsub.icon }}{% else %}bi-dot{% endif %}"></i>
+                                {% endif %}
+                              </span>
+                              <span class="subsub-text">{{ subsub.name }}</span>
+                              <span class="subsub-count">{{ global_subsubcategory_counts|get_item:subsub.id|default:0
+                                }}</span>
+                            </a>
+                            {% endif %}
+                            {% empty %}
+                            <div class="mega-no-subsub">No items yet</div>
+                            {% endfor %}
+                          </div>
+                        </div>
+                        {% endif %}
                       </div>
                       {% endif %}
+                      {% empty %}
+                      <div
+                        style="grid-column: 1/-1; padding: 16px; color: var(--header-muted); font-size: 0.85rem; text-align: center;">
+                        <i class="bi bi-inbox" style="font-size:1.5rem;display:block;margin-bottom:6px;"></i>
+                        No subcategories yet
+                      </div>
+                      {% endfor %}
                     </div>
-                    {% endif %}
-                    {% empty %}
-                    <div style="grid-column: 1/-1; padding: 16px; color: var(--header-muted); font-size: 0.85rem; text-align: center;">
-                      <i class="bi bi-inbox" style="font-size:1.5rem;display:block;margin-bottom:6px;"></i>
-                      No subcategories yet
-                    </div>
-                    {% endfor %}
-                  </div>
                   </div>
                 </div>
                 {% empty %}
-                <div class="mega-panel active" data-panel-index="0" style="display:flex;align-items:center;justify-content:center;">
+                <div class="mega-panel active" data-panel-index="0"
+                  style="display:flex;align-items:center;justify-content:center;">
                   <div style="padding:40px 20px;text-align:center;color:var(--header-muted);">
-                    <i class="bi bi-box-seam" style="font-size:2.5rem;display:block;margin-bottom:12px;color:var(--header-green);"></i>
+                    <i class="bi bi-box-seam"
+                      style="font-size:2.5rem;display:block;margin-bottom:12px;color:var(--header-green);"></i>
                     <p style="font-weight:700;margin:0;">Categories will appear here</p>
                     <p style="font-size:0.8rem;margin:4px 0 0;">Add categories from the Django admin panel.</p>
                   </div>
@@ -2566,11 +3908,13 @@
 
       <form action="{% url 'store:product_list' %}" method="get" class="header-search">
         <i class="bi bi-search search-icon"></i>
-        <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products" autocomplete="off" id="globalProductSearch">
+        <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products" autocomplete="off"
+          id="globalProductSearch">
         <button type="submit" class="search-submit" aria-label="Search">
           <i class="bi bi-arrow-right-short"></i>
         </button>
-        <div class="search-suggestions" id="globalSearchSuggestions" role="listbox" aria-label="Search suggestions"></div>
+        <div class="search-suggestions" id="globalSearchSuggestions" role="listbox" aria-label="Search suggestions">
+        </div>
       </form>
 
       <div class="header-actions">
@@ -2581,7 +3925,8 @@
 
         {% if user.is_authenticated %}
         <div class="notification-center" id="notificationCenter">
-          <button class="notification-bell" type="button" id="notificationBellBtn" aria-label="Notifications" aria-expanded="false">
+          <button class="notification-bell" type="button" id="notificationBellBtn" aria-label="Notifications"
+            aria-expanded="false">
             <i class="bi bi-bell-fill"></i>
             <span class="notification-badge" id="notificationBadge" {% if unread_notification_count == 0 %}style="display:none"{% endif %}>{{ unread_notification_count }}</span>
           </button>
@@ -2619,10 +3964,13 @@
             <i class="bi bi-chevron-down"></i>
           </button>
           <ul class="account-dropdown" id="profileDropdown">
-            <li><a href="{% url 'store:profile' %}" class="dropdown-link-custom"><i class="bi bi-person"></i> Profile</a></li>
-            <li><a href="{% url 'store:profile_orders' %}" class="dropdown-link-custom"><i class="bi bi-bag-check"></i> My Orders</a></li>
+            <li><a href="{% url 'store:profile' %}" class="dropdown-link-custom"><i class="bi bi-person"></i>
+                Profile</a></li>
+            <li><a href="{% url 'store:profile_orders' %}" class="dropdown-link-custom"><i class="bi bi-bag-check"></i>
+                My Orders</a></li>
             {% if request.user.is_superuser %}
-            <li><a href="{% url 'api_settings:api_settings_page' %}" class="dropdown-link-custom"><i class="bi bi-gear"></i> API Settings</a></li>
+            <li><a href="{% url 'api_settings:api_settings_page' %}" class="dropdown-link-custom"><i
+                  class="bi bi-gear"></i> API Settings</a></li>
             {% endif %}
             <li><a href="/logout" class="dropdown-link-custom"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
           </ul>
@@ -2634,7 +3982,8 @@
           </button>
           <ul class="account-dropdown" id="authDropdown">
             <li><a href="/login/" class="dropdown-link-custom"><i class="bi bi-box-arrow-in-right"></i> Login</a></li>
-            <li><a href="{% url 'store:signup_method' %}" class="dropdown-link-custom"><i class="bi bi-person-plus"></i> Signup</a></li>
+            <li><a href="{% url 'store:signup_method' %}" class="dropdown-link-custom"><i class="bi bi-person-plus"></i>
+                Signup</a></li>
           </ul>
           {% endif %}
         </div>
@@ -2643,195 +3992,328 @@
   </div>
 </header>
 
-  <div class="mobile-overlay" id="mobileOverlay"></div>
+<!-- Dedicated mobile search interface.
+       Independent component: opened/closed ONLY by #mobileSearchBtn and its own
+       controls. It shares no markup, state or handler with #mobileNavDrawer,
+       so opening it can never reveal the navigation menu. -->
+<div class="mobile-search-bar" id="mobileSearchBar" aria-hidden="true">
+  <form action="{% url 'store:product_list' %}" method="get" class="mobile-search" role="search" id="mobileSearchForm">
+    <i class="bi bi-search" aria-hidden="true"></i>
+    <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products" autocomplete="off"
+      id="mobileSearchField">
+    <button type="submit" aria-label="Search"><i class="bi bi-arrow-right-short"></i></button>
+  </form>
+  <button type="button" class="mobile-search-close" id="mobileSearchClose" aria-label="Close search">
+    <i class="bi bi-x-lg"></i>
+  </button>
+</div>
 
-  <aside class="mobile-nav-drawer" id="mobileNavDrawer" aria-hidden="true" aria-label="Mobile navigation">
-    <div class="mobile-drawer-header">
-      <a href="{% url 'store:home' %}" class="mobile-drawer-brand" aria-label="GrocHub home">
-        <span class="brand-icon"><i class="bi bi-basket2-fill"></i></span>
-        <span class="brand-text">
-          <span class="brand-name">GrocHub</span>
-          <span class="brand-tagline">Fresh Daily</span>
-        </span>
+<!-- Dedicated authentication panel.
+       Independent component: opened/closed ONLY by the Profile icon
+       (#mobileAccountBtn) and its own controls. It shares no markup, state or
+       handler with #mobileNavDrawer, so opening it can NEVER reveal the mobile
+       navigation menu. Every action reuses the EXISTING GrocHub auth routes. -->
+<div class="mobile-auth-panel" id="mobileAuthPanel" aria-hidden="true" aria-label="Account and sign in">
+  <div class="mobile-auth-head">
+    <span class="mobile-auth-avatar" aria-hidden="true"><i class="bi bi-person-circle"></i></span>
+    <span class="mobile-auth-greeting">
+      {% if user.is_authenticated %}
+      <strong>{{ user.first_name|default:user.username }}</strong>
+      <small>Welcome back to GrocHub</small>
+      {% else %}
+      <strong>Your Account</strong>
+      <small>Sign in or create an account</small>
+      {% endif %}
+    </span>
+    <button type="button" class="mobile-auth-close" id="mobileAuthClose" aria-label="Close account panel">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <ul class="mobile-auth-list">
+    {% if user.is_authenticated %}
+    <li>
+      <a href="{% url 'store:profile' %}" class="mobile-auth-link">
+        <i class="bi bi-person" aria-hidden="true"></i>
+        <span class="mobile-auth-text"><span class="ma-title">Profile</span><span class="ma-desc">Manage your
+            details</span></span>
       </a>
-      <button type="button" class="mobile-drawer-close" id="mobileDrawerClose" aria-label="Close menu">
-        <i class="bi bi-x-lg"></i>
-      </button>
-    </div>
+    </li>
+    <li>
+      <a href="{% url 'store:profile_orders' %}" class="mobile-auth-link">
+        <i class="bi bi-bag-check" aria-hidden="true"></i>
+        <span class="mobile-auth-text"><span class="ma-title">My Orders</span><span class="ma-desc">Track purchases
+            &amp; invoices</span></span>
+      </a>
+    </li>
+    {% if request.user.is_superuser %}
+    <li>
+      <a href="{% url 'api_settings:api_settings_page' %}" class="mobile-auth-link">
+        <i class="bi bi-gear" aria-hidden="true"></i>
+        <span class="mobile-auth-text"><span class="ma-title">API Settings</span><span class="ma-desc">Admin
+            configuration</span></span>
+      </a>
+    </li>
+    {% endif %}
+    <li>
+      <a href="{% url 'store:logout' %}" class="mobile-auth-link is-danger">
+        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+        <span class="mobile-auth-text"><span class="ma-title">Logout</span><span class="ma-desc">Sign out of
+            GrocHub</span></span>
+      </a>
+    </li>
+    {% else %}
+    <li>
+      <a href="{% url 'store:login' %}" class="mobile-auth-link is-primary">
+        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+        <span class="mobile-auth-text"><span class="ma-title">Login</span><span class="ma-desc">Access your
+            account</span></span>
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'store:signup_method' %}" class="mobile-auth-link">
+        <i class="bi bi-person-plus" aria-hidden="true"></i>
+        <span class="mobile-auth-text"><span class="ma-title">Create Account</span><span class="ma-desc">Email or phone
+            signup</span></span>
+      </a>
+    </li>
+    {% endif %}
+  </ul>
+</div>
 
-    <nav class="mobile-menu" aria-label="Primary">
-      <ul class="mobile-menu-list">
-        <li class="mobile-menu-item">
-          <a href="{% url 'store:home' %}" class="mobile-menu-link"><i class="bi bi-house-door"></i><span>Home</span></a>
-        </li>
-        <li class="mobile-menu-item mobile-has-submenu">
-          <button type="button" class="mobile-menu-link mobile-menu-toggle" id="mobileCatToggle" aria-expanded="false" aria-controls="mobileCategoriesList">
-            <i class="bi bi-grid"></i><span>Categories</span><i class="bi bi-chevron-down mobile-chevron" aria-hidden="true"></i>
-          </button>
-          <ul class="mobile-submenu" id="mobileCategoriesList">
-            {% for category in global_categories %}
-            <li class="mobile-submenu-item">
-              <a href="{% url 'store:category_products' category.slug %}" class="mobile-submenu-link">
-                <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i><span>{{ category.name }}</span>
-              </a>
-            </li>
-            {% empty %}
-            <li class="mobile-submenu-item"><span class="mobile-submenu-empty">No categories yet</span></li>
-            {% endfor %}
-          </ul>
-        </li>
-        <li class="mobile-menu-item">
-          <a href="{% url 'store:product_list' %}" class="mobile-menu-link"><i class="bi bi-bag"></i><span>Products</span></a>
-        </li>
-        <li class="mobile-menu-item">
-          <a href="{% url 'store:about' %}" class="mobile-menu-link"><i class="bi bi-info-circle"></i><span>About</span></a>
-        </li>
-        <li class="mobile-menu-item">
-          <a href="{% url 'store:contact' %}" class="mobile-menu-link"><i class="bi bi-chat-dots"></i><span>Contact</span></a>
-        </li>
-      </ul>
-    </nav>
+<div class="mobile-overlay" id="mobileOverlay"></div>
 
-    <form action="{% url 'store:product_list' %}" method="get" class="mobile-search" role="search" id="mobileDrawerSearchForm">
-      <i class="bi bi-search"></i>
-      <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products" autocomplete="off" id="mobileSearchInput">
-      <button type="submit" aria-label="Search"><i class="bi bi-arrow-right-short"></i></button>
-    </form>
+<aside class="mobile-nav-drawer" id="mobileNavDrawer" aria-hidden="true" aria-label="Mobile navigation">
+  <div class="mobile-drawer-header">
+    <a href="{% url 'store:home' %}" class="mobile-drawer-brand" aria-label="GrocHub home">
+      <span class="brand-icon"><i class="bi bi-basket2-fill"></i></span>
+      <span class="brand-text">
+        <span class="brand-name">GrocHub</span>
+        <span class="brand-tagline">Fresh Daily</span>
+      </span>
+    </a>
+    <button type="button" class="mobile-drawer-close" id="mobileDrawerClose" aria-label="Close menu">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
 
-    <div class="mobile-account-section">
-      <button type="button" class="mobile-menu-link mobile-menu-toggle" id="mobileAccountToggle" aria-expanded="false" aria-controls="mobileAccountList">
-        <i class="bi bi-person"></i><span>My Account</span><i class="bi bi-chevron-down mobile-chevron" aria-hidden="true"></i>
-      </button>
-      <ul class="mobile-submenu" id="mobileAccountList">
-        {% if user.is_authenticated %}
-        <li class="mobile-submenu-item">
-          <a href="{% url 'store:profile' %}" class="mobile-submenu-link"><i class="bi bi-person"></i><span>Profile</span></a>
-        </li>
-        <li class="mobile-submenu-item">
-          <a href="{% url 'store:profile_orders' %}" class="mobile-submenu-link"><i class="bi bi-bag-check"></i><span>My Orders</span></a>
-        </li>
-        {% if request.user.is_superuser %}
-        <li class="mobile-submenu-item">
-          <a href="{% url 'api_settings:api_settings_page' %}" class="mobile-submenu-link"><i class="bi bi-gear"></i><span>API Settings</span></a>
-        </li>
-        {% endif %}
-        <li class="mobile-submenu-item">
-          <a href="/logout" class="mobile-submenu-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a>
-        </li>
-        {% else %}
-        <li class="mobile-submenu-item">
-          <a href="/login/" class="mobile-submenu-link"><i class="bi bi-box-arrow-in-right"></i><span>Sign In</span></a>
-        </li>
-        <li class="mobile-submenu-item">
-          <a href="{% url 'store:signup_method' %}" class="mobile-submenu-link"><i class="bi bi-person-plus"></i><span>Create Account</span></a>
-        </li>
-        {% endif %}
-      </ul>
-    </div>
-  </aside>
+  <nav class="mobile-menu" aria-label="Primary">
+    <ul class="mobile-menu-list">
+      <li class="mobile-menu-item">
+        <a href="{% url 'store:home' %}" class="mobile-menu-link"><i class="bi bi-house-door"></i><span>Home</span></a>
+      </li>
+      <li class="mobile-menu-item mobile-has-submenu">
+        <button type="button" class="mobile-menu-link mobile-menu-toggle" id="mobileCatToggle" aria-expanded="false"
+          aria-controls="mobileCategoriesList">
+          <i class="bi bi-grid"></i><span>Categories</span><i class="bi bi-chevron-down mobile-chevron"
+            aria-hidden="true"></i>
+        </button>
+        <ul class="mobile-submenu" id="mobileCategoriesList">
+          {% for category in global_categories %}
+          <li class="mobile-submenu-item">
+            <a href="{% url 'store:category_products' category.slug %}" class="mobile-submenu-link">
+              <i class="bi {% if category.icon %}{{ category.icon }}{% else %}bi-folder2{% endif %}"></i><span>{{
+                category.name }}</span>
+            </a>
+          </li>
+          {% empty %}
+          <li class="mobile-submenu-item"><span class="mobile-submenu-empty">No categories yet</span></li>
+          {% endfor %}
+        </ul>
+      </li>
+      <li class="mobile-menu-item">
+        <a href="{% url 'store:product_list' %}" class="mobile-menu-link"><i
+            class="bi bi-bag"></i><span>Products</span></a>
+      </li>
+      <li class="mobile-menu-item">
+        <a href="{% url 'store:about' %}" class="mobile-menu-link"><i
+            class="bi bi-info-circle"></i><span>About</span></a>
+      </li>
+      <li class="mobile-menu-item">
+        <a href="{% url 'store:contact' %}" class="mobile-menu-link"><i
+            class="bi bi-chat-dots"></i><span>Contact</span></a>
+      </li>
+    </ul>
+  </nav>
+
+  <form action="{% url 'store:product_list' %}" method="get" class="mobile-search" role="search"
+    id="mobileDrawerSearchForm">
+    <i class="bi bi-search"></i>
+    <input type="search" name="q" placeholder="Search groceries..." aria-label="Search products" autocomplete="off"
+      id="mobileSearchInput">
+    <button type="submit" aria-label="Search"><i class="bi bi-arrow-right-short"></i></button>
+  </form>
+
+  <div class="mobile-account-section">
+    <button type="button" class="mobile-menu-link mobile-menu-toggle" id="mobileAccountToggle" aria-expanded="false"
+      aria-controls="mobileAccountList">
+      <i class="bi bi-person"></i><span>My Account</span><i class="bi bi-chevron-down mobile-chevron"
+        aria-hidden="true"></i>
+    </button>
+    <ul class="mobile-submenu" id="mobileAccountList">
+      {% if user.is_authenticated %}
+      <li class="mobile-submenu-item">
+        <a href="{% url 'store:profile' %}" class="mobile-submenu-link"><i
+            class="bi bi-person"></i><span>Profile</span></a>
+      </li>
+      <li class="mobile-submenu-item">
+        <a href="{% url 'store:profile_orders' %}" class="mobile-submenu-link"><i class="bi bi-bag-check"></i><span>My
+            Orders</span></a>
+      </li>
+      {% if request.user.is_superuser %}
+      <li class="mobile-submenu-item">
+        <a href="{% url 'api_settings:api_settings_page' %}" class="mobile-submenu-link"><i
+            class="bi bi-gear"></i><span>API Settings</span></a>
+      </li>
+      {% endif %}
+      <li class="mobile-submenu-item">
+        <a href="/logout" class="mobile-submenu-link"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a>
+      </li>
+      {% else %}
+      <li class="mobile-submenu-item">
+        <a href="/login/" class="mobile-submenu-link"><i class="bi bi-box-arrow-in-right"></i><span>Sign In</span></a>
+      </li>
+      <li class="mobile-submenu-item">
+        <a href="{% url 'store:signup_method' %}" class="mobile-submenu-link"><i
+            class="bi bi-person-plus"></i><span>Create Account</span></a>
+      </li>
+      {% endif %}
+    </ul>
+  </div>
+</aside>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const siteHeader = document.getElementById('siteHeader');
-  const navWrap = document.getElementById('navWrap');
-  const menuToggle = document.getElementById('menuToggle');
-  const accountMenu = document.getElementById('accountMenu');
-  const accountTrigger = accountMenu?.querySelector('.account-trigger');
-  const catDropdown = document.getElementById('catDropdown');
-  const catDropdownTrigger = document.getElementById('catDropdownTrigger');
-  const catSidebar = document.getElementById('catSidebar');
-  const megaContent = document.getElementById('megaContent');
-  const megaSearchInput = document.getElementById('megaSearchInput');
-  const globalProductSearch = document.getElementById('globalProductSearch');
-  const globalSearchSuggestions = document.getElementById('globalSearchSuggestions');
-  const sidebarItems = catSidebar?.querySelectorAll('.mega-sidebar-item') || [];
-  const panels = megaContent?.querySelectorAll('.mega-panel') || [];
-  const mobileSearchBtn = document.getElementById('mobileSearchBtn');
-  const mobileAccountBtn = document.getElementById('mobileAccountBtn');
-  const mobileOverlay = document.getElementById('mobileOverlay');
-  const mobileNavDrawer = document.getElementById('mobileNavDrawer');
-  const mobileDrawerClose = document.getElementById('mobileDrawerClose');
-  const mobileSearchInput = document.getElementById('mobileSearchInput');
-  const mobileCatToggle = document.getElementById('mobileCatToggle');
-  const mobileAccountToggle = document.getElementById('mobileAccountToggle');
-  const mobileCategoriesList = document.getElementById('mobileCategoriesList');
-  const mobileAccountList = document.getElementById('mobileAccountList');
-  const mobileDrawerSearchForm = document.getElementById('mobileDrawerSearchForm');
+  document.addEventListener('DOMContentLoaded', function () {
+    const siteHeader = document.getElementById('siteHeader');
+    const navWrap = document.getElementById('navWrap');
+    const menuToggle = document.getElementById('menuToggle');
+    const accountMenu = document.getElementById('accountMenu');
+    const accountTrigger = accountMenu?.querySelector('.account-trigger');
+    const catDropdown = document.getElementById('catDropdown');
+    const catDropdownTrigger = document.getElementById('catDropdownTrigger');
+    const catSidebar = document.getElementById('catSidebar');
+    const megaContent = document.getElementById('megaContent');
+    const megaSearchInput = document.getElementById('megaSearchInput');
+    const globalProductSearch = document.getElementById('globalProductSearch');
+    const globalSearchSuggestions = document.getElementById('globalSearchSuggestions');
+    const sidebarItems = catSidebar?.querySelectorAll('.mega-sidebar-item') || [];
+    const panels = megaContent?.querySelectorAll('.mega-panel') || [];
+    const mobileSearchBtn = document.getElementById('mobileSearchBtn');
+    const mobileAccountBtn = document.getElementById('mobileAccountBtn');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileNavDrawer = document.getElementById('mobileNavDrawer');
+    const mobileDrawerClose = document.getElementById('mobileDrawerClose');
+    const mobileSearchInput = document.getElementById('mobileSearchInput');
+    const mobileCatToggle = document.getElementById('mobileCatToggle');
+    const mobileAccountToggle = document.getElementById('mobileAccountToggle');
+    const mobileCategoriesList = document.getElementById('mobileCategoriesList');
+    const mobileAccountList = document.getElementById('mobileAccountList');
+    const mobileDrawerSearchForm = document.getElementById('mobileDrawerSearchForm');
+    // Dedicated mobile search interface (independent from the nav drawer)
+    const mobileSearchBar = document.getElementById('mobileSearchBar');
+    const mobileSearchForm = document.getElementById('mobileSearchForm');
+    const mobileSearchField = document.getElementById('mobileSearchField');
+    const mobileSearchClose = document.getElementById('mobileSearchClose');
+    // Dedicated authentication panel (independent from the nav drawer).
+    // Opened/closed ONLY by the Profile icon (#mobileAccountBtn).
+    const mobileAuthPanel = document.getElementById('mobileAuthPanel');
+    const mobileAuthClose = document.getElementById('mobileAuthClose');
+    // Notification center elements (declared up-front so every dropdown handler
+    // can toggle them safely — they are only used when the center exists).
+    const notifCenter = document.getElementById('notificationCenter');
+    const notifBellBtn = document.getElementById('notificationBellBtn');
+    const notifDropdown = document.getElementById('notificationDropdown');
+    const notifList = document.getElementById('notificationList');
+    const notifBadge = document.getElementById('notificationBadge');
+    const notifMarkAllBtn = document.getElementById('notifMarkAllRead');
+    const notifClearAllBtn = document.getElementById('notifClearAll');
 
-  const isMobile = () => window.innerWidth <= 1100;
+    const isMobile = () => window.innerWidth <= 1100;
 
-  // ── Dynamic arrow position for centered mega dropdown ──
-  function updateDropdownArrow() {
-    const dropdown = document.querySelector('.cat-dropdown-menu');
-    const trigger = document.getElementById('catDropdownTrigger');
-    if (!dropdown || !trigger || window.innerWidth <= 1100) {
-      if (dropdown) dropdown.style.removeProperty('--arrow-left');
-      return;
+    // ── Highlight the nav item matching the current route ──
+    function setActiveNavLink() {
+      const path = window.location.pathname.replace(/\/+$/, '') || '/';
+      document.querySelectorAll('.primary-nav .nav-link-custom').forEach(function (link) {
+        if (!link.hasAttribute('href') || link.getAttribute('href') === '#') return;
+        const href = (link.getAttribute('href') || '').split(/[?#]/)[0].replace(/\/+$/, '') || '/';
+        if (path === href || (href !== '/' && path.indexOf(href + '/') === 0)) {
+          link.classList.add('active');
+        }
+      });
     }
-    const triggerRect = trigger.getBoundingClientRect();
-    const dropdownRect = dropdown.getBoundingClientRect();
-    const triggerCenter = triggerRect.left + triggerRect.width / 2;
-    const relativeLeft = triggerCenter - dropdownRect.left;
-    dropdown.style.setProperty('--arrow-left', relativeLeft + 'px');
-  }
 
-  // ── Ripple effect on click ──
-  function createRipple(event, element) {
-    const existingRipple = element.querySelector('.ripple');
-    if (existingRipple) existingRipple.remove();
-
-    const circle = document.createElement('span');
-    const diameter = Math.max(element.clientWidth, element.clientHeight);
-    const radius = diameter / 2;
-    const rect = element.getBoundingClientRect();
-
-    circle.style.width = circle.style.height = `${diameter}px`;
-    circle.style.left = `${event.clientX - rect.left - radius}px`;
-    circle.style.top = `${event.clientY - rect.top - radius}px`;
-    circle.classList.add('ripple');
-
-    element.appendChild(circle);
-    setTimeout(() => circle.remove(), 600);
-  }
-
-  document.querySelectorAll('.nav-link-custom, .account-trigger').forEach(el => {
-    el.addEventListener('click', (e) => createRipple(e, el));
-  });
-
-  // AJAX product search suggestions
-  let productSearchTimer = null;
-  function closeSearchSuggestions() {
-    if (globalSearchSuggestions) {
-      globalSearchSuggestions.classList.remove('open');
-      globalSearchSuggestions.innerHTML = '';
+    // ── Dynamic arrow position for centered mega dropdown ──
+    function updateDropdownArrow() {
+      const dropdown = document.querySelector('.cat-dropdown-menu');
+      const trigger = document.getElementById('catDropdownTrigger');
+      if (!dropdown || !trigger || window.innerWidth <= 1100) {
+        if (dropdown) dropdown.style.removeProperty('--arrow-left');
+        return;
+      }
+      const triggerRect = trigger.getBoundingClientRect();
+      const dropdownRect = dropdown.getBoundingClientRect();
+      const triggerCenter = triggerRect.left + triggerRect.width / 2;
+      const relativeLeft = triggerCenter - dropdownRect.left;
+      dropdown.style.setProperty('--arrow-left', relativeLeft + 'px');
     }
-  }
 
-  function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"']/g, char => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#039;'
-    }[char]));
-  }
+    // ── Ripple effect on click ──
+    function createRipple(event, element) {
+      const existingRipple = element.querySelector('.ripple');
+      if (existingRipple) existingRipple.remove();
 
-  function renderSearchSuggestions(results) {
-    if (!globalSearchSuggestions) return;
-    if (!results.length) {
-      closeSearchSuggestions();
-      return;
+      const circle = document.createElement('span');
+      const diameter = Math.max(element.clientWidth, element.clientHeight);
+      const radius = diameter / 2;
+      const rect = element.getBoundingClientRect();
+
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${event.clientX - rect.left - radius}px`;
+      circle.style.top = `${event.clientY - rect.top - radius}px`;
+      circle.classList.add('ripple');
+
+      element.appendChild(circle);
+      setTimeout(() => circle.remove(), 600);
     }
-    globalSearchSuggestions.innerHTML = results.map(item => {
-      const title = escapeHtml(item.title);
-      const category = escapeHtml(item.category || 'Grocery');
-      const price = escapeHtml(item.price);
-      const url = encodeURI(item.url || '#');
-      const image = item.image
-        ? `<img src="${escapeHtml(item.image)}" alt="">`
-        : '<i class="bi bi-basket2"></i>';
-      return `
+
+    document.querySelectorAll('.nav-link-custom, .account-trigger').forEach(el => {
+      el.addEventListener('click', (e) => createRipple(e, el));
+    });
+
+    // AJAX product search suggestions
+    let productSearchTimer = null;
+    function closeSearchSuggestions() {
+      if (globalSearchSuggestions) {
+        globalSearchSuggestions.classList.remove('open');
+        globalSearchSuggestions.innerHTML = '';
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      }[char]));
+    }
+
+    function renderSearchSuggestions(results) {
+      if (!globalSearchSuggestions) return;
+      if (!results.length) {
+        closeSearchSuggestions();
+        return;
+      }
+      globalSearchSuggestions.innerHTML = results.map(item => {
+        const title = escapeHtml(item.title);
+        const category = escapeHtml(item.category || 'Grocery');
+        const price = escapeHtml(item.price);
+        const url = encodeURI(item.url || '#');
+        const image = item.image
+          ? `<img src="${escapeHtml(item.image)}" alt="">`
+          : '<i class="bi bi-basket2"></i>';
+        return `
         <a class="suggestion-link" href="${url}" role="option">
           <span class="suggestion-thumb">${image}</span>
           <span>
@@ -2841,553 +4323,747 @@ document.addEventListener('DOMContentLoaded', function () {
           <span class="suggestion-price">Rs. ${price}</span>
         </a>
       `;
-    }).join('');
-    globalSearchSuggestions.classList.add('open');
-  }
-
-  globalProductSearch?.addEventListener('input', function () {
-    clearTimeout(productSearchTimer);
-    const query = this.value.trim();
-    if (query.length < 2) {
-      closeSearchSuggestions();
-      return;
+      }).join('');
+      globalSearchSuggestions.classList.add('open');
     }
-    productSearchTimer = setTimeout(() => {
-      fetch(`/api/products/search/?q=${encodeURIComponent(query)}`)
-        .then(response => response.ok ? response.json() : { results: [] })
-        .then(data => renderSearchSuggestions(data.results || []))
-        .catch(closeSearchSuggestions);
-    }, 280);
-  });
 
-  // ── Expandable search (desktop) ────────────────────────────────
-  // A single state class .search-expanded + a dynamically measured width
-  // lets the search field take over the whole center zone, while the logo
-  // and the right-side controls (cart/notification/account) stay fixed.
-  const searchForm = document.querySelector('.header-search');
-  const headerActions = document.querySelector('.header-actions');
-  const primaryNav = document.querySelector('.primary-nav');
-  const EXPAND_GAP = 18; // right margin between the search and the controls
-  const isSearchExpanded = () => siteHeader?.classList.contains('search-expanded');
-  let navNaturalWidth = 1200; // measured on first open; collapsed state
-
-  // The nav links are collapsed via a px max-width and the search grows via
-  // a px width, so BOTH values are animated by CSS transitions → the two
-  // movements stay visually synchronized and never "jump". We only lock the
-  // current px as the transition start point, flip the state class, then set
-  // the final px targets. The browser interpolates every intermediate frame.
-  function openSearch() {
-    if (isMobile() || !searchForm || !primaryNav) return;
-    if (isSearchExpanded()) return;             // keep expanded until a close
-    // 1) Freeze current sizes into explicit px so auto → px is not instant.
-    navNaturalWidth = primaryNav.offsetWidth || navNaturalWidth;
-    primaryNav.style.maxWidth = navNaturalWidth + 'px';
-    searchForm.style.width = searchForm.offsetWidth + 'px';
-    // 2) Adopt the locked start values, then switch state (batch both).
-    void navWrap.offsetWidth;                    // force reflow on start values
-    siteHeader.classList.add('search-expanded');
-    // 3) Target px = center width − right controls − gap; grow to fill.
-    const available = navWrap.clientWidth - headerActions.offsetWidth - EXPAND_GAP;
-    searchForm.style.width = Math.max(180, available) + 'px';
-    primaryNav.style.maxWidth = '0px';
-  }
-
-  function closeSearch() {
-    if (!isSearchExpanded() || !searchForm || !primaryNav) return;
-    // Reverse: grow nav back to its natural px and let the search shrink to
-    // its CSS clamp() base. Both animate together on the way out too.
-    primaryNav.style.maxWidth = navNaturalWidth + 'px';
-    searchForm.style.width = '';
-    siteHeader.classList.remove('search-expanded');
-    if (globalProductSearch) globalProductSearch.blur();
-  }
-
-  // Re-fit an already-expanded search to the current window width (resize).
-  function refitExpandedWidth() {
-    if (!isSearchExpanded() || !searchForm || !headerActions || !navWrap) return;
-    const available = navWrap.clientWidth - headerActions.offsetWidth - EXPAND_GAP;
-    searchForm.style.width = Math.max(180, available) + 'px';
-  }
-
-  globalProductSearch?.addEventListener('focus', openSearch);
-  searchForm?.addEventListener('click', function (event) {
-    if (event.target.closest('.search-submit')) return; // let the form submit
-    if (!isSearchExpanded()) {
-      openSearch();
-      globalProductSearch?.focus();
-    }
-  });
-  searchForm?.addEventListener('submit', function () {
-    // Execute the existing search; restore the navbar as it navigates.
-    closeSearch();
-  });
-
-  // ── Header scroll ──
-  function updateHeaderScrollState() {
-    siteHeader?.classList.toggle('is-scrolled', window.scrollY > 24);
-  }
-
-  // ── Mobile drawer (compact navigation) ──
-  function positionMobileDrawer() {
-    if (!mobileNavDrawer || !siteHeader) return;
-    const rect = siteHeader.getBoundingClientRect();
-    // Sit just below the sticky header, aligned with its right edge.
-    mobileNavDrawer.style.top = Math.max(8, rect.bottom + 8) + 'px';
-    mobileNavDrawer.style.right = Math.max(0, window.innerWidth - rect.right + 8) + 'px';
-  }
-
-  // Animate a submenu's height (Categories / Account) with a smooth transition.
-  function setMobileSubmenu(listEl, expanded) {
-    if (!listEl) return;
-    if (expanded) {
-      const targetHeight = listEl.scrollHeight;
-      listEl.style.maxHeight = targetHeight + 'px';
-      listEl.style.overflowY = 'hidden';
-      const onEnd = () => {
-        listEl.style.maxHeight = 'none';
-        listEl.style.overflowY = 'auto';
-        listEl.removeEventListener('transitionend', onEnd);
-      };
-      listEl.addEventListener('transitionend', onEnd);
-    } else {
-      listEl.style.maxHeight = '0';
-      listEl.style.overflowY = 'hidden';
-    }
-  }
-
-  function openMobileDrawer(options) {
-    if (!mobileNavDrawer) return;
-    siteHeader?.classList.add('menu-open');
-    mobileNavDrawer.classList.add('open');
-    mobileNavDrawer.setAttribute('aria-hidden', 'false');
-    mobileOverlay?.classList.add('open');
-    menuToggle?.setAttribute('aria-expanded', 'true');
-    if (menuToggle) menuToggle.innerHTML = '<i class="bi bi-x-lg"></i>';
-    document.body.style.overflow = 'hidden';
-    positionMobileDrawer();
-    if (options?.focusSearch) {
-      setTimeout(() => mobileSearchInput?.focus(), 90);
-    }
-  }
-
-  function closeMobileDrawer() {
-    if (!mobileNavDrawer) return;
-    mobileNavDrawer.classList.remove('open');
-    mobileNavDrawer.setAttribute('aria-hidden', 'true');
-    mobileOverlay?.classList.remove('open');
-    siteHeader?.classList.remove('menu-open');
-    menuToggle?.setAttribute('aria-expanded', 'false');
-    if (menuToggle) menuToggle.innerHTML = '<i class="bi bi-list"></i>';
-    mobileCatToggle?.setAttribute('aria-expanded', 'false');
-    mobileAccountToggle?.setAttribute('aria-expanded', 'false');
-    setMobileSubmenu(mobileCategoriesList, false);
-    setMobileSubmenu(mobileAccountList, false);
-    document.body.style.overflow = '';
-  }
-
-  function isMobileDrawerOpen() {
-    return mobileNavDrawer?.classList.contains('open') || false;
-  }
-
-  function toggleMobileDrawer() {
-    if (isMobileDrawerOpen()) closeMobileDrawer();
-    else openMobileDrawer();
-  }
-
-  // Legacy alias so existing handlers (Escape / outside click / link taps)
-  // keep working unchanged.
-  function closeMenu() {
-    if (isMobile()) closeMobileDrawer();
-  }
-
-  menuToggle?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleMobileDrawer();
-  });
-
-  mobileDrawerClose?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    closeMobileDrawer();
-  });
-
-  mobileOverlay?.addEventListener('click', function () {
-    closeMobileDrawer();
-  });
-
-  mobileAccountBtn?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    openMobileDrawer({ focusSearch: false });
-    // Reveal the account actions immediately.
-    mobileAccountToggle?.setAttribute('aria-expanded', 'true');
-    setMobileSubmenu(mobileAccountList, true);
-    setTimeout(() => mobileAccountToggle?.focus(), 90);
-  });
-
-  mobileSearchBtn?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    openMobileDrawer({ focusSearch: true });
-  });
-
-  // ── Expandable Categories / Account submenus ──
-  function toggleMobileSubmenu(toggleBtn, listEl, sectionEl) {
-    if (!toggleBtn || !listEl) return;
-    const willExpand = toggleBtn.getAttribute('aria-expanded') !== 'true';
-    toggleBtn.setAttribute('aria-expanded', willExpand ? 'true' : 'false');
-    sectionEl?.classList.toggle('expanded', willExpand);
-    setMobileSubmenu(listEl, willExpand);
-  }
-
-  mobileCatToggle?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleMobileSubmenu(mobileCatToggle, mobileCategoriesList, mobileCatToggle.closest('.mobile-has-submenu'));
-  });
-
-  mobileAccountToggle?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleMobileSubmenu(mobileAccountToggle, mobileAccountList, mobileAccountToggle.closest('.mobile-account-section'));
-  });
-
-  mobileDrawerSearchForm?.addEventListener('submit', function () {
-    // The page navigates to search results; close the drawer as it does so.
-    closeMobileDrawer();
-  });
-  mobileSearchInput?.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') closeMobileDrawer();
-  });
-
-  window.addEventListener('scroll', positionMobileDrawer, { passive: true });
-  window.addEventListener('resize', positionMobileDrawer);
-
-  // ── Account dropdown ──
-  accountTrigger?.addEventListener('click', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    const isOpen = accountMenu.classList.toggle('open');
-    accountTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  });
-
-  // ── Mega dropdown logic ──
-  let catHoverTimeout = null;
-  let catCloseTimeout = null;
-  const HOVER_DELAY = 80;
-  const CLOSE_DELAY = 200;
-
-  function activateFirstPanel() {
-    sidebarItems.forEach(item => item.classList.remove('active'));
-    panels.forEach(panel => panel.classList.remove('active'));
-    if (sidebarItems.length > 0 && panels.length > 0) {
-      sidebarItems[0].classList.add('active');
-      panels[0].classList.add('active');
-    }
-  }
-
-  function setActivePanel(targetItem) {
-    const index = targetItem.dataset.catIndex;
-    sidebarItems.forEach(item => item.classList.remove('active'));
-    panels.forEach(panel => panel.classList.remove('active'));
-    targetItem.classList.add('active');
-    const targetPanel = megaContent.querySelector(`.mega-panel[data-panel-index="${index}"]`);
-    if (targetPanel) {
-      targetPanel.classList.add('active');
-      // Reset scroll position when switching categories
-      const scrollContainer = targetPanel.querySelector('.mega-sub-scroll');
-      if (scrollContainer) scrollContainer.scrollTop = 0;
-    }
-  }
-
-  function openCatDropdown() {
-    clearTimeout(catCloseTimeout);
-    catHoverTimeout = setTimeout(() => {
-      catDropdown?.classList.add('menu-open');
-      if (!catSidebar.querySelector('.mega-sidebar-item.active')) {
-        activateFirstPanel();
+    globalProductSearch?.addEventListener('input', function () {
+      clearTimeout(productSearchTimer);
+      const query = this.value.trim();
+      if (query.length < 2) {
+        closeSearchSuggestions();
+        return;
       }
-      updateDropdownArrow();
-    }, HOVER_DELAY);
-  }
-
-  function closeCatDropdown() {
-    clearTimeout(catHoverTimeout);
-    catCloseTimeout = setTimeout(() => {
-      catDropdown?.classList.remove('menu-open');
-      activateFirstPanel();
-    }, CLOSE_DELAY);
-  }
-
-  // Desktop: hover on trigger
-  if (catDropdown && catDropdownTrigger) {
-    catDropdownTrigger.addEventListener('mouseenter', function () {
-      if (!isMobile()) openCatDropdown();
+      productSearchTimer = setTimeout(() => {
+        fetch(`/api/products/search/?q=${encodeURIComponent(query)}`)
+          .then(response => response.ok ? response.json() : { results: [] })
+          .then(data => renderSearchSuggestions(data.results || []))
+          .catch(closeSearchSuggestions);
+      }, 280);
     });
 
-    catDropdown.addEventListener('mouseenter', function () {
-      if (!isMobile()) { clearTimeout(catCloseTimeout); clearTimeout(catHoverTimeout); }
-    });
-
-    catDropdown.addEventListener('mouseleave', function () {
-      if (!isMobile()) closeCatDropdown();
-    });
-  }
-
-  // Desktop: hover sidebar item
-  sidebarItems.forEach(function (item) {
-    item.addEventListener('mouseenter', function () {
-      if (!isMobile()) setActivePanel(item);
-    });
-
-    const link = item.querySelector('.mega-sidebar-link');
-    if (link) {
-      link.addEventListener('click', function (event) {
-        if (isMobile()) {
-          event.preventDefault();
-          event.stopPropagation();
-          const wasActive = item.classList.contains('active');
-          sidebarItems.forEach(i => i.classList.remove('active'));
-          panels.forEach(p => p.classList.remove('active'));
-          if (!wasActive) {
-            item.classList.add('active');
-            const index = item.dataset.catIndex;
-            const targetPanel = megaContent.querySelector(`.mega-panel[data-panel-index="${index}"]`);
-            if (targetPanel) targetPanel.classList.add('active');
-          }
-        }
-      });
-    }
-  });
-
-  // Click trigger toggles dropdown on mobile and desktop
-  if (catDropdownTrigger) {
-    catDropdownTrigger.addEventListener('click', function (event) {
-      const currentlyOpen = catDropdown.classList.contains('menu-open') || catDropdown.classList.contains('open');
+    // ── Suggestion navigation (delegated) ─────────────────────────
+    // Every search result carries the exact product URL from the API. Clicking
+    // anywhere on a suggestion row navigates to that product's detail page using
+    // the real identifier — never the typed query — then tears down the dropdown
+    // cleanly so the page can navigate without reopening suggestions.
+    globalSearchSuggestions?.addEventListener('click', function (event) {
+      const link = event.target.closest('.suggestion-link');
+      if (!link) return;
+      const href = link.getAttribute('href');
       event.preventDefault();
-      event.stopPropagation();
-      if (isMobile()) {
-        catDropdown.classList.toggle('open');
-      } else {
-        catDropdown.classList.toggle('menu-open');
-      }
-      const isOpen = catDropdown.classList.contains('menu-open') || catDropdown.classList.contains('open');
-      catDropdownTrigger.setAttribute('aria-expanded', String(isOpen));
-      if (isOpen) activateFirstPanel();
-      if (!isMobile() && currentlyOpen && !catDropdown.classList.contains('menu-open')) {
-        activateFirstPanel();
-      }
-      updateDropdownArrow();
-    });
-
-    catDropdownTrigger.addEventListener('keydown', function (event) {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        catDropdownTrigger.click();
-      }
-    });
-  }
-
-  // ── Mega search filter ──
-  if (megaSearchInput) {
-    megaSearchInput.addEventListener('input', function () {
-      const query = this.value.toLowerCase().trim();
-      const activePanel = megaContent.querySelector('.mega-panel.active');
-      if (!activePanel) return;
-      const scrollContainer = activePanel.querySelector('.mega-sub-scroll');
-      const sections = activePanel.querySelectorAll('.mega-sub-section');
-      sections.forEach(section => {
-        const text = section.textContent.toLowerCase();
-        if (text.includes(query)) {
-          section.style.display = '';
-          if (query && section.querySelector('.mega-sub-section-content')) {
-            section.classList.add('expanded');
-          }
-        } else {
-          section.style.display = 'none';
-        }
-      });
-      // Reset scroll position when searching
-      if (scrollContainer && query) {
-        scrollContainer.scrollTop = 0;
-      }
-    });
-  }
-
-  // ── Sub-subcategory expand/collapse with smooth animation ──
-  megaContent?.addEventListener('click', function (event) {
-    const expandIcon = event.target.closest('.expand-icon');
-    const toggleBtn = event.target.closest('.expand-toggle-btn');
-    const target = expandIcon || toggleBtn;
-    if (target) {
-      event.preventDefault();
-      event.stopPropagation();
-      const section = target.closest('.mega-sub-section');
-      if (!section) return;
-
-      const content = section.querySelector('.mega-sub-section-content');
-      if (!content) return;
-
-      const isExpanding = !section.classList.contains('expanded');
-
-      if (isExpanding) {
-        section.classList.add('expanded');
-        // Animate open
-        const targetHeight = content.scrollHeight;
-        content.style.maxHeight = '0';
-        content.style.overflowY = 'hidden';
-        // Force reflow
-        content.offsetHeight;
-        content.style.maxHeight = targetHeight + 'px';
-        content.style.overflowY = 'auto';
-
-        const onTransitionEnd = () => {
-          if (section.classList.contains('expanded')) {
-            content.style.maxHeight = 'none';
-            content.style.overflowY = 'auto';
-          }
-          content.removeEventListener('transitionend', onTransitionEnd);
-        };
-        content.addEventListener('transitionend', onTransitionEnd);
-      } else {
-        // Animate close
-        content.style.maxHeight = content.scrollHeight + 'px';
-        // Force reflow
-        content.offsetHeight;
-        content.style.maxHeight = '0';
-        content.style.overflowY = 'hidden';
-        section.classList.remove('expanded');
-      }
-      return;
-    }
-  });
-
-  // Initialize already-expanded sections with proper height
-  document.querySelectorAll('.mega-sub-section.expanded .mega-sub-section-content').forEach(content => {
-    content.style.maxHeight = 'none';
-    content.style.overflowY = 'auto';
-  });
-
-  // ── Global clicks ──
-  document.addEventListener('click', function (event) {
-    if (isSearchExpanded() && event.target.closest && !event.target.closest('.header-search')) {
-      closeSearch();
-    }
-    if (globalSearchSuggestions && !event.target.closest('.header-search')) {
+      if (!href || href === '#') return;
       closeSearchSuggestions();
-    }
-    if (accountMenu && !accountMenu.contains(event.target)) {
-      accountMenu.classList.remove('open');
-      accountTrigger?.setAttribute('aria-expanded', 'false');
-    }
-    // Close the drawer when tapping outside both the header AND the drawer.
-    const clickedOutside =
-      siteHeader && !siteHeader.contains(event.target) &&
-      mobileNavDrawer && !mobileNavDrawer.contains(event.target) &&
-      mobileOverlay && !mobileOverlay.contains(event.target);
-    if (clickedOutside) closeMobileDrawer();
-    if (!isMobile() && catDropdown && !catDropdown.contains(event.target)) {
-      catDropdown.classList.remove('menu-open');
-      activateFirstPanel();
-    }
-  });
-
-  // ── Escape key ──
-  document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape') {
-      closeMobileDrawer();
       closeSearch();
+      window.location.href = href;
+    });
+
+    // ── Expandable search (desktop) ────────────────────────────────
+    // A single state class .search-expanded + a dynamically measured width
+    // lets the search field take over the whole center zone, while the logo
+    // and the right-side controls (cart/notification/account) stay fixed.
+    const searchForm = document.querySelector('.header-search');
+    const headerActions = document.querySelector('.header-actions');
+    const primaryNav = document.querySelector('.primary-nav');
+    const EXPAND_GAP = 18; // right margin between the search and the controls
+    const isSearchExpanded = () => siteHeader?.classList.contains('search-expanded');
+    let navNaturalWidth = 1200; // measured on first open; collapsed state
+
+    // The nav links are collapsed via a px max-width and the search grows via
+    // a px width, so BOTH values are animated by CSS transitions → the two
+    // movements stay visually synchronized and never "jump". We only lock the
+    // current px as the transition start point, flip the state class, then set
+    // the final px targets. The browser interpolates every intermediate frame.
+    function openSearch() {
+      if (isMobile() || !searchForm || !primaryNav) return;
+      if (isSearchExpanded()) return;             // keep expanded until a close
+      // Only the search may be active — dismiss every other dropdown first.
       accountMenu?.classList.remove('open');
       accountTrigger?.setAttribute('aria-expanded', 'false');
+      notifCenter?.classList.remove('open');
+      notifBellBtn?.setAttribute('aria-expanded', 'false');
+      if (catDropdown) {
+        catDropdown.classList.remove('menu-open');
+        catDropdown.classList.remove('open');
+        activateFirstPanel();
+      }
+      // 1) Freeze current sizes into explicit px so auto → px is not instant.
+      navNaturalWidth = primaryNav.offsetWidth || navNaturalWidth;
+      primaryNav.style.maxWidth = navNaturalWidth + 'px';
+      searchForm.style.width = searchForm.offsetWidth + 'px';
+      // 2) Adopt the locked start values, then switch state (batch both).
+      void navWrap.offsetWidth;                    // force reflow on start values
+      siteHeader.classList.add('search-expanded');
+      // 3) Target px = center width − right controls − gap; grow to fill.
+      const available = navWrap.clientWidth - headerActions.offsetWidth - EXPAND_GAP;
+      searchForm.style.width = Math.max(180, available) + 'px';
+      primaryNav.style.maxWidth = '0px';
+    }
+
+    function closeSearch() {
+      if (!isSearchExpanded() || !searchForm || !primaryNav) return;
+      // Reverse: grow nav back to its natural px and let the search shrink to
+      // its CSS clamp() base. Both animate together on the way out too.
+      primaryNav.style.maxWidth = navNaturalWidth + 'px';
+      searchForm.style.width = '';
+      siteHeader.classList.remove('search-expanded');
+      if (globalProductSearch) globalProductSearch.blur();
+    }
+
+    // Re-fit an already-expanded search to the current window width (resize).
+    function refitExpandedWidth() {
+      if (!isSearchExpanded() || !searchForm || !headerActions || !navWrap) return;
+      const available = navWrap.clientWidth - headerActions.offsetWidth - EXPAND_GAP;
+      searchForm.style.width = Math.max(180, available) + 'px';
+    }
+
+    globalProductSearch?.addEventListener('focus', openSearch);
+    searchForm?.addEventListener('click', function (event) {
+      // Let suggestion rows handle their own click so expanding the search field
+      // (which shifts layout) can never swallow the navigation.
+      if (event.target.closest('.search-submit')) return; // let the form submit
+      if (event.target.closest('.suggestion-link')) return;
+      if (!isSearchExpanded()) {
+        openSearch();
+        globalProductSearch?.focus();
+      }
+    });
+    searchForm?.addEventListener('submit', function () {
+      // Execute the existing search; restore the navbar as it navigates.
+      closeSearch();
+    });
+
+    // ── Header scroll ──
+    function updateHeaderScrollState() {
+      const scrollY = window.pageYOffset || document.documentElement.scrollTop || 0;
+      siteHeader?.classList.toggle('is-scrolled', scrollY > 50);
+    }
+
+    // ── Mobile drawer (compact navigation) ──
+    function positionMobileDrawer() {
+      if (!mobileNavDrawer || !siteHeader) return;
+      const rect = siteHeader.getBoundingClientRect();
+      // Sit just below the sticky header, aligned with its right edge.
+      mobileNavDrawer.style.top = Math.max(8, rect.bottom + 8) + 'px';
+      mobileNavDrawer.style.right = Math.max(0, window.innerWidth - rect.right + 8) + 'px';
+    }
+
+    // Animate a submenu's height (Categories / Account) with a smooth transition.
+    function setMobileSubmenu(listEl, expanded) {
+      if (!listEl) return;
+      if (expanded) {
+        const targetHeight = listEl.scrollHeight;
+        listEl.style.maxHeight = targetHeight + 'px';
+        listEl.style.overflowY = 'hidden';
+        const onEnd = () => {
+          listEl.style.maxHeight = 'none';
+          listEl.style.overflowY = 'auto';
+          listEl.removeEventListener('transitionend', onEnd);
+        };
+        listEl.addEventListener('transitionend', onEnd);
+      } else {
+        listEl.style.maxHeight = '0';
+        listEl.style.overflowY = 'hidden';
+      }
+    }
+
+    function openMobileDrawer(options) {
+      if (!mobileNavDrawer) return;
+      // Floating panels are mutually exclusive on screen: opening the navigation
+      // drawer dismisses the auth panel so the two can never overlap.
+      closeMobileAuthPanel({ skipFocusRestore: true });
+      siteHeader?.classList.add('menu-open');
+      mobileNavDrawer.classList.add('open');
+      mobileNavDrawer.setAttribute('aria-hidden', 'false');
+      mobileOverlay?.classList.add('open');
+      menuToggle?.setAttribute('aria-expanded', 'true');
+      if (menuToggle) menuToggle.innerHTML = '<i class="bi bi-x-lg"></i>';
+      document.body.style.overflow = 'hidden';
+      positionMobileDrawer();
+      if (options?.focusSearch) {
+        setTimeout(() => mobileSearchInput?.focus(), 90);
+      }
+    }
+
+    function closeMobileDrawer() {
+      if (!mobileNavDrawer) return;
+      mobileNavDrawer.classList.remove('open');
+      mobileNavDrawer.setAttribute('aria-hidden', 'true');
+      mobileOverlay?.classList.remove('open');
+      siteHeader?.classList.remove('menu-open');
+      menuToggle?.setAttribute('aria-expanded', 'false');
+      if (menuToggle) menuToggle.innerHTML = '<i class="bi bi-list"></i>';
+      mobileCatToggle?.setAttribute('aria-expanded', 'false');
+      mobileAccountToggle?.setAttribute('aria-expanded', 'false');
+      setMobileSubmenu(mobileCategoriesList, false);
+      setMobileSubmenu(mobileAccountList, false);
+      document.body.style.overflow = '';
+    }
+
+    // ── Independent state readers ──
+    // isMobileMenuOpen → the full navigation drawer (hamburger control only)
+    // isSearchOpen     → the dedicated search interface (search icon control only)
+    // They are intentionally separate: neither feature reads nor writes the
+    // other's state, so one can never trigger or dismiss the other.
+    function isMobileMenuOpen() {
+      return mobileNavDrawer?.classList.contains('open') || false;
+    }
+
+    const isSearchOpen = () => mobileSearchBar?.classList.contains('open') || false;
+
+    function toggleMobileDrawer() {
+      if (isMobileMenuOpen()) closeMobileDrawer();
+      else openMobileDrawer();
+    }
+
+    // Legacy alias so existing handlers (Escape / outside click / link taps)
+    // keep working unchanged.
+    function closeMenu() {
+      if (isMobile()) closeMobileDrawer();
+    }
+
+    menuToggle?.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleMobileDrawer();
+    });
+
+    mobileDrawerClose?.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeMobileDrawer();
+    });
+
+    mobileOverlay?.addEventListener('click', function () {
+      closeMobileDrawer();
+    });
+
+    // ── Dedicated authentication panel (Profile icon) ────────────────
+    // ROOT-CAUSE FIX: the old handler called openMobileDrawer() directly, which
+    // is why tapping the Profile icon revealed the ENTIRE mobile navigation
+    // drawer (Home / Categories / Products / About / Contact / search / account).
+    // The Profile icon now owns ONE dedicated state (isProfileOpen) and NEVER
+    // touches #mobileNavDrawer, #menuToggle or any drawer submenu. It opens only
+    // the Login/Signup interface, whose actions point at the EXISTING auth routes.
+
+    const isProfileOpen = () => mobileAuthPanel?.classList.contains('open') || false;
+
+    function positionMobileAuth() {
+      if (!mobileAuthPanel || !siteHeader) return;
+      const rect = siteHeader.getBoundingClientRect();
+      // Sit just below the sticky header (top), aligned under the compact-bar
+      // controls (right comes from CSS) — never outside the viewport.
+      mobileAuthPanel.style.top = Math.max(8, rect.bottom + 8) + 'px';
+    }
+
+    function openMobileAuthPanel() {
+      if (!mobileAuthPanel || isProfileOpen()) return;
+      // Floating panels are mutually exclusive on screen: opening the auth UI
+      // dismisses the nav drawer and the search bar. The reverse is handled by
+      // openMobileDrawer()/openMobileSearch(), which call closeMobileAuthPanel().
+      closeMobileDrawer();
+      closeMobileSearch();
+      positionMobileAuth();              // position BEFORE showing (no flash)
+      mobileAuthPanel.classList.add('open');
+      mobileAuthPanel.setAttribute('aria-hidden', 'false');
+      mobileAccountBtn?.setAttribute('aria-expanded', 'true');
+      // Automatically focus the first authentication action (Login / Create
+      // Account / Profile …), then retry once after the entrance animation for
+      // browsers that defer focus.
+      const firstAction = mobileAuthPanel.querySelector('.mobile-auth-link') || mobileAuthClose;
+      firstAction?.focus({ preventScroll: true });
+      setTimeout(() => firstAction?.focus({ preventScroll: true }), 120);
+    }
+
+    function closeMobileAuthPanel(options) {
+      if (!mobileAuthPanel || !isProfileOpen()) return;
+      const restoreFocus = options?.restoreFocus === true;
+      mobileAuthPanel.classList.remove('open');
+      mobileAuthPanel.setAttribute('aria-hidden', 'true');
+      mobileAccountBtn?.setAttribute('aria-expanded', 'false');
+      // Return focus to the trigger only on explicit closes (button / Escape).
+      if (restoreFocus) setTimeout(() => mobileAccountBtn?.focus({ preventScroll: true }), 0);
+    }
+
+    // PROFILE ICON → Login/Signup ONLY. stopPropagation keeps this click away
+    // from every document-level handler (outside-click & menu logic included),
+    // so it can never be re-interpreted as a menu toggle.
+    mobileAccountBtn?.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (isProfileOpen()) closeMobileAuthPanel({ restoreFocus: true });
+      else openMobileAuthPanel();
+    });
+
+    // Dedicated close button — closes ONLY the Login/Signup interface.
+    // The mobile menu stays exactly as it was (closed stays closed).
+    mobileAuthClose?.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeMobileAuthPanel({ restoreFocus: true });
+    });
+
+    // Clicking anywhere outside the panel closes ONLY the auth interface.
+    document.addEventListener('click', function (event) {
+      if (!isProfileOpen()) return;
+      if (event.target.closest?.('#mobileAuthPanel')) return;   // clicks inside
+      closeMobileAuthPanel();
+    });
+
+    // Escape closes ONLY the auth interface — never the navigation state.
+    document.addEventListener('keydown', function (event) {
+      if (event.key !== 'Escape' || !isProfileOpen()) return;
+      event.stopPropagation();
+      closeMobileAuthPanel({ restoreFocus: true });
+    });
+
+    // ── Dedicated mobile search ─────────────────────────────────────
+    // The Search icon opens ONLY this search bar. It must NEVER open the
+    // navigation drawer, so none of the functions below touch #mobileNavDrawer,
+    // #menuToggle or the menu-open class (except to close an already open menu
+    // so the two floating panels can never overlap).
+
+    function positionMobileSearch() {
+      if (!mobileSearchBar || !siteHeader) return;
+      const rect = siteHeader.getBoundingClientRect();
+      // Sit just below the sticky header, spanning the viewport width minus a
+      // small gutter on each side (left/right come from CSS) — no overflow.
+      mobileSearchBar.style.top = Math.max(8, rect.bottom + 8) + 'px';
+    }
+
+    function openMobileSearch() {
+      if (!mobileSearchBar || isSearchOpen()) return;
+      closeMobileDrawer();               // panels are mutually exclusive on screen
+      closeMobileAuthPanel({ skipFocusRestore: true });   // …and so is the auth panel
+      positionMobileSearch();            // position BEFORE showing (no flash)
+      mobileSearchBar.classList.add('open');
+      mobileSearchBar.setAttribute('aria-hidden', 'false');
+      mobileSearchBtn?.setAttribute('aria-expanded', 'true');
+      // Focus immediately (the element is visible as soon as .open lands), then
+      // retry once after the entrance animation for browsers that defer focus.
+      mobileSearchField?.focus({ preventScroll: true });
+      setTimeout(() => mobileSearchField?.focus({ preventScroll: true }), 120);
+    }
+
+    function closeMobileSearch(options) {
+      if (!mobileSearchBar || !isSearchOpen()) return;
+      const restoreFocus = options?.restoreFocus === true;
+      mobileSearchBar.classList.remove('open');
+      mobileSearchBar.setAttribute('aria-hidden', 'true');
+      mobileSearchBtn?.setAttribute('aria-expanded', 'false');
+      mobileSearchField?.blur();
+      // Return focus to the trigger only on explicit closes (button / Escape).
+      if (restoreFocus) setTimeout(() => mobileSearchBtn?.focus({ preventScroll: true }), 0);
+    }
+
+    // SEARCH ICON → search UI only. stopPropagation keeps the click away from
+    // every document-level handler (menu logic included).
+    mobileSearchBtn?.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (isSearchOpen()) {
+        closeMobileSearch({ restoreFocus: false });
+      } else {
+        openMobileSearch();
+      }
+    });
+
+    // Dedicated close button — closes ONLY the search interface.
+    mobileSearchClose?.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeMobileSearch({ restoreFocus: true });
+    });
+
+    // Enter / submit button executes the EXISTING search functionality
+    // (GET {% url 'store:product_list' %}?q=…) and restores the normal navbar.
+    mobileSearchForm?.addEventListener('submit', function () {
+      closeMobileSearch();
+    });
+
+    mobileSearchField?.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        closeMobileSearch({ restoreFocus: true });
+      }
+    });
+
+    // ── Expandable Categories / Account submenus ──
+    function toggleMobileSubmenu(toggleBtn, listEl, sectionEl) {
+      if (!toggleBtn || !listEl) return;
+      const willExpand = toggleBtn.getAttribute('aria-expanded') !== 'true';
+      toggleBtn.setAttribute('aria-expanded', willExpand ? 'true' : 'false');
+      sectionEl?.classList.toggle('expanded', willExpand);
+      setMobileSubmenu(listEl, willExpand);
+    }
+
+    mobileCatToggle?.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleMobileSubmenu(mobileCatToggle, mobileCategoriesList, mobileCatToggle.closest('.mobile-has-submenu'));
+    });
+
+    mobileAccountToggle?.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleMobileSubmenu(mobileAccountToggle, mobileAccountList, mobileAccountToggle.closest('.mobile-account-section'));
+    });
+
+    mobileDrawerSearchForm?.addEventListener('submit', function () {
+      // The page navigates to search results; close the drawer as it does so.
+      closeMobileDrawer();
+    });
+    mobileSearchInput?.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeMobileDrawer();
+    });
+
+    window.addEventListener('scroll', positionMobileDrawer, { passive: true });
+    window.addEventListener('resize', positionMobileDrawer);
+    window.addEventListener('scroll', positionMobileSearch, { passive: true });
+    window.addEventListener('resize', positionMobileSearch);
+    window.addEventListener('scroll', positionMobileAuth, { passive: true });
+    window.addEventListener('resize', positionMobileAuth);
+
+    // ── Account dropdown ──
+    accountTrigger?.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      // Only this dropdown may stay open — dismiss notifications, categories & search.
+      closeSearch();
+      notifCenter?.classList.remove('open');
+      notifBellBtn?.setAttribute('aria-expanded', 'false');
       if (!isMobile() && catDropdown) {
         catDropdown.classList.remove('menu-open');
         activateFirstPanel();
       }
-    }
-  });
-
-  // ── Nav links close mobile drawer ──
-  navWrap?.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', function () {
-      if (isMobile() && link.closest('.mega-sidebar-link')) return;
-      closeMenu();
+      const isOpen = accountMenu.classList.toggle('open');
+      accountTrigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     });
-  });
-  mobileNavDrawer?.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', function () {
-      closeMobileDrawer();
-    });
-  });
 
-  // ── Initialize ──
-  updateHeaderScrollState();
-  window.addEventListener('scroll', updateHeaderScrollState, { passive: true });
+    // ── Mega dropdown logic ──
+    let catCloseTimeout = null;
+    const CLOSE_DELAY = 160; // brief grace so a fast exit still fades out smoothly
 
-  window.addEventListener('resize', function () {
-    if (!isMobile()) {
-      catDropdown?.classList.remove('open');
-      closeMobileDrawer();
-      if (menuToggle) {
-        menuToggle.innerHTML = '<i class="bi bi-list"></i>';
-        menuToggle.setAttribute('aria-expanded', 'false');
+    function activateFirstPanel() {
+      sidebarItems.forEach(item => item.classList.remove('active'));
+      panels.forEach(panel => panel.classList.remove('active'));
+      if (sidebarItems.length > 0 && panels.length > 0) {
+        sidebarItems[0].classList.add('active');
+        panels[0].classList.add('active');
       }
     }
-    if (isSearchExpanded()) {
-      if (isMobile()) closeSearch(); else refitExpandedWidth();
+
+    function setActivePanel(targetItem) {
+      const index = targetItem.dataset.catIndex;
+      sidebarItems.forEach(item => item.classList.remove('active'));
+      panels.forEach(panel => panel.classList.remove('active'));
+      targetItem.classList.add('active');
+      const targetPanel = megaContent.querySelector(`.mega-panel[data-panel-index="${index}"]`);
+      if (targetPanel) {
+        targetPanel.classList.add('active');
+        // Reset scroll position when switching categories
+        const scrollContainer = targetPanel.querySelector('.mega-sub-scroll');
+        if (scrollContainer) scrollContainer.scrollTop = 0;
+      }
     }
-    updateDropdownArrow();
-  });
 
-  // ── Notification Center ──
-  const notifCenter = document.getElementById('notificationCenter');
-  const notifBellBtn = document.getElementById('notificationBellBtn');
-  const notifDropdown = document.getElementById('notificationDropdown');
-  const notifList = document.getElementById('notificationList');
-  const notifBadge = document.getElementById('notificationBadge');
-  const notifMarkAllBtn = document.getElementById('notifMarkAllRead');
-  const notifClearAllBtn = document.getElementById('notifClearAll');
+    function openCatDropdown() {
+      clearTimeout(catCloseTimeout);
+      if (!catDropdown) return;
+      catDropdown.classList.add('menu-open');
+      catDropdownTrigger?.setAttribute('aria-expanded', 'true');
+      if (!catSidebar.querySelector('.mega-sidebar-item.active')) {
+        activateFirstPanel();
+      }
+      updateDropdownArrow();
+    }
 
-  let notifLoaded = false;
+    function closeCatDropdown() {
+      clearTimeout(catCloseTimeout);
+      catCloseTimeout = setTimeout(() => {
+        catDropdown?.classList.remove('menu-open');
+        catDropdownTrigger?.setAttribute('aria-expanded', 'false');
+        activateFirstPanel();
+      }, CLOSE_DELAY);
+    }
 
-  // Only initialize notification center for authenticated users
-  if (notifCenter) {
-    function getNotifCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
+    // Desktop: ONE hover container — #catDropdown owns the trigger, the hover
+    // bridge AND the mega-menu. mouseenter/mouseleave on this single parent means
+    // moving from the Categories trigger straight into the menu never triggers the
+    // close event, and the menu only closes after the cursor leaves all of it.
+    if (catDropdown) {
+      catDropdown.addEventListener('mouseenter', function () {
+        if (!isMobile()) openCatDropdown();
+      });
+
+      catDropdown.addEventListener('mouseleave', function () {
+        if (!isMobile()) closeCatDropdown();
+      });
+    }
+
+    // Desktop: hover sidebar item
+    sidebarItems.forEach(function (item) {
+      item.addEventListener('mouseenter', function () {
+        if (!isMobile()) setActivePanel(item);
+      });
+
+      const link = item.querySelector('.mega-sidebar-link');
+      if (link) {
+        link.addEventListener('click', function (event) {
+          if (isMobile()) {
+            event.preventDefault();
+            event.stopPropagation();
+            const wasActive = item.classList.contains('active');
+            sidebarItems.forEach(i => i.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            if (!wasActive) {
+              item.classList.add('active');
+              const index = item.dataset.catIndex;
+              const targetPanel = megaContent.querySelector(`.mega-panel[data-panel-index="${index}"]`);
+              if (targetPanel) targetPanel.classList.add('active');
+            }
+          }
+        });
+      }
+    });
+
+    // Click trigger toggles dropdown on mobile and desktop
+    if (catDropdownTrigger) {
+      catDropdownTrigger.addEventListener('click', function (event) {
+        const currentlyOpen = catDropdown.classList.contains('menu-open') || catDropdown.classList.contains('open');
+        event.preventDefault();
+        event.stopPropagation();
+        // Only Categories may open — dismiss account & notification dropdowns & search.
+        closeSearch();
+        accountMenu?.classList.remove('open');
+        accountTrigger?.setAttribute('aria-expanded', 'false');
+        notifCenter?.classList.remove('open');
+        notifBellBtn?.setAttribute('aria-expanded', 'false');
+        if (isMobile()) {
+          catDropdown.classList.toggle('open');
+        } else {
+          catDropdown.classList.toggle('menu-open');
+        }
+        const isOpen = catDropdown.classList.contains('menu-open') || catDropdown.classList.contains('open');
+        catDropdownTrigger.setAttribute('aria-expanded', String(isOpen));
+        if (isOpen) activateFirstPanel();
+        if (!isMobile() && currentlyOpen && !catDropdown.classList.contains('menu-open')) {
+          activateFirstPanel();
+        }
+        updateDropdownArrow();
+      });
+
+      catDropdownTrigger.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          catDropdownTrigger.click();
+        }
+      });
+    }
+
+    // ── Mega search filter ──
+    if (megaSearchInput) {
+      megaSearchInput.addEventListener('input', function () {
+        const query = this.value.toLowerCase().trim();
+        const activePanel = megaContent.querySelector('.mega-panel.active');
+        if (!activePanel) return;
+        const scrollContainer = activePanel.querySelector('.mega-sub-scroll');
+        const sections = activePanel.querySelectorAll('.mega-sub-section');
+        sections.forEach(section => {
+          const text = section.textContent.toLowerCase();
+          if (text.includes(query)) {
+            section.style.display = '';
+            if (query && section.querySelector('.mega-sub-section-content')) {
+              section.classList.add('expanded');
+            }
+          } else {
+            section.style.display = 'none';
+          }
+        });
+        // Reset scroll position when searching
+        if (scrollContainer && query) {
+          scrollContainer.scrollTop = 0;
+        }
+      });
+    }
+
+    // ── Sub-subcategory expand/collapse with smooth animation ──
+    megaContent?.addEventListener('click', function (event) {
+      const expandIcon = event.target.closest('.expand-icon');
+      const toggleBtn = event.target.closest('.expand-toggle-btn');
+      const target = expandIcon || toggleBtn;
+      if (target) {
+        event.preventDefault();
+        event.stopPropagation();
+        const section = target.closest('.mega-sub-section');
+        if (!section) return;
+
+        const content = section.querySelector('.mega-sub-section-content');
+        if (!content) return;
+
+        const isExpanding = !section.classList.contains('expanded');
+
+        if (isExpanding) {
+          section.classList.add('expanded');
+          // Animate open
+          const targetHeight = content.scrollHeight;
+          content.style.maxHeight = '0';
+          content.style.overflowY = 'hidden';
+          // Force reflow
+          content.offsetHeight;
+          content.style.maxHeight = targetHeight + 'px';
+          content.style.overflowY = 'auto';
+
+          const onTransitionEnd = () => {
+            if (section.classList.contains('expanded')) {
+              content.style.maxHeight = 'none';
+              content.style.overflowY = 'auto';
+            }
+            content.removeEventListener('transitionend', onTransitionEnd);
+          };
+          content.addEventListener('transitionend', onTransitionEnd);
+        } else {
+          // Animate close
+          content.style.maxHeight = content.scrollHeight + 'px';
+          // Force reflow
+          content.offsetHeight;
+          content.style.maxHeight = '0';
+          content.style.overflowY = 'hidden';
+          section.classList.remove('expanded');
+        }
+        return;
+      }
+    });
+
+    // Initialize already-expanded sections with proper height
+    document.querySelectorAll('.mega-sub-section.expanded .mega-sub-section-content').forEach(content => {
+      content.style.maxHeight = 'none';
+      content.style.overflowY = 'auto';
+    });
+
+    // ── Global clicks ──
+    document.addEventListener('click', function (event) {
+      if (isSearchExpanded() && event.target.closest && !event.target.closest('.header-search')) {
+        closeSearch();
+      }
+      if (globalSearchSuggestions && !event.target.closest('.header-search')) {
+        closeSearchSuggestions();
+      }
+      if (accountMenu && !accountMenu.contains(event.target)) {
+        accountMenu.classList.remove('open');
+        accountTrigger?.setAttribute('aria-expanded', 'false');
+      }
+      // Close the drawer when tapping outside both the header AND the drawer.
+      const clickedOutside =
+        siteHeader && !siteHeader.contains(event.target) &&
+        mobileNavDrawer && !mobileNavDrawer.contains(event.target) &&
+        mobileOverlay && !mobileOverlay.contains(event.target);
+      if (clickedOutside) closeMobileDrawer();
+      // Close the dedicated search bar when tapping outside of it and its
+      // trigger. This never opens/closes the menu — it only dismisses search.
+      if (
+        isSearchOpen() &&
+        mobileSearchBar && !mobileSearchBar.contains(event.target) &&
+        !(mobileSearchBtn && mobileSearchBtn.contains(event.target))
+      ) {
+        closeMobileSearch();
+      }
+      if (!isMobile() && catDropdown && !catDropdown.contains(event.target)) {
+        catDropdown.classList.remove('menu-open');
+        activateFirstPanel();
+      }
+    });
+
+    // ── Escape key ──
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        closeMobileDrawer();
+        closeSearch();
+        closeMobileSearch();
+        accountMenu?.classList.remove('open');
+        accountTrigger?.setAttribute('aria-expanded', 'false');
+        if (!isMobile() && catDropdown) {
+          catDropdown.classList.remove('menu-open');
+          activateFirstPanel();
         }
       }
-    }
-    return cookieValue;
-  }
+    });
 
-  function getNotifTypeIcon(type) {
-    const map = {
-      auth: 'bi-shield-lock',
-      order: 'bi-bag-check',
-      profile: 'bi-person-gear',
-      system: 'bi-info-circle',
-    };
-    return map[type] || 'bi-bell';
-  }
+    // ── Nav links close mobile drawer ──
+    navWrap?.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', function () {
+        if (isMobile() && link.closest('.mega-sidebar-link')) return;
+        closeMenu();
+      });
+    });
+    mobileNavDrawer?.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', function () {
+        closeMobileDrawer();
+      });
+    });
 
-  function escapeHtml(str) {
-    const d = document.createElement('div');
-    d.textContent = str || '';
-    return d.innerHTML;
-  }
+    // ── Initialize ──
+    setActiveNavLink();
+    updateHeaderScrollState();
+    window.addEventListener('scroll', updateHeaderScrollState, { passive: true });
 
-  function renderNotificationItem(n) {
-    const unreadClass = n.is_read ? '' : ' notification-item--unread';
-    const toggleIcon = n.is_read ? 'bi-envelope' : 'bi-envelope-open';
-    const toggleTitle = n.is_read ? 'Mark as unread' : 'Mark as read';
-    return `
+    window.addEventListener('resize', function () {
+      if (!isMobile()) {
+        catDropdown?.classList.remove('open');
+        closeMobileDrawer();
+        closeMobileSearch();   // the dedicated search bar is mobile/tablet-only
+        if (menuToggle) {
+          menuToggle.innerHTML = '<i class="bi bi-list"></i>';
+          menuToggle.setAttribute('aria-expanded', 'false');
+        }
+      }
+      if (isSearchExpanded()) {
+        if (isMobile()) closeSearch(); else refitExpandedWidth();
+      }
+      updateDropdownArrow();
+    });
+
+    // ── Notification Center ──
+    let notifLoaded = false;
+
+    // Only initialize notification center for authenticated users
+    if (notifCenter) {
+      function getNotifCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+
+      function getNotifTypeIcon(type) {
+        const map = {
+          auth: 'bi-shield-lock',
+          order: 'bi-bag-check',
+          profile: 'bi-person-gear',
+          system: 'bi-info-circle',
+        };
+        return map[type] || 'bi-bell';
+      }
+
+      function escapeHtml(str) {
+        const d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+      }
+
+      function renderNotificationItem(n) {
+        const unreadClass = n.is_read ? '' : ' notification-item--unread';
+        const toggleIcon = n.is_read ? 'bi-envelope' : 'bi-envelope-open';
+        const toggleTitle = n.is_read ? 'Mark as unread' : 'Mark as read';
+        return `
       <div class="notification-item${unreadClass}" data-id="${n.id}" data-read="${n.is_read}">
         <div class="notification-type-icon notification-type-icon--${n.type}">
           <i class="bi ${getNotifTypeIcon(n.type)}"></i>
@@ -3407,117 +5083,125 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
       </div>
     `;
-  }
+      }
 
-  function updateBellVisibility(unreadCount) {
-    if (notifBadge) {
-      notifBadge.textContent = unreadCount || 0;
-      notifBadge.style.display = unreadCount > 0 ? '' : 'none';
-    }
-  }
+      function updateBellVisibility(unreadCount) {
+        if (notifBadge) {
+          notifBadge.textContent = unreadCount || 0;
+          notifBadge.style.display = unreadCount > 0 ? '' : 'none';
+        }
+      }
 
-  function loadNotifications() {
-    fetch('/api/notifications/')
-      .then(r => r.ok ? r.json() : { notifications: [], unread_count: 0, total_count: 0 })
-      .then(data => {
-        if (!notifList) return;
-        if (data.notifications.length === 0) {
-          notifList.innerHTML = `
+      function loadNotifications() {
+        fetch('/api/notifications/')
+          .then(r => r.ok ? r.json() : { notifications: [], unread_count: 0, total_count: 0 })
+          .then(data => {
+            if (!notifList) return;
+            if (data.notifications.length === 0) {
+              notifList.innerHTML = `
             <div class="notification-empty">
               <i class="bi bi-bell-slash"></i>
               <p>No notifications yet</p>
             </div>
           `;
-        } else {
-          notifList.innerHTML = data.notifications.map(renderNotificationItem).join('');
-        }
-        updateBellVisibility(data.unread_count);
-        notifLoaded = true;
-      })
-      .catch(() => {});
-  }
+            } else {
+              notifList.innerHTML = data.notifications.map(renderNotificationItem).join('');
+            }
+            updateBellVisibility(data.unread_count);
+            notifLoaded = true;
+          })
+          .catch(() => { });
+      }
 
-  function pollUnreadCount() {
-    fetch('/api/notifications/unread-count/')
-      .then(r => r.ok ? r.json() : { unread_count: 0, total_count: 0 })
-      .then(data => {
-        const prev = parseInt(notifBadge?.textContent || '0', 10);
-        updateBellVisibility(data.unread_count);
-        if (data.unread_count > prev && notifLoaded) {
+      function pollUnreadCount() {
+        fetch('/api/notifications/unread-count/')
+          .then(r => r.ok ? r.json() : { unread_count: 0, total_count: 0 })
+          .then(data => {
+            const prev = parseInt(notifBadge?.textContent || '0', 10);
+            updateBellVisibility(data.unread_count);
+            if (data.unread_count > prev && notifLoaded) {
+              loadNotifications();
+            }
+          })
+          .catch(() => { });
+      }
+
+      function notifPost(url, body) {
+        return fetch(url, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': getNotifCookie('csrftoken'),
+            'Content-Type': 'application/json',
+          },
+          body: body ? JSON.stringify(body) : '{}',
+        }).then(r => r.ok ? r.json() : {});
+      }
+
+      notifBellBtn?.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Only Notifications may open — dismiss account/categories dropdowns & search.
+        closeSearch();
+        accountMenu?.classList.remove('open');
+        accountTrigger?.setAttribute('aria-expanded', 'false');
+        if (!isMobile() && catDropdown) {
+          catDropdown.classList.remove('menu-open');
+          activateFirstPanel();
+        }
+        const isOpen = notifCenter.classList.toggle('open');
+        notifBellBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        if (isOpen && !notifLoaded) {
+          loadNotifications();
+        } else if (isOpen) {
           loadNotifications();
         }
-      })
-      .catch(() => {});
-  }
+      });
 
-  function notifPost(url, body) {
-    return fetch(url, {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': getNotifCookie('csrftoken'),
-        'Content-Type': 'application/json',
-      },
-      body: body ? JSON.stringify(body) : '{}',
-    }).then(r => r.ok ? r.json() : {});
-  }
+      notifList?.addEventListener('click', function (e) {
+        const toggleBtn = e.target.closest('.notif-toggle-read');
+        const deleteBtn = e.target.closest('.notif-delete');
+        const item = e.target.closest('.notification-item');
 
-  notifBellBtn?.addEventListener('click', function (e) {
-    e.preventDefault();
-    e.stopPropagation();
-    const isOpen = notifCenter.classList.toggle('open');
-    notifBellBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    if (isOpen && !notifLoaded) {
-      loadNotifications();
-    } else if (isOpen) {
-      loadNotifications();
+        if (toggleBtn && item) {
+          const id = item.dataset.id;
+          const isRead = item.dataset.read === 'true';
+          const url = isRead ? '/api/notifications/mark-unread/' : '/api/notifications/mark-read/';
+          notifPost(url, { id: id }).then(() => loadNotifications());
+        }
+
+        if (deleteBtn && item) {
+          const id = item.dataset.id;
+          notifPost('/api/notifications/delete/', { id: id }).then(() => loadNotifications());
+        }
+      });
+
+      notifMarkAllBtn?.addEventListener('click', function () {
+        notifPost('/api/notifications/mark-all-read/').then(() => loadNotifications());
+      });
+
+      notifClearAllBtn?.addEventListener('click', function () {
+        notifPost('/api/notifications/clear-all/').then(() => {
+          loadNotifications();
+        });
+      });
+
+      // Close notification dropdown on outside click
+      document.addEventListener('click', function (e) {
+        if (notifCenter && !notifCenter.contains(e.target)) {
+          notifCenter.classList.remove('open');
+          notifBellBtn?.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && notifCenter) {
+          notifCenter.classList.remove('open');
+          notifBellBtn?.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      // Poll for new notifications every 30 seconds (authenticated users only)
+      setInterval(pollUnreadCount, 30000);
     }
   });
-
-  notifList?.addEventListener('click', function (e) {
-    const toggleBtn = e.target.closest('.notif-toggle-read');
-    const deleteBtn = e.target.closest('.notif-delete');
-    const item = e.target.closest('.notification-item');
-
-    if (toggleBtn && item) {
-      const id = item.dataset.id;
-      const isRead = item.dataset.read === 'true';
-      const url = isRead ? '/api/notifications/mark-unread/' : '/api/notifications/mark-read/';
-      notifPost(url, { id: id }).then(() => loadNotifications());
-    }
-
-    if (deleteBtn && item) {
-      const id = item.dataset.id;
-      notifPost('/api/notifications/delete/', { id: id }).then(() => loadNotifications());
-    }
-  });
-
-  notifMarkAllBtn?.addEventListener('click', function () {
-    notifPost('/api/notifications/mark-all-read/').then(() => loadNotifications());
-  });
-
-  notifClearAllBtn?.addEventListener('click', function () {
-    notifPost('/api/notifications/clear-all/').then(() => {
-      loadNotifications();
-    });
-  });
-
-  // Close notification dropdown on outside click
-  document.addEventListener('click', function (e) {
-    if (notifCenter && !notifCenter.contains(e.target)) {
-      notifCenter.classList.remove('open');
-      notifBellBtn?.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && notifCenter) {
-      notifCenter.classList.remove('open');
-      notifBellBtn?.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  // Poll for new notifications every 30 seconds (authenticated users only)
-  setInterval(pollUnreadCount, 30000);
-  }
-});
 </script>

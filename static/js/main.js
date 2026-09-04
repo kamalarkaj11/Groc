@@ -146,21 +146,65 @@ function addToCart(productId, quantity, button) {
 }
 
 // ─── DOM Ready ────────────────────────────────────────────────────────
+// Unified scroll handling: passive listeners + rAF throttling, so scrolling
+// stays smooth even on image/product-heavy pages. Reveal animations use
+// IntersectionObserver (no per-frame layout math on every scroll event).
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Navbar scroll effect (on .site-header)
-  window.addEventListener('scroll', () => {
-    const header = document.querySelector('.site-header');
-    if (header) {
-      if (window.scrollY > 50) {
-        header.classList.add('is-scrolled');
-      } else {
-        header.classList.remove('is-scrolled');
-      }
-    }
-  });
+  const header = document.querySelector('.site-header');
+  const scrollTopBtn = document.getElementById('scrollTopBtn');
+  const reduceMotion =
+    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  // Animate on scroll
+  // ── Header + Scroll-to-Top visibility (single passive, rAF-throttled) ──
+  let scrollQueued = false;
+  function updateScrollUI() {
+    scrollQueued = false;
+    const y = window.pageYOffset || document.documentElement.scrollTop || 0;
+    if (header) header.classList.toggle('is-scrolled', y > 50);
+    if (scrollTopBtn) scrollTopBtn.classList.toggle('is-visible', y > 320);
+  }
+  function onScroll() {
+    if (!scrollQueued) {
+      scrollQueued = true;
+      window.requestAnimationFrame(updateScrollUI);
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  updateScrollUI(); // correct initial state (e.g. reload mid-page)
+
+  // ── Scroll to Top ──
+  if (scrollTopBtn) {
+    scrollTopBtn.addEventListener('click', function () {
+      window.scrollTo({
+        top: 0,
+        behavior: reduceMotion && reduceMotion.matches ? 'auto' : 'smooth'
+      });
+    });
+  }
+
+  // ── Reusable Scroll Reveal (.scroll-reveal → .show) ──
+  // Elements are hidden by CSS only when `.js` is present; IntersectionObserver
+  // adds `.show` once per element. Reduced-motion / legacy browsers reveal
+  // instantly. unobserve() prevents re-triggering while scrolling back/forth.
+  const revealEls = document.querySelectorAll('.scroll-reveal');
+  if (revealEls.length) {
+    if (!('IntersectionObserver' in window) || (reduceMotion && reduceMotion.matches)) {
+      revealEls.forEach(el => el.classList.add('show'));
+    } else {
+      const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('show');
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -48px 0px' });
+      revealEls.forEach(el => revealObserver.observe(el));
+    }
+  }
+
+  // Animate on scroll (existing product cards / glass cards)
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -197,17 +241,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Initial cart count fetch
   updateCartSummary();
+});
 
-  // Smooth scroll for anchor links
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-      e.preventDefault();
-      const target = document.querySelector(this.getAttribute('href'));
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth' });
-      }
-    });
-  });
+// ─── Smooth Anchor Navigation (delegated → covers dynamically added links) ──
+// Real in-page targets scroll smoothly (offset handled by CSS scroll-padding-top).
+// Bare "#" placeholders keep their previous no-jump behaviour without throwing,
+// Boostrap toggles (tabs/dropdowns/collapse) are left untouched.
+document.addEventListener('click', function (e) {
+  const link = e.target && e.target.closest ? e.target.closest('a[href^="#"]') : null;
+  if (!link || link.hasAttribute('data-bs-toggle')) return;
+  const href = (link.getAttribute('href') || '').trim();
+  if (!href || href === '#') { e.preventDefault(); return; }
+  const target = document.getElementById(href.slice(1));
+  if (!target) return;
+  e.preventDefault();
+  target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 // ─── Utility ─────────────────────────────────────────────────────────
